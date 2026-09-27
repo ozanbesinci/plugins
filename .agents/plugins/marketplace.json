@@ -1,0 +1,20 @@
+{
+  "name": "kilic-satinalma-workspace",
+  "interface": {
+    "displayName": "Kılıç Satınalma"
+  },
+  "plugins": [
+    {
+      "name": "kilic-satinalma",
+      "source": {
+        "source": "local",
+        "path": "./plugins/kilic-satinalma"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

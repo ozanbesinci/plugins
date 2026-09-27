@@ -1,0 +1,4 @@
+interface:
+  display_name: "Teklif Değerlendirme"
+  short_description: "Üç profille kanıtlı teklif ve maliyet karşılaştırma"
+  default_prompt: "$teklif-degerlendirme ile bu teklifleri incele; dosya envanterini ve profil önerisini göster."

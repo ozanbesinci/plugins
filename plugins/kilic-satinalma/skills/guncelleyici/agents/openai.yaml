@@ -1,0 +1,4 @@
+interface:
+  display_name: "Güncelleyici"
+  short_description: "Program ortamını ve teklif skill sürümünü yönet"
+  default_prompt: "$guncelleyici ile gerekli programları ve teklif skill sürümünü kontrol et."

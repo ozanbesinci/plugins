@@ -1,0 +1,21 @@
+{
+  "name": "kilic-satinalma",
+  "version": "1.1.0",
+  "description": "Satınalma tekliflerini değerlendiren ve çalışma ortamını güncelleyen iki skill.",
+  "author": {
+    "name": "Ozan Beşinci"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Kılıç Satınalma",
+    "shortDescription": "Teklif değerlendirme ve güncelleyici",
+    "longDescription": "Satınalma tekliflerini karşılaştırır ve gerekli programlar ile teklif skill sürümünü kullanıcı seçimleriyle yönetir.",
+    "developerName": "Ozan Beşinci",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
+    "defaultPrompt": "Teklifleri değerlendir veya güncelleyiciyi çalıştır."
+  }
+}
