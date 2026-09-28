@@ -1,6 +1,6 @@
 {
   "name": "kilic-satinalma",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Satınalma tekliflerini değerlendiren ve çalışma ortamını güncelleyen iki skill.",
   "author": {
     "name": "Ozan Beşinci"
@@ -17,11 +17,11 @@
       "Write"
     ],
     "defaultPrompt": "Teklifleri değerlendir veya güncelleyiciyi çalıştır.",
-    "websiteURL": "https://github.com/ozanbesinci/kilic-satinalma-plugin",
+    "websiteURL": "https://github.com/ozanbesinci/kilic-satinalma-openai-plugin",
     "brandColor": "#163E70",
     "composerIcon": "./assets/kilic-logo.svg",
     "logo": "./assets/kilic-logo.svg"
   },
-  "repository": "https://github.com/ozanbesinci/kilic-satinalma-plugin",
-  "homepage": "https://github.com/ozanbesinci/kilic-satinalma-plugin"
+  "repository": "https://github.com/ozanbesinci/kilic-satinalma-openai-plugin",
+  "homepage": "https://github.com/ozanbesinci/kilic-satinalma-openai-plugin"
 }
