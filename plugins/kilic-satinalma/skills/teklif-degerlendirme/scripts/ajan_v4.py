@@ -115,16 +115,18 @@ def can_start(m):
 def check_main_model(m):
     if m.get('closed_at'): return
     main=next(s for s in m['sessions'] if s['session_id']==m['main_session_id'])
-    allowed={m['roles']['extraction']['model'],m['roles']['adjudicator']['model']}
+    expected=m['roles']['extraction']
     current=read_session(main['log_path'])
-    if current['model'] not in allowed:
-        raise ValueError('Ana sohbet güncel Sol/Terra dışına geçti; model seçimini düzeltin.')
+    if any(current[key] != expected[key] for key in ('model', 'reasoning_effort')):
+        raise ValueError('Ana sohbet GPT-6.1/High dışında; model ve efor seçimini düzeltin.')
     raw=Path(main['log_path']).read_bytes()[main.get('baseline_bytes',0):]
     for line in raw.splitlines():
         try: event=json.loads(line)
         except ValueError: continue
-        if event.get('type')=='turn_context' and event.get('payload',{}).get('model') not in allowed:
-            raise ValueError('Koşu sırasında ana sohbet izin verilmeyen modele geçti; yeni koşu gerekli.')
+        if event.get('type')=='turn_context':
+            context=event.get('payload',{})
+            if context.get('model') != expected['model'] or context.get('effort') != expected['reasoning_effort']:
+                raise ValueError('Koşu sırasında ana sohbet model/eforu GPT-6.1/High dışına geçti; yeni koşu gerekli.')
 
 
 def prepare(source, run, catalog, main_log, profile, context, *, selected=None, downgrade_reason=None, log_root=None):
@@ -141,8 +143,8 @@ def prepare(source, run, catalog, main_log, profile, context, *, selected=None, 
     original_skill_sha=inventory(skill)['dataset_sha256']
     roles = resolve(catalog)
     session = read_session(main_log)
-    if session['model'] not in {roles['adjudicator']['model'], roles['extraction']['model']}:
-        raise ValueError('Ana sohbeti erişilebilir güncel Sol veya Terra modeline geçirip yeniden hazırlayın.')
+    if any(session[key] != roles['extraction'][key] for key in ('model', 'reasoning_effort')):
+        raise ValueError('Ana sohbeti GPT-6.1 modeline ve High eforuna geçirip yeniden hazırlayın.')
     if not session.get('usage'):
         raise ValueError('Ana oturum başlangıç token sayacı yok.')
     suggested = recommend(**context)
@@ -508,11 +510,11 @@ def verify(run, _locked=False):
         decision=load(file_for(run,m['artifacts']['decision']))
         summaries=[t for t in m['tasks'] if t['role']=='decision_summary' and t['state']=='COMPLETED' and t['result']==m['artifacts']['decision']]
         if not summaries or summaries[-1]['inputs'].get('data')!=m['artifacts']['data']['sha256']:
-            failures.append('Sol karar özeti gerçek güncel görev çıktısı değil.')
+            failures.append('Karar özeti gerçek güncel görev çıktısı değil.')
         if decision.get('data_sha256')!=digest(data) or not decision.get('summary'):
-            failures.append('Sol karar özeti güncel veriye bağlı değil.')
+            failures.append('Karar özeti güncel veriye bağlı değil.')
         if receipt.get('decision_sha256')!=digest(decision):
-            failures.append('Excel karar özeti Sol karar artefaktıyla eşleşmiyor.')
+            failures.append('Excel karar özeti bağımsız karar artefaktıyla eşleşmiyor.')
         if m['downgrade_reason'] and m['downgrade_reason'] not in decision.get('summary',''):
             failures.append('Profil düşürme gerekçesi karar özetinde yok.')
         if open_issues and decision.get('recommendation') is not None:

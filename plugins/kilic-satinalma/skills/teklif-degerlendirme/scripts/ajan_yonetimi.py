@@ -1,4 +1,4 @@
-"""v4 entry point: native subagents, current-model resolution and evidence gates."""
+"""v4 entry point: native GPT-6.1/High subagents and evidence gates."""
 from ajan_v4 import *
 if __name__ == '__main__':
     import sys

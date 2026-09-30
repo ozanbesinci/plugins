@@ -6,18 +6,32 @@ kayıtlarını yönetir. Kendi başına model çağırmaz. Her komutun seçenekl
 
 ## Hazırlık
 
-Ana skill'in başlangıcındaki `guncelleyici` sohbet akışının `@@SONUC` kaydı tamamlanmadan
-`prepare` yapma. Ayrı `ortam_ve_belge.py` ortam kontrolünü tekrarlama; scriptin
+İlk adım aktif ana oturumun model/efor kontrolüdür; otomatik `guncelleyici`
+tarama/kurulum akışı ve `@@SONUC` ön koşulu yoktur. Önce şu salt okunur kontrolü yap:
+
+```text
+python "<skill>/scripts/oturum_kontrol.py" --main-log "<aktif-ana-oturum.jsonl>" --session-id "<aktif-oturum-kimliği>"
+```
+
+`READY` yalnız gerçek GPT-6.1/High seçimiyle gelir. `WAITING_FOR_SELECTION` veya
+`UNVERIFIED` durumunda analizi başlatma; gerekli seçimi bildir ve kullanıcı yanıtını
+bekle. Her yeni yanıtta aynı güncel oturumu yeniden kontrol et; yanlış seçim
+sürdükçe uyarıyı tekrarla. Kullanıcının “değiştirdim” veya “devam et” demesi tek
+başına geçiş izni değildir. Doğrulanınca başlangıç mesajı ve analiz hazırlığına geç.
+
+Ayrı `ortam_ve_belge.py` ortam kontrolünü çalıştırma; scriptin
 `--help` çıktısındaki belge çıkarma komutunu analiz sırasında kullan. PDF görüntüleme pypdfium2,
 metin çıkarma pdfplumber/pypdf, Excel üretimi openpyxl, Excel hesaplatma pywin32'dir.
-Paket sürümleri `requirements.txt` ile eşleşir. Eksik veya başarısız kurulum
-`guncelleyici` sonucunda görünür; buradan pip, wheel veya ayrı Python kurulumu yapılmaz.
+Paket sürümleri `requirements.txt` ile eşleşir. Gereken analiz aracı kullanılamıyorsa
+somut engeli bildir; `guncelleyici`yi otomatik açma. Kurulum/güncelleme yalnız ayrı
+kullanıcı isteğiyle yapılır; buradan pip, wheel veya ayrı Python kurulumu yapılmaz.
 
 Katalog JSON'u: `source` gözlenen araç/katalog kaynağı, `observed_at` saat dilimli
 ISO zaman, `models` gerçek `id` ve desteklenen `efforts` listesidir. Sunulmamış
 model kimliği üretme; eski önbelleği güncel gözlem gibi etiketleme. Hazırlıktaki
 katalog gözlemi en fazla 5 dakika eski olabilir. Yeni koşuda
-katalog tekrar okunur, çözülmüş somut rol kimlikleri manifestte sabitlenir.
+katalog tekrar okunur; `gpt-6.1-sol` ve `high` desteği doğrulanır, bütün rol
+kimlikleri manifestte sabitlenir. Ana sohbet de aynı model ve High eforunu kullanır.
 
 Bağlam JSON'u profil önericinin alanlarını taşır:
 `has_spec` boolean, `purchase_type` (`genel_mal_hizmet` genel mal/hizmet için),
@@ -61,8 +75,9 @@ Sıra:
 5. Sonuç tamamlanınca ana ajan `register` ile günlüğü, gerçek model/eforu ve
    dosya hash'ini doğrulatır. Ana oturumda üretilmiş bir mühür bağımsız kanıt değildir.
 
-Ana sohbetin modeli her yeni görevde yeniden denetlenir; hazırlıktan sonra başka
-modele geçmek koşuya sabitlenen güncel aile kimliği kontrolünü kaldırmaz.
+Ana sohbetin modeli ve eforu her yeni görevde yeniden denetlenir; hazırlıktan sonra
+GPT-6.1/High dışına geçmek yeni görevi engeller. Farklı model/efora geçip tekrar
+doğru seçime dönülmesi de koşu içindeki uyuşmazlığı kaldırmaz.
 
 Aynı oturum kimliği başka görevde kullanılamaz. Alt ajan ana oturumun doğrudan
 çocuğudur ve başka ajan açamaz. `task --phase revision` de yeni oturum açar.
@@ -79,8 +94,8 @@ kaydedilir. Başlıca türler:
 | `data` | Merkezi `teklif-data/v4` JSON |
 | `coverage` | Her özgün dosyanın okunmuş/okunamamış/uygulanmıyor kapsam kaydı |
 | `blind` | Kabul edilmiş bağımsız rolün sonuç JSON'u |
-| `verdict` | Kabul edilmiş Sol hakem sonucu |
-| `decision` | Güncel veriye bağlı Sol karar özeti |
+| `verdict` | Kabul edilmiş GPT-6.1/High hakem sonucu |
+| `decision` | Güncel veriye bağlı GPT-6.1/High karar özeti |
 | `workbook`, `excel_receipt` | Excel ve gerçek hesap/doğrulama raporu |
 | `pdf`, `visual` | Yüksek güvence PDF'i ve gerçek görsel gözlemler |
 
@@ -103,7 +118,7 @@ kez geçirilir ve yalnız bu son dosya/rapor teslim artefaktı olarak kaydedilir
 veri/fark hash'ine bağlı kanıtlı düzeltmeyi kabul eder. Ardından QA ve etkilenen
 hesap/Excel doğrulamasını yenile. Düzeltme olmayan hakem kararı da uygulanır ve
 güncel sonuçla bağı kurulur. Bundan sonra `task --role decision_summary` ile yeni
-Sol/high görevini aç, güncel veri hash'ine bağlı summary/recommendation sonucunu
+GPT-6.1/High görevini aç, güncel veri hash'ine bağlı summary/recommendation sonucunu
 bind/seal-result/register döngüsünden geçir ve `record --kind decision` ile bağla.
 
 ## Teslim kapısı

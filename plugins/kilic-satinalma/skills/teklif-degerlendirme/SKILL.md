@@ -2,7 +2,7 @@
 name: teklif-degerlendirme
 description: Satınalma tekliflerini kapsam, maliyet, ticari koşul ve risk açısından karşılaştırır; şartname varsa uygunluğu denetler. Teklif değerlendirme ve satınalma karar desteği isteklerinde kullan. Seçilen analiz profiline göre formüllü Excel ve gerektiğinde PDF üretir.
 metadata:
-  version: "4.0.3"
+  version: "4.0.5"
 ---
 
 # Teklif Değerlendirme
@@ -13,36 +13,44 @@ kurumsal dil kullan; analiz çıktılarında kişiye özel hitap kullanma.
 
 ## Başlangıç
 
-Yeni analizde ilk olarak kardeş `guncelleyici` skill'ini aç ve onun
-`SKILL.md` dosyasındaki sohbet içi `scan` akışını çalıştır. Sürüm tablosunu
-sohbette göster; kullanıcı **Güncelle** demeden kurulum başlatma. Kullanıcının
-seçtiği `apply` işlemleri bitmeden teklif hazırlığına geçme.
-Güncelleyicinin `@@SONUC` kaydını oku: `up_to_date` veya kurulumdan sonra
-`completed` ile devam et. `selection_required` durumunda kullanıcı yanıtını
-bekle; `stale` durumunda yenilenen tabloyu gösterip yeniden seçim al.
-`cancelled`, `busy`, `error` veya `warning` durumunda sonucu ve engeli bildir,
-analizi başlatma. Kullanıcı adına seçim yapma veya **Güncelle** kararı verme.
-`guncelleyici` ana skill'i değiştirdiyse güncel `SKILL.md` ve `VERSION` dosyasını
-yeniden oku. Bu adımda `ortam_ve_belge.py` ortam kontrolünü ayrıca çalıştırma;
-belge çıkarma komutları analiz sırasında kullanılabilir. `guncelleyici` yoksa
-veya başlatılamıyorsa işlemi durdur ve somut engeli bildir.
+İlk adım **aktif kullanıcı oturumunun model ve efor kontrolüdür**.
+`guncelleyici` skill'ini otomatik açma; program/sürüm taraması, kurulum ve
+güncelleme seçimi başlangıç akışında yoktur. Ayrı `ortam_ve_belge.py` ortam
+kontrolü de çalıştırma; belge çıkarma komutları analiz sırasında kullanılabilir.
 
-Ardından `scripts/baslangic_mesaji.py` çalıştır ve çıktısını kullanıcıya görünen
+`scripts/oturum_kontrol.py --main-log "<aktif-oturum.jsonl>" --session-id "<aktif-oturum-kimliği>"`
+ile gerçek oturum kaydını oku. Yapılandırma dosyasındaki varsayılan seçimi,
+başka oturumun kaydını veya kullanıcının “değiştirdim” beyanını kanıt sayma.
+
+- `READY`: **GPT-6.1 / High** doğrulandı; sonraki analiz adımına geç.
+- `WAITING_FOR_SELECTION`: kullanıcıya **“Modeli GPT-6.1, eforu High olarak
+  değiştirin. Bu seçim doğrulanana kadar teklif analizine devam edemiyorum.”** de.
+  Analizi, belge envanterini ve alt ajanları başlatma; kullanıcı yanıtını bekle.
+- Her yeni kullanıcı yanıtında aynı aktif oturumun güncel kaydını yeniden oku.
+  Model veya efor hâlâ yanlışsa aynı uyarıyı **her seferinde** tekrarla ve bekle;
+  ikisi de doğru olduğunda kaldığın yerden devam et. Sadece “devam et” denmesi
+  kontrolü geçmez. Kullanıcı yanıt vermeden sürekli mesaj veya sorgu üretme.
+- `UNVERIFIED`: somut doğrulama engelini ve gerekli seçimi bildir; doğrulanmadan
+  ilerleme. Kullanıcı analizi açıkça iptal ederse beklemeyi bitir.
+
+Model/efor doğrulandıktan sonra `scripts/baslangic_mesaji.py` çalıştır ve çıktısını kullanıcıya görünen
 ilk **teklif analizi** mesajında aynen göster. Sürüm `VERSION` dosyasından gelir;
-geliştirme ve sürüm sorgusu analiz değildir. Ayrı `--check-release` sorgusu yapma:
-sürüm kontrolü `guncelleyici` tarafından yapıldı.
+geliştirme ve sürüm sorgusu analiz değildir. Otomatik sürüm sorgusu veya
+`--check-release` çağrısı yapma. `guncelleyici` yalnız kullanıcı ayrıca istediğinde çalışır.
 
 1. `references/ajan-mimarisi.md` ve `references/ajan-calistirma.md` oku. v4 çalışma
    ortamı Windows üzerinde Codex masaüstü / yerel ChatGPT Work, yerleşik alt ajanlar,
-   Python 3.14 ve masaüstü Excel'dir. Kurulum ve sürüm yönetimi tamamlanan
-   `guncelleyici` oturumuna aittir; burada paket indirme veya ikinci kurulum yolu
-   oluşturma.
-2. Her yeni analizde ortamın sunduğu **gerçek güncel model kataloğunu** kaydet.
-   `scripts/model_secimi.py` rolün Sol/Terra ailesinde erişilebilir en yeni sürümü
-   çözer. Model adı veya `latest` takma adı uydurma. Çözülen kimlik analiz boyunca
-   sabittir. Gerçek oturum modeli ve eforu sonucu kabul etmeden doğrulanır. Ana
-   sohbet eski sürümdeyse ve araçla değiştirilemiyorsa güncel sürümün seçilmesini
-   iste; analiz model görevlerini başlatma. **Luna hiçbir yerde kullanılmaz.**
+   Python 3.14 ve masaüstü Excel'dir. Kurulum ve sürüm yönetimi ayrı bir kullanıcı
+   isteğidir; burada paket indirme, otomatik `guncelleyici` devri veya ikinci
+   kurulum yolu oluşturma.
+2. Ana koordinatör ve bütün alt ajanlar **GPT-6.1 / High** kullanır. Bu ortamda
+   somut kimlik `gpt-6.1-sol`, efor `high`dır. Her yeni analizde gerçek model
+   kataloğunu kaydet; `scripts/model_secimi.py` bu kimliğin ve High desteğinin
+   erişilebilir olduğunu doğrular. Başka sürüme, aileye veya efora otomatik geçme;
+   model adı veya `latest` takma adı uydurma. Gerçek oturum modeli ve eforu hazırlıkta,
+   her yeni görevde ve sonuç kabulünde doğrulanır. Ana sohbet uyuşmuyorsa ve araçla
+   değiştirilemiyorsa personelden GPT-6.1 ve High seçmesini iste; analiz model
+   görevlerini başlatma. **Luna hiçbir yerde kullanılmaz.**
 3. Kodla dosya envanteri, hash ve okunabilirlik kontrolü yap. Kullanıcıya dosyaları,
    içerikten desteklenen alım türünü ve profil önerisini tek blokta sun; belirsiz
    iş girdilerini aynı blokta sor. **Profili kullanıcı seçer.**
@@ -65,27 +73,27 @@ bağlama yükleme. Hedef bağlam 20–40 bin tokendır; bu bir doğruluk ölçü
 
 1. `prepare` ile kaynak listesi, skill kopyası, profil, katalog ve ana oturumun
    başlangıç sayacını sabitle. Sonraki işlemlerde manifestteki `runner` yolunu kullan.
-2. Teklif çıkarımı Terra/medium; zor kaynak Terra/high. Şartname çıkarımı ayrı
-   Terra/high görevidir. Model hesap sonucu üretmez; her hükme kaynak ve kısa alıntı ekler.
-3. Standart/yüksek güvencede bağımsız Sol/high **ham PDF'leri** okuyarak sabit şablonu
+2. Teklif çıkarımı, zor kaynak incelemesi ve ayrı şartname çıkarımı GPT-6.1/High
+   görevleridir. Model hesap sonucu üretmez; her hükme kaynak ve kısa alıntı ekler.
+3. Standart/yüksek güvencede bağımsız GPT-6.1/High **ham PDF'leri** okuyarak sabit şablonu
    doldurur; çıkarımla paralel çalışır, merkezi veri ve önerilen firmayı görmez.
-   Hızlıda ayrı Terra/high kritik özgün sayfaları **görüntüden** kontrol eder.
+   Hızlıda ayrı GPT-6.1/High kritik özgün sayfaları **görüntüden** kontrol eder.
 4. Kod merkezi verinin tamlığını kontrol eder, maliyeti hesaplar; QA taslak Excel'i
    üretip düzen/formül/girdi sözleşmesinin ucuz mekanik kontrolünü yapar.
-5. Kod bağımsız bulgularla merkezi veriyi karşılaştırır. Yeni Sol/high hakem görevi
+5. Kod bağımsız bulgularla merkezi veriyi karşılaştırır. Yeni GPT-6.1/High hakem görevi
    yalnız farkları, serbest bulguları ve ilgili kaynakları değerlendirir. Yüksek güvencede bütün eleme kararları ve öneri gerekçesi de incelenir.
 6. Hakemin kanıtlı düzeltme kayıtlarını kod uygular; etkilenen hesap ve çıktılar
-   yeniden üretilir. Yorum gerekiyorsa Terra'ya yeni dar görev verilir. Standartta
+   yeniden üretilir. Yorum gerekiyorsa GPT-6.1/High ile yeni dar görev verilir. Standartta
    en çok 1, yüksek güvencede 2 düzeltme turu; kalan uyuşmazlık açık konudur.
-7. Düzeltme sonrası yeni dar Sol/high `decision_summary` görevi güncel veri hash'ine
-   bağlı karar özetini yazar. Koordinatör bu metni aktarır. Kod ayrı Sol karar
+7. Düzeltme sonrası yeni dar GPT-6.1/High `decision_summary` görevi güncel veri hash'ine
+   bağlı karar özetini yazar. Koordinatör bu metni aktarır. Kod ayrı karar
    dosyasıyla son Excel'i üretir; gerçek Excel yeniden hesaplaması ve mutabakatı
    bu son dosyada bir kez yapar.
 
 Yerleşik alt ajan aracını kullan; `codex exec` veya oturum devamı kullanma. Her görev
 yeni, dar bağlamla başlar. En çok 3 alt ajan eşzamanlıdır; alt ajan alt ajan açamaz.
 Teknik/mali yöntem/sözleşme uzmanları yalnız yüksek güvencede, ihtiyaç varsa
-Terra/high çalışır. Model seti Sol + Terra'dır; Astra ve Jev görevleri yoktur.
+GPT-6.1/High çalışır. Bütün roller aynı model/eforu kullanır; Astra ve Jev görevleri yoktur.
 
 ## Satınalma ve hesap değişmezleri
 

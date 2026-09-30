@@ -1,13 +1,22 @@
 {
-  "policy_version": "4.0.0",
+  "policy_version": "4.0.5",
+  "startup": {
+    "first_step": "verify_active_session_model_and_effort",
+    "automatic_updater": false,
+    "continue_only_when": "READY",
+    "recheck_on_each_user_reply": true,
+    "repeat_warning_until_verified": true
+  },
   "execution": "native_subagents",
-  "model_selection": "latest_available_per_family_at_run_start",
+  "model_selection": "fixed_model_and_effort",
+  "required_model": "gpt-6.1-sol",
+  "required_reasoning_effort": "high",
   "allowed_families": [
-    "sol",
-    "terra"
+    "sol"
   ],
   "forbidden_families": [
     "luna",
+    "terra",
     "astra",
     "jev"
   ],
@@ -34,27 +43,31 @@
   },
   "main_session": {
     "allowed_families": [
-      "sol",
-      "terra"
+      "sol"
     ],
-    "selection": "latest_available",
-    "reasoning_effort": "user_selected"
+    "selection": "fixed_model_and_effort",
+    "model": "gpt-6.1-sol",
+    "reasoning_effort": "high"
   },
   "roles": {
     "extraction": {
-      "family": "terra",
-      "reasoning_effort": "medium"
+      "family": "sol",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "high"
     },
     "extraction_difficult": {
-      "family": "terra",
+      "family": "sol",
+      "model": "gpt-6.1-sol",
       "reasoning_effort": "high"
     },
     "requirements": {
-      "family": "terra",
+      "family": "sol",
+      "model": "gpt-6.1-sol",
       "reasoning_effort": "high"
     },
     "targeted_review": {
-      "family": "terra",
+      "family": "sol",
+      "model": "gpt-6.1-sol",
       "reasoning_effort": "high",
       "profiles": [
         "hizli"
@@ -62,6 +75,7 @@
     },
     "blind_review": {
       "family": "sol",
+      "model": "gpt-6.1-sol",
       "reasoning_effort": "high",
       "profiles": [
         "standart",
@@ -70,24 +84,28 @@
     },
     "adjudicator": {
       "family": "sol",
+      "model": "gpt-6.1-sol",
       "reasoning_effort": "high"
     },
     "technical": {
-      "family": "terra",
+      "family": "sol",
+      "model": "gpt-6.1-sol",
       "reasoning_effort": "high",
       "profiles": [
         "yuksek_guvence"
       ]
     },
     "financial": {
-      "family": "terra",
+      "family": "sol",
+      "model": "gpt-6.1-sol",
       "reasoning_effort": "high",
       "profiles": [
         "yuksek_guvence"
       ]
     },
     "contracts": {
-      "family": "terra",
+      "family": "sol",
+      "model": "gpt-6.1-sol",
       "reasoning_effort": "high",
       "profiles": [
         "yuksek_guvence"
@@ -95,6 +113,7 @@
     },
     "decision_summary": {
       "family": "sol",
+      "model": "gpt-6.1-sol",
       "reasoning_effort": "high"
     }
   },
@@ -102,7 +121,7 @@
   "budget_warning_ratio": 0.8,
   "transfer_scope": "User-requested analysis within the configured OpenAI account; no repeated consent per allowed role. New providers, recipients and publication require separate authorization.",
   "notes": [
-    "Resolve real offered model IDs and supported efforts for every new run; no fabricated aliases or silent fallback.",
+    "Require the real offered gpt-6.1-sol model and high effort for the main session and every role; do not substitute older, newer or other-family models.",
     "Record actual session model and reasoning effort, not only requested values.",
     "Business rules remain source-backed; incomplete critical evidence prevents a final recommendation."
   ],

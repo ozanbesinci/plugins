@@ -145,10 +145,10 @@ Girdi/hücre bağı ve kontrol raporu saklanır. `qa` hakem öncesi taslağı ve
 mekanik preflight'i otomatik üretir. Gerçek COM yalnız son karar Excel'inde çalışır.
 
 `decision` dosyası `data_sha256`, `summary`, `recommendation` taşır. Metin yeni
-`decision_summary` Sol/high görevinin gerçek oturumundan gelir; kod son veriyle bağlar. Kritik açık konu varsa
+`decision_summary` GPT-6.1/High görevinin gerçek oturumundan gelir; kod son veriyle bağlar. Kritik açık konu varsa
 `recommendation:null`. Profil düşürme varsa somut gerekçe summary içinde görünür.
 Yüksek güvencede çözülemeyen uzman konuları, muhatap ve istenen teyitle ayrıca listelenir.
-Üretici ve doğrulayıcıya bu ayrı Sol JSON'u `--decision` ile verilir; hesap
+Üretici ve doğrulayıcıya bu ayrı karar JSON'u `--decision` ile verilir; hesap
 sözleşmesi ve Excel makbuzu `decision_sha256` taşır. Merkezi verideki eski metin,
 bağımsız son karar dosyasının yerine geçirilmez.
 Son üretime güncel QA ve envanter de verilir. Sözleşmenin profil,

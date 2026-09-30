@@ -9,6 +9,19 @@ Sürüm numarası kuralı: **büyük** (omurga değişti, çıktı yapısı değ
 
 ---
 
+## v4.0.5 — 2026-09-30 — başlangıçta oturum kontrolü
+
+- Kullanıcı talimatıyla başlangıçtaki otomatik `guncelleyici` taraması ve sonuç bekleme kaldırıldı; ilk adım aktif oturumun GPT-6.1/High kontrolü oldu.
+- Yanlış seçimde analiz bekler; her yeni kullanıcı yanıtında gerçek oturum tekrar okunur ve gerekirse uyarı tekrarlanır. Doğru model ve efor doğrulanınca sonraki analiz adımına geçilir.
+- Salt okunur, ek paket ve ağ erişimi gerektirmeyen `oturum_kontrol.py` eklendi; kullanıcı beyanı veya başka oturum kaydı kontrolü geçmez.
+- Kullanıcının açık yayın kararıyla kararlı dağıtıma alındı; 4.0.4'teki bütün ajanlar için GPT-6.1/High değişikliği bu yayına dahildir. Model, oturum ve koşu denetimlerinin 50 testi geçti; canlı teklif kabulü ayrı tutulur.
+
+## v4.0.4 — 2026-09-30 — bütün ajanlarda GPT-6.1 / High (yerel, yayımlanmamış)
+
+- Kullanıcının model/efor kararı uygulandı: ana koordinatör ve bütün alt roller `gpt-6.1-sol` / `high` kullanır; aile başına en yeni sürüm seçimi ve Terra/Medium çıkarımı kaldırıldı.
+- Hazırlık ve görev başlangıcında ana model ile efor birlikte doğrulanır; koşu içinde farklı efora geçip geri dönülmesi de engellenir. Gerçek alt oturum model/efor denetimi korunur.
+- Talimat, politika, rol çözümleyici, kurulum ve çalışma referansları aynı kurala bağlandı. Yerel doğrulama gerçek teklif kabulü veya yayın anlamına gelmez.
+
 ## v4.0.3 — 2026-09-28 — sohbet içi güncelleyici başlangıcı
 
 - Güncelleyici başlangıcı masaüstü Work ve Codex sohbetindeki seçim akışına bağlandı; PowerShell seçim penceresi çağrısı kaldırıldı.

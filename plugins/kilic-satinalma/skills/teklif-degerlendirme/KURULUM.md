@@ -1,6 +1,7 @@
-# Kurulum ve dağıtım — ana skill v4.0.3 / birleşik güncelleyici
+# Kurulum ve dağıtım — ana skill v4.0.5 / birleşik güncelleyici
 
-**4.0.3 kararlı dağıtım sürümüdür.** Yayın, kullanıcının açık kararıyla yapılmıştır.
+**4.0.5 kararlı dağıtım sürümüdür.** Kullanıcının 2026-09-30 tarihli açık
+yayın kararıyla 4.0.3 sonrasındaki model/efor ve başlangıç düzeltmelerini içerir.
 Excel/PDF doğrulaması ile uçtan uca canlı analiz kabulü ayrı kayıtlardır;
 kararlı yayın, bütün canlı analiz senaryolarının kabul edildiği anlamına gelmez.
 Resmî dağıtım deposu:
@@ -37,8 +38,8 @@ Kaynak depo ZIP'i, doğrulanmış dağıtım ZIP'iyle aynı kurulum biçimi say�
   pypdfium2 ve pywin32. Sürüm kaynağı `guncelleyici` paket listesidir.
 - Masaüstü Microsoft Excel; Python + pywin32 ile görünmez bağımsız örnekte gerçek
   yeniden hesaplama ve temiz kapanış.
-- Gerçek güncel araç kataloğunda erişilebilir Sol ve Terra aileleri, rollerin medium/high
-  eforları. Her yeni analiz erişilebilir en yeni aile sürümünü çözer. Luna yoktur.
+- Gerçek güncel araç kataloğunda erişilebilir GPT-6.1 (`gpt-6.1-sol`) ve High eforu.
+  Ana koordinatör ve bütün alt roller bu model/eforu kullanır; başka sürüme geçilmez.
 - Gerçek oturum JSONL kayıtlarına, model/efora ve token sayaçlarına erişim.
 
 Python/kütüphane eksikliği `guncelleyici` program akışının işidir. Python kurucusu veya wheel
@@ -78,13 +79,12 @@ keşfedilir; kullanıcıya görünmesi başarılı analiz koşusunun kanıtı de
 
 ## Analizi başlatma
 
-1. Personel ana sohbet için güncel Sol veya Terra ailesini seçer; efor tercihi kendisinindir.
+1. Personel ana sohbet için **GPT-6.1 / High** seçer; bütün alt görevler aynı model/eforu kullanır.
 2. `$teklif-degerlendirme` ile kaynak dosyaları/klasörü verir.
-3. Skill önce kardeş `guncelleyici` taramasını çalıştırır; gereken seçimleri
-   sohbet tablosunda gösterir ve kullanıcının **Güncelle** yanıtını bekler.
-   `up_to_date` veya seçilen kurulumlardan sonra `completed` sonucu gelince,
-   varsa güncellenmiş skill talimatı yeniden okunur ve teklif analizi başlar.
-   Başarısız, uyarılı veya iptal edilmiş sonuçta analiz başlamaz.
+3. Skill otomatik `guncelleyici` çağrısını atlar; ilk olarak aktif oturumun gerçek
+   model/efor kaydını `oturum_kontrol.py` ile kontrol eder. GPT-6.1/High değilse
+   kullanıcıdan ikisini de değiştirmesini ister. Her yeni yanıtta kontrol ve
+   gerekiyorsa uyarı tekrarlanır; yalnız `READY` sonucuyla analize geçilir.
 4. Skill envanter ve öneriyi gösterir; personel hızlı, standart veya yüksek güvence seçer.
 5. Gerçek katalog ve ana oturum sayacıyla `prepare` değişmez koşu kopyasını oluşturur.
 6. Sonraki işlemler manifestin `runner` yoluyla yürür. `task` yalnız görev kaydıdır;

@@ -17,10 +17,11 @@ from test_v4_veri import fixture
 def catalog():
     return {'source':'synthetic tool catalog','observed_at':a.now(),'models':[
         {'id':'gpt-5.6-sol','efforts':['high','medium']}, {'id':'gpt-6-sol','efforts':['high','medium']},
+        {'id':'gpt-6.1-sol','efforts':['low','medium','high','xhigh']},
         {'id':'gpt-5.6-terra','efforts':['medium','high']}, {'id':'gpt-6-luna','efforts':['high']}]}
 
 
-def log(path, identity, model='gpt-6-sol', effort='high', parent=None, total=100, seal=None):
+def log(path, identity, model='gpt-6.1-sol', effort='high', parent=None, total=100, seal=None):
     meta={'id':identity,'cwd':str(path.parent)}
     if parent: meta['source']={'subagent':{'thread_spawn':{'parent_thread_id':parent}}}
     rows=[{'type':'session_meta','payload':meta}, {'type':'turn_context','payload':{'model':model,'effort':effort}},
@@ -31,24 +32,45 @@ def log(path, identity, model='gpt-6-sol', effort='high', parent=None, total=100
 
 
 class ModelTests(unittest.TestCase):
-    def test_current_family_resolved_without_inventing_terra6(self):
+    def test_all_roles_use_gpt61_high(self):
         roles=resolve(catalog())
-        self.assertEqual(roles['extraction']['model'],'gpt-5.6-terra')
-        self.assertEqual(roles['adjudicator']['model'],'gpt-6-sol')
-        self.assertFalse(any('luna' in r['model'] for r in roles.values()))
+        self.assertEqual(len(roles),10)
+        for role, expected in roles.items():
+            with self.subTest(role=role):
+                self.assertEqual(expected,{'family':'sol','model':'gpt-6.1-sol','reasoning_effort':'high'})
 
-    def test_new_version_automatically_selected(self):
+    def test_new_version_does_not_replace_requested_model(self):
         c=catalog(); c['models'].append({'id':'gpt-7-sol','efforts':['high']})
-        self.assertEqual(resolve(c)['adjudicator']['model'],'gpt-7-sol')
+        self.assertEqual(resolve(c)['adjudicator']['model'],'gpt-6.1-sol')
 
-    def test_latest_without_effort_does_not_silently_downgrade(self):
-        c=catalog(); c['models'].append({'id':'gpt-7-sol','efforts':['low']})
+    def test_required_model_without_high_does_not_silently_downgrade(self):
+        c=catalog(); next(r for r in c['models'] if r['id']=='gpt-6.1-sol')['efforts']=['low','medium','xhigh']
         with self.assertRaises(ValueError): resolve(c)
 
-    def test_missing_family_and_stale_catalog_fail(self):
-        c=catalog(); c['models']=[r for r in c['models'] if 'terra' not in r['id']]
+    def test_missing_required_model_and_stale_catalog_fail(self):
+        c=catalog(); c['models']=[r for r in c['models'] if r['id']!='gpt-6.1-sol']
         with self.assertRaises(ValueError): resolve(c)
         c=catalog(); c['observed_at']='2020-01-01T00:00:00+00:00'
+        with self.assertRaises(ValueError): resolve(c)
+
+    def test_required_model_alone_suffices(self):
+        c=catalog(); c['models']=[r for r in c['models'] if r['id']=='gpt-6.1-sol']
+        self.assertEqual(len(resolve(c)),10)
+
+    def test_declared_policy_matches_resolved_agents(self):
+        policy=load(Path(a.__file__).resolve().parents[1]/'config/ajan-politikasi.json')
+        roles=resolve(catalog())
+        self.assertEqual(set(policy['roles']),set(roles))
+        for role, expected in roles.items():
+            with self.subTest(role=role):
+                self.assertEqual({key:policy['roles'][role][key] for key in expected},expected)
+        self.assertEqual(policy['main_session']['model'],'gpt-6.1-sol')
+        self.assertEqual(policy['main_session']['reasoning_effort'],'high')
+
+    def test_alias_or_duplicate_model_is_rejected(self):
+        c=catalog(); next(r for r in c['models'] if r['id']=='gpt-6.1-sol')['id']='gpt-6.1'
+        with self.assertRaises(ValueError): resolve(c)
+        c=catalog(); c['models'].append(copy.deepcopy(next(r for r in c['models'] if r['id']=='gpt-6.1-sol')))
         with self.assertRaises(ValueError): resolve(c)
 
     def test_profiles_recommend_not_select(self):
@@ -96,9 +118,17 @@ class RunTests(unittest.TestCase):
         result=a.prepare(self.src,self.root/'other',catalog(),self.main,'hizli',{**self.context,'has_spec':True},downgrade_reason='User accepts warning for bounded comparison',log_root=self.logs)
         self.assertEqual(result['profile'],'hizli')
 
-    def test_latest_terra_main_supported(self):
+    def test_terra_main_rejected(self):
         log(self.main,'main','gpt-5.6-terra')
-        a.prepare(self.src,self.root/'terra',catalog(),self.main,'standart',self.context,log_root=self.logs)
+        with self.assertRaises(ValueError):
+            a.prepare(self.src,self.root/'terra',catalog(),self.main,'standart',self.context,log_root=self.logs)
+
+    def test_main_requires_exact_high_effort(self):
+        for effort in ('low','medium','xhigh','max'):
+            with self.subTest(effort=effort):
+                log(self.main,'main',effort=effort)
+                with self.assertRaises(ValueError):
+                    a.prepare(self.src,self.root/effort,catalog(),self.main,'standart',self.context,log_root=self.logs)
 
     def test_source_or_snapshot_change_blocks_start(self):
         (self.src/'offer.txt').write_text('Changed')
@@ -114,8 +144,24 @@ class RunTests(unittest.TestCase):
         with self.assertRaises(ValueError): a.plan_task(self.run,'blind_review','Read')
 
     def test_wrong_actual_model_cannot_bind(self):
-        t=a.plan_task(self.run,'extraction','Extract'); path=self.logs/'wrong.jsonl'; log(path,'wrong',parent='main')
+        t=a.plan_task(self.run,'extraction','Extract'); path=self.logs/'wrong.jsonl'; log(path,'wrong',model='gpt-6-sol',parent='main')
         with self.assertRaises(ValueError): a.bind(self.run,t['task_id'],path)
+
+    def test_wrong_actual_effort_cannot_bind(self):
+        t=a.plan_task(self.run,'extraction','Extract'); path=self.logs/'wrong.jsonl'
+        log(path,'wrong',effort='medium',parent='main')
+        with self.assertRaises(ValueError): a.bind(self.run,t['task_id'],path)
+
+    def test_child_cannot_change_effort_then_restore_high(self):
+        t=a.plan_task(self.run,'extraction','Extract'); path=self.logs/'child.jsonl'
+        log(path,'child',parent='main'); a.bind(self.run,t['task_id'],path)
+        result=Path(t['output_dir'])/'result.json'; save(result,{'ok':True})
+        seal=a.seal_result(self.run,t['task_id'],result)
+        with path.open('a',encoding='utf-8') as stream:
+            for effort in ('medium','high'):
+                stream.write(json.dumps({'type':'turn_context','payload':{'model':'gpt-6.1-sol','effort':effort}})+'\n')
+            stream.write(json.dumps({'type':'response_item','payload':{'type':'function_call_output','output':'TEKLIF_RESULT_SEAL:'+json.dumps(seal)}})+'\n')
+        with self.assertRaises(ValueError): a.register(self.run,t['task_id'],result)
 
     def test_wrong_parent_cannot_bind(self):
         t=a.plan_task(self.run,'blind_review','Read'); path=self.logs/'wrong.jsonl'; log(path,'wrong',parent='other')
@@ -197,6 +243,17 @@ class RunTests(unittest.TestCase):
     def test_main_cannot_switch_to_luna_during_run(self):
         with self.main.open('a',encoding='utf-8') as out:
             out.write(json.dumps({'type':'turn_context','payload':{'model':'gpt-6-luna','effort':'high'}})+'\n')
+        with self.assertRaises(ValueError): a.plan_task(self.run,'extraction','Read')
+
+    def test_main_cannot_change_effort_then_restore_high(self):
+        with self.main.open('a',encoding='utf-8') as out:
+            for effort in ('medium','high'):
+                out.write(json.dumps({'type':'turn_context','payload':{'model':'gpt-6.1-sol','effort':effort}})+'\n')
+        with self.assertRaises(ValueError): a.plan_task(self.run,'extraction','Read')
+
+    def test_main_current_medium_blocks_start(self):
+        with self.main.open('a',encoding='utf-8') as out:
+            out.write(json.dumps({'type':'turn_context','payload':{'model':'gpt-6.1-sol','effort':'medium'}})+'\n')
         with self.assertRaises(ValueError): a.plan_task(self.run,'extraction','Read')
 
     def test_coverage_change_invalidates_prior_qa(self):

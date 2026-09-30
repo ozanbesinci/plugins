@@ -1,20 +1,18 @@
 """Resolve real offered models; no provider calls or invented fallback names."""
 from __future__ import annotations
 import datetime as dt
-import re
 
 PROFILES = {
     "hizli": {"max_input_tokens": 8_000_000, "max_wall_seconds": 1500, "max_revisions": 1},
     "standart": {"max_input_tokens": 25_000_000, "max_wall_seconds": 3600, "max_revisions": 1},
     "yuksek_guvence": {"max_input_tokens": 50_000_000, "max_wall_seconds": 7200, "max_revisions": 2},
 }
-ROLES = {
-    "extraction": ("terra", "medium"), "extraction_difficult": ("terra", "high"),
-    "requirements": ("terra", "high"), "targeted_review": ("terra", "high"),
-    "blind_review": ("sol", "high"), "adjudicator": ("sol", "high"), "decision_summary": ("sol", "high"),
-    "technical": ("terra", "high"), "financial": ("terra", "high"), "contracts": ("terra", "high"),
-}
-MODEL_ID = re.compile(r"^gpt-(\d+(?:\.\d+)*)-(sol|terra)$")
+REQUIRED_MODEL = "gpt-6.1-sol"
+REQUIRED_EFFORT = "high"
+ROLES = {role: ("sol", REQUIRED_EFFORT) for role in (
+    "extraction", "extraction_difficult", "requirements", "targeted_review",
+    "blind_review", "adjudicator", "decision_summary", "technical", "financial", "contracts",
+)}
 
 
 def timestamp(value):
@@ -31,30 +29,23 @@ def resolve(catalog, now=None):
     age = (now - timestamp(catalog["observed_at"])).total_seconds()
     if not -60 <= age <= 300:
         raise ValueError("Model kataloğu taze değil; başlangıçta yeniden okuyun.")
-    selected, seen = {}, set()
+    selected, seen = None, set()
     for row in catalog["models"]:
         identity = row["id"]
         if identity in seen:
             raise ValueError("Katalogda yinelenmiş model kimliği.")
         seen.add(identity)
-        match = MODEL_ID.fullmatch(identity)
-        if not match:  # Luna/Astra and unnamed future families cannot enter role selection.
+        if identity != REQUIRED_MODEL:
             continue
-        version = tuple(int(part) for part in match[1].split("."))
-        family = match[2]
         if not isinstance(row.get("efforts"), list) or not row["efforts"]:
             raise ValueError("Katalogda desteklenen eforlar eksik.")
-        if family not in selected or version > selected[family][0]:
-            selected[family] = (version, row)
-    result = {}
-    for role, (family, effort) in ROLES.items():
-        if family not in selected:
-            raise ValueError(f"Erişilebilir {family} yok; başka aileye geçilmez.")
-        row = selected[family][1]
-        if effort not in row["efforts"]:
-            raise ValueError(f"En yeni {family} {effort} desteklemiyor; eski sürüme dönülmez.")
-        result[role] = {"family": family, "model": row["id"], "reasoning_effort": effort}
-    return result
+        selected = row
+    if selected is None:
+        raise ValueError(f"Erişilebilir {REQUIRED_MODEL} yok; başka modele geçilmez.")
+    if REQUIRED_EFFORT not in selected["efforts"]:
+        raise ValueError(f"{REQUIRED_MODEL} High desteklemiyor; başka efora geçilmez.")
+    return {role: {"family": family, "model": selected["id"], "reasoning_effort": effort}
+            for role, (family, effort) in ROLES.items()}
 
 
 def recommend(*, has_spec, purchase_type, imported, has_tco, max_amount=None, fast_limit=None):

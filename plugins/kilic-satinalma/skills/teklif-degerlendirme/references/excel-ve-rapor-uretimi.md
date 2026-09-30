@@ -38,7 +38,7 @@ iki tedarikçide medyan/sapma yerine fark analizi vardır.
 maliyet zinciri; profil/seçim gerekçesi, kritik uyarılar, renk lejantı, veri/skill
 sürümü. “Bu analiz teklif-degerlendirme <VERSION> ile üretilmiştir” damgası koddan gelir.
 
-**Karar Özeti:** düzeltme sonrası yeni Sol karar özeti görevinin kaynaklı metni; uygunluk ve maliyet durumu; kırmızı
+**Karar Özeti:** düzeltme sonrası yeni GPT-6.1/High karar özeti görevinin kaynaklı metni; uygunluk ve maliyet durumu; kırmızı
 çizgiler, RFI/teyit sorumluları ve sonraki adımlar. Kritik bilgi açıkken kesin firma
 önerisi bulunmaz. Profil düşürme ve yapılmayan kontrol açıkça yazılır.
 
@@ -142,7 +142,7 @@ Eksik sayfa/sekme gözlemi yüksek güvence kapısını geçmez.
 ## PDF ve sürüm
 
 Yüksek güvencede PDF zorunludur; standart/hızlıda kullanıcı rapor isterse PDF üretilir.
-Kod merkezi veriyi ve Sol hakem metnini birleştirir; rapor üretmek için yeni yorum
+Kod merkezi veriyi ve GPT-6.1/High hakem metnini birleştirir; rapor üretmek için yeni yorum
 oturumu açılmaz. Mevcut otomasyonun PDF dışa aktarımı kullanılır.
 
 PDF diskte var, boş değil ve açılabilir olmalıdır. Metin, Türkçe karakterler,
@@ -166,7 +166,7 @@ python "<skill>/scripts/excel_dogrula.py" --workbook "<yeni-kitap.xlsx>" --data 
 Yüksek güvencede `--profile yuksek_guvence`; PDF konumu gerekiyorsa doğrulayıcıya
 `--pdf "<yeni-rapor.pdf>"` verilir. Üretici workbook yanında hesap/formül sözleşmesi
 yazar; bu dosya kontrol girdisidir. Doğrulayıcı başarıda hesaplanmış kitabı aynı
-çıktı yoluna yerleştirir ve **hash değişir**. Her iki komuta aynı ayrı Sol karar
+çıktı yoluna yerleştirir ve **hash değişir**. Her iki komuta aynı ayrı karar
 JSON'u verilir; `decision_sha256` ile son veri/karar/metin bağı doğrulanır. Bu nedenle koşudaki `workbook`,
 `excel_receipt` ve varsa `pdf` kayıtlarını doğrulama tamamlandıktan sonra yap.
 Üretilen makbuz yolunu kullan; dosya adına bakıp PASS varsayma.

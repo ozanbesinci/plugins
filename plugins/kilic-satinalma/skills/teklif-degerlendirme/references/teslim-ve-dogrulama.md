@@ -35,10 +35,10 @@ Detaylı örnekler `hesaplama-kontrolleri.md` ve ilgili alan referansındadır.
 ## Bağımsız model kanıtı
 
 - Görev gerçek yerleşik alt ajan oturumuna bağlı mı; model/efor seçilmiş kimlikle aynı mı?
-- Standart/yüksek güvence bağımsız Sol okuması özgün kaynaklardan ve merkezi veriyi
-  görmeden yapılmış mı? Hızlı hedefli Terra kontrolü kritik sayfa görüntülerini kapsıyor mu?
+- Standart/yüksek güvence bağımsız GPT-6.1/High okuması özgün kaynaklardan ve merkezi veriyi
+  görmeden yapılmış mı? Hızlı hedefli GPT-6.1/High kontrolü kritik sayfa görüntülerini kapsıyor mu?
 - Kod farkları ve serbest bulguları eksiksiz hakeme taşıdı mı?
-- Yeni Sol hakem fark başına karar/gerekçe verdi mi; yüksek güvencede tüm eleme/öneri
+- Yeni GPT-6.1/High hakem fark başına karar/gerekçe verdi mi; yüksek güvencede tüm eleme/öneri
   gerekçelerini ayrıca inceledi mi?
 - Düzeltmeler kodla, doğru veri/fark hash'inde uygulandı mı? Etkilenen maliyet,
   Excel ve karar özeti yenilendi mi? Aynı eski oturum devam ettirilmedi mi?
