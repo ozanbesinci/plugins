@@ -1,82 +1,123 @@
 ---
 name: guncelleyici
-description: Python, Python kütüphaneleri, Node.js, pnpm, DuckDB, Power BI Modeling MCP ve teklif-degerlendirme skill sürümlerini sohbet tablosunda karşılaştırır; kullanıcının seçtiklerini günceller. "Güncelleyiciyi çalıştır", "programları güncelle" veya "teklif skill'ini güncelle" isteklerinde kullan.
+description: Windows'ta Python, sabit Python paket seti, Node.js, pnpm, DuckDB, Power BI Modeling MCP ve teklif-degerlendirme sürümlerini kontrol eder; yalnız açık kullanıcı onayıyla sabitlenmiş planı uygular. İsteğe bağlı DuckDB PDF eklentisi, işlev kontrolü ve onarım planı sunar. "Güncelleyiciyi çalıştır", "programları güncelle", "teklif skill'ini güncelle", "DuckDB PDF eklentisini ekle" veya bu kurulumları doğrulama isteklerinde kullan. Bir skill'i inceleme/geliştirme isteğini canlı kurulum yetkisi sayma.
 ---
 
 # Güncelleyici
 
-## Tek giriş: sohbet içi seçim
+## Durum ve sınır
 
-Yerel Windows ortamında `scripts/sohbet.ps1` dosyasını PowerShell 5.1 ile
-çalıştır. `<SKILL>`, bu dosyanın bulunduğu klasörün tam yoludur. Tabloyu
-PowerShell penceresinde açma; `@@SONUC` JSON kaydındaki `rows` verisini **sohbette
-Markdown tablosu** olarak göster. Bu akış masaüstü Work ve Codex'te aynıdır.
+`BUILD.json` sürümün yayın ve kabul durumunu gösterir. `VERSION` kaynak sürümdür;
+GitHub'da yayımlanmış olması personel genel dağıtım/üretim onayı anlamına gelmez.
+[Windows kabul kontrollerindeki](references/kabul-ve-kurtarma.md) çalıştırılmamış
+aşamaları PASS sayma. Kaynak yayın, canlı kurulum, istemci ayarı değiştirme ve
+üretim dağıtım onayı farklı yetkilerdir.
 
-```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "<SKILL>\scripts\sohbet.ps1" -Action scan
-```
+Yerel Windows PowerShell 5.1 ve gerçek kullanıcı dosya sistemi olmadan kurulum
+başlatma. Bulut/Linux oturumunu kullanıcının bilgisayarı gibi gösterme. Bu durumda
+paketi/sonucu ver; yerel kurulum yapılmadığını belirt. Yönetici yükseltmesi, güvenlik
+politikası atlatma, imzasız eklenti veya kullanım sözleşmesi kabulü yapma.
+Komutlar mevcut Windows çalıştırma politikasını devralır. Politika yürütmeyi
+engelliyorsa BLOCKED bildir; otomatik Bypass veya politika değişikliği uygulama.
 
-Kullanıcı **Güncelle** dedikten sonra eski `program-guncelle` /
-`program-guncelleme` skill kurulumu
-standart kullanıcı skill yollarından kaldırılır. Junction ise yalnız bağlantı
-kaldırılır; fiziksel eski skill doğrulandıktan sonra kullanıcı alanındaki
-karantinaya taşınır. Yeni `guncelleyici` ve hedef skill ağacına bu temizlikte
-dokunulmaz.
+## Tek giriş: sohbet tablosu
 
-Tarama bilgisayardaki yüklü sürümleri ve çevrimiçi güncel kararlı
-sürümleri salt okuma seçenekleriyle denetler. `teklif-degerlendirme` sürümü
-GitHub'daki doğrulanmış Release paketinin manifestinden okunur. İnternet
-doğrulaması yapılamayan satır “Kontrol edilemedi” gösterir; sürüm uydurulmaz.
-Bu durumda satırın durum sütunu ağ erişimi engelini belirtir; ayrıntılı hata
-`ayrinti` alanında ve işlem sonucunda korunur. Gerçekten yüklü olmayan bileşenin
-yüklü sürüm hücresi **Yüklü değil** olur; seçilirse güncel kararlı sürüm kurulur.
-Eksik ve eski bileşenler **varsayılan seçili** gelir (`secili: true`); kullanıcı
-seçimleri sohbetten değiştirebilir. Güncel veya güncelliği doğrulanamayan
-satırlar seçilmez.
-Tüm bileşenler yüklüyse ve hedef sürümlerle eşleşiyor veya onlardan ilerideyse
-tablo gösterilmez: yalnız **Güncelsiniz.** denir ve bitirilir. Bir satırın kontrolü
-başarısızsa bu kısa çıkış kullanılmaz.
-Python kütüphaneleri bir set olarak
-listelenir; o satır seçilirse 12 desteklenen paket birlikte kurulur ve sınanır.
-Power BI MCP de aynı varsayılan seçim kuralına tabidir. Başka bir
-başlangıç onayı veya ayrı Power BI sorusu sorma.
+Son kullanıcı yüzeyi yalnız **ChatGPT Desktop Work veya Codex sohbetidir**. Kullanıcıdan
+Terminal/PowerShell açmasını, komut kopyalamasını, script çalıştırmasını veya teknik
+çıktı toplamasını isteme. Bu dosyadaki PowerShell komutları kullanıcı talimatı değildir;
+Work/Codex bunları kendi yerel shell/terminal aracıyla arka planda çalıştırır. Yerel Windows
+hostunda komut çalıştırma yeteneği yoksa kurulumu kullanıcıya devretme; "yerel yürütme
+kullanılamıyor" diyerek dur. Geliştirici/BT kabul testi açıkça istenmişse bu kuralın
+test komutları için istisnası vardır.
 
-`status: selection_required` geldiğinde yedi satırı şu sırada göster: Python,
-Python kütüphaneleri, Node.js, pnpm, DuckDB, Power BI Modeling MCP,
-teklif-degerlendirme. Tablo sütunları **Seçim / Bileşen / Yüklü / Güncel /
-Durum** olsun. `secili: true` için `☑`, diğerleri için `☐` yaz. Kontrol
-edilemeyen satırın `ayrinti` bilgisini tablonun altında belirt. Ardından
-“Varsayılan seçimlerle güncellemek için **Güncelle** yazın; değiştirmek için
-bileşen adlarını, vazgeçmek için **İptal** yazın.” de. Kullanıcı yanıtını
-bekle. Varsayılan seçimler kendi başına kurulum yetkisi değildir.
+`<SKILL>` fiziksel skill klasörüdür. Başlangıçta başka kurucu çağırma; eski GUI
+`panel.ps1` artık doğrudan çalışmaz. Scan kurulum/ayar/sağlık kaydı yazmaz; yalnız
+geçici plan ve doğrulanacak paket önbelleği oluşturabilir.
 
-Kullanıcı **Güncelle** dediğinde veya yeni seçimini açıkça bildirdiğinde yalnız
-seçili satırların `key` değerlerini, tarama kaydındaki `fingerprint` ile birlikte
-ver. Örnek:
+Work/Codex'in yerel aracında çalıştırılacak iç komut:
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "<SKILL>\scripts\sohbet.ps1" -Action apply -Keys "python,libraries,duckdb" -Fingerprint "<scan fingerprint>"
+powershell.exe -NoProfile -File "<SKILL>\scripts\sohbet.ps1" -Action scan
 ```
 
-Kullanıcı **İptal** derse `apply` çağırma. Bağımlılık seçimini kullanıcı
-kaldırabilir: Python gerektiren
-satırlarda Python yoksa veya pnpm için Node.js yoksa ilgili satırın sonucu
-açık hata olur. Betiğin tamamlanmasını bekle; çıkan `@@SONUC` JSON kaydındaki
-`results` ve `rows` ile **sohbette sıralı son durum tablosu** göster. Seçilmeyen
-adaylar “Atlandı · seçilmedi” olarak kalır.
-Güncel, yayından yeni ve kontrol edilemeyen satırların durum bilgisi korunur.
-Komutu izlenemeyen bağımsız bir süreç olarak bırakma; doğrudan çalıştır veya
-`Start-Process -Wait` ile çıktısını al. `status: stale` dönerse sürümler taramadan
-sonra değişmiştir; gelen yeni `rows` ile tabloyu yenile, yeniden seçim bekle.
-`status: busy` dönerse eşzamanlı başka kurulum var; bunu bildir. Betiklerin
-nihai `@@SONUC` kayıtları, süreç çıkış kodu ve kurulum sonrası sürüm sonucu
-belirler. Kullanıcı adına **Güncelle** kararı verme.
+Son `@@SONUC` JSON'unu oku. `rows` ve `global_effects` verisini **Seçim / Bileşen / Yüklü / Hedef /
+Durum** sütunlarıyla sohbet içinde göster. `secili=true` için ☑, diğerleri için ☐
+kullan. İlk yedi satır eski sıradadır; isteğe bağlı PDF satırı sekizincidir.
+Sürüm/tarih/hash uydurma; `blocked`, `pending`, `health` ve hata ayrıntılarını gizleme.
+`up_to_date`, yalnız sürüm uygunluğudur: **"Sürüm kontrolü güncel; bu taramada işlev
+testi çalıştırılmadı."** de. Önceki başarısız kontrol/bağlantı varsa onu da göster.
 
-Kurulumlar yalnız kararlı yayınları kullanır. Var olan betiklerin imza, SHA-256,
-geri dönüş, kullanıcı alanı, süreç engeli ve IT raporu kuralları korunur.
-Uygulama ayrıntıları: [program ve ortam](references/program-kurulumu.md),
-[teklif paketi](references/teklif-paketi.md).
+PDF kullanıcı tarafından istenmişse taramaya `-IncludePdf` ekle. PDF varsayılan
+seçili değildir. Kullanıcının açık PDF kurulum talebi seçim niyetidir; gösterilen
+paketin uygulanması için yine plan onayı al. [PDF kuralları](references/duckdb-pdf.md).
 
-Sonraki sürüm değişiklikleri ve GitHub yayınları ayrı kullanıcı talimatıyla
-yapılır; yerel geliştirme kayıtları `CHANGELOG.md` içinde “Yayımlanmamış”
-altında tutulur.
+## Seçim ve uygulama yetkisi
+
+Seçim değiştirmek kurulum değildir. "Yalnız Python seçili olsun" tablodaki seçimi
+değiştirir; `apply` çağırma. "Güncelle", "bu seçimleri uygula" gibi açık uygulama
+onayı bekle. Bağımlılıkları gizlice kurma; eksik Python/Node varsa önce gerekli
+kurulumu planla, ardından yeniden tara. Çözülemeyen satır seçilemez.
+
+Tek onay mesajında yalnız seçili satırların `effects` kayıtlarını ve `global_effects` etkilerini göster: seçili paketler ve sürümler,
+Python paket setindeki **paket adı + eski sürüm → hedef sürüm** düşürmelerini tek tek, eski skill bağlantılarının kaldırılması/
+fiziksel klasörlerin karantinaya alınması, Power BI'nin kurulu istemcilerdeki
+`powerbi-modeling` kaydına bağlanması ve yeniden başlatma ihtiyacı.
+
+Python/kütüphane/Node/pnpm/DuckDB değişecekse kullanıcıdan aktif işleri tamamlayıp
+bakım penceresini doğrulamasını aynı onayda iste. Bunu varsayma. Gerçek kullanıcı
+programlarını otomatik kapatma. Çalışan Python/Node iş yükü bulunursa kurulum durur.
+
+Work/Codex'in yerel aracında, yalnız açık uygulama onayından sonra çalıştırılacak iç komut:
+
+```powershell
+powershell.exe -NoProfile -File "<SKILL>\scripts\sohbet.ps1" -Action apply -PlanFile "<scan plan_file>" -Fingerprint "<scan fingerprint>" -Keys "node,pnpm" -MaintenanceWindow -ConfirmApply
+```
+
+`-Keys` sadece kullanıcının onayladığı seçimi içerir. `-ConfirmApply` yalnız kullanıcının açık **Güncelle / bu seçimleri uygula** yanıtından sonra verilir; yalnız seçim düzenleme yanıtında bu bayrağı verme ve `apply` çağırma. `-MaintenanceWindow` yalnız
+kullanıcı bakım durumunu teyit etmişse verilir. Yalnız Power BI/teklif/PDF için bu
+parametre gerekmeyebilir. Plan dosyasını düzenleme, yeniden hash üretip eski onayı
+kullanma veya installer hedefini değiştirerek engeli aşma. Hedefler uygulamada yeniden
+"latest" olarak seçilmez. Süresi dolmuş veya değişmiş plan için yeniden seçim al.
+
+`İptal` yanıtında `apply` çağırma. `stale` veya kilit hatasında tekrar tekrar deneme;
+yeni tarama ya da gerekli bekleme durumunu bildir. İşlemi izlenemeyen arka süreç
+olarak bırakma. Nihai süreç kodu, JSON ve yerel son durum sonucunu birlikte kullan.
+Sıfır olmayan kod veya `error` başarı değildir. `warning` ve seçilmeyenleri göster.
+
+## Sonuç ve kurtarma
+
+`results`, `rows`, `maintenance`, `report`, `recovery_required` alanlarını oku.
+Tam ayrıntıyı logda tut; sohbette kısa hata kodu/açıklaması ve rapor yolunu göster.
+Temizlik veya bağlantı uyarısını kurulum başarısızlığıyla karıştırma; ikisini ayır.
+`recovery_required=true` veya işlem günlüğü varsa yeni kurulum başlatma, kilit/günlük
+silme, körlemesine tekrar çalıştırma. [Kurtarma prosedürünü](references/kabul-ve-kurtarma.md)
+kullan; doğrulanamayan çalışır durum hakkında olumlu iddiada bulunma.
+
+## İşlev kontrolü ve açık onarım
+
+Sürüm taraması kurulum doğrulaması değildir. Kullanıcı "çalışıyor mu kontrol et"
+dediğinde paket kurmadan aşağıdaki yolu kullan. Excel/MCP kontrolünün geçici test
+dosyası ve kendisine ait süreç başlatacağını belirt; bunlar kullanıcı verisi değildir.
+
+Work/Codex'in yerel aracında çalıştırılacak iç doğrulama komutu:
+
+```powershell
+powershell.exe -NoProfile -File "<SKILL>\scripts\sohbet.ps1" -Action verify -Keys "libraries,duckdb"
+```
+
+Aynı sürümde yeniden kurma/onarım gerektiğinde `scan -RepairKeys "libraries,duckdb"`
+ile **yeni** plan çıkar. Kullanıcı onayı olmadan zorla yeniden kurma. Python ana
+kurucusu ve teklif için aynı sürüm zorla üzerine yazma desteklenmez. Teklifte yerel
+değişiklikleri örtmek için `register --replace-local` kullanma.
+
+Power BI sunucusu çalışsa bile açık Codex/Claude istemcisinin ayarlarını değiştirme;
+bağlantıyı ertelenmiş göster. Kapalı istemcide ayrı açık bağlama isteği için
+[program kurulum referansındaki](references/program-kurulumu.md) `-BindOnly` yolunu kullan.
+
+## Başvuru
+
+Program ayrıntıları: [program-kurulumu.md](references/program-kurulumu.md).
+Teklif paketi: [teklif-paketi.md](references/teklif-paketi.md).
+Geçmişe yönelik not: [teklif-surum-gecmisi.md](references/teklif-surum-gecmisi.md).
+Tasarım değişiklikleri ve ertelenen işler: [degisiklik-haritasi.md](references/degisiklik-haritasi.md).
+Harici teknik kaynaklar: [kaynaklar.md](references/kaynaklar.md).

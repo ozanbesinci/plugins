@@ -1,4 +1,7 @@
-"""Legacy paired-release validator used by the unified updater; not a CLI."""
+"""Legacy paired-release validator used by the unified updater; not a CLI.
+
+Compatible with schema 1/2 packages. Schema 3 only manages the offer tree.
+"""
 from __future__ import annotations
 
 import argparse
@@ -45,7 +48,6 @@ def version(value):
 
 
 def component_versions(manifest):
-    """Schema 1 paired releases remain readable; schema 2 versions are independent."""
     version(manifest.get("version"))
     if manifest.get("schema") == 1:
         return {name: manifest["version"] for name in SKILLS}
@@ -64,7 +66,6 @@ def assert_upgrade(old, new):
         raise UpdateError("Yalnız daha yeni paket sürümü kurulabilir.")
     before, after = component_versions(old), component_versions(new)
     for name in SKILLS:
-        # Old updater 3.x was a bundle label, not an independent semantic version.
         migration = (name == SKILLS[1] and old.get("schema") == 1 and new.get("schema") == 2
                      and version(after[SKILLS[0]]) > version(before[SKILLS[0]]))
         if not migration and version(after[name]) < version(before[name]):
@@ -86,7 +87,6 @@ def read_json(path):
 
 
 def replace_path(source, target):
-    """Bounded retries for transient Windows sharing locks; persistent errors still fail."""
     for attempt in range(5):
         try:
             return os.replace(source, target)
@@ -102,7 +102,8 @@ def write_json(path, obj):
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as out:
             json.dump(obj, out, ensure_ascii=False, sort_keys=True, indent=2)
-            out.flush(); os.fsync(out.fileno())
+            out.flush()
+            os.fsync(out.fileno())
         replace_path(tmp, path)
     finally:
         if os.path.exists(tmp):
@@ -110,27 +111,28 @@ def write_json(path, obj):
 
 
 def linked(path):
+    path = Path(path)
     return path.is_symlink() or (hasattr(path, "is_junction") and path.is_junction())
 
 
 def safe_name(name):
-    if not isinstance(name, str) or "\\" in name or "\x00" in name or ":" in name:
+    if (not isinstance(name, str) or any(c in name for c in '\\\x00:<>"|?*')):
         raise UpdateError("Güvensiz ZIP yolu.")
     parts = name.split("/")
     if any(p in {"", ".", ".."} or p.endswith((".", " ")) or any(ord(c) < 32 for c in p) for p in parts):
         raise UpdateError("Güvensiz ZIP yol parçası.")
     for p in parts:
-        if re.fullmatch(r"(?i)(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])", p.split(".")[0]):
+        if re.fullmatch(r"(?i)(CON|PRN|AUX|NUL|COM[1-9¹²³]|LPT[1-9¹²³])", p.split(".")[0]):
             raise UpdateError("Ayrılmış Windows dosya adı.")
     if name != MANIFEST and (len(parts) < 3 or parts[0] != "skills" or parts[1] not in SKILLS):
-        raise UpdateError("Paket izinli iki skill dışına çıkıyor.")
+        raise UpdateError("Paket izinli skill kapsamı dışına çıkıyor.")
     return name
 
 
 def validate_archive(data, expected_sha, expected_version=None):
     if len(data) > MAX_DOWNLOAD or not re.fullmatch(r"[0-9a-fA-F]{64}", expected_sha or "") or sha(data) != expected_sha.lower():
         raise UpdateError("Paket boyutu veya SHA-256 eşleşmiyor.")
-    files = {}; seen = set(); size = 0
+    files, seen, size = {}, set(), 0
     try:
         with zipfile.ZipFile(io.BytesIO(data)) as z:
             if len(z.infolist()) > MAX_FILES:
@@ -141,12 +143,18 @@ def validate_archive(data, expected_sha, expected_version=None):
                 mode = info.external_attr >> 16
                 if key in seen or info.is_dir() or stat.S_ISLNK(mode) or (stat.S_IFMT(mode) not in {0, stat.S_IFREG}):
                     raise UpdateError("Yinelenmiş yol, dizin veya bağlantı paketi reddedildi.")
-                seen.add(key); size += info.file_size
+                seen.add(key)
+                size += info.file_size
                 if size > MAX_EXPANDED or info.flag_bits & 1:
                     raise UpdateError("Açılan paket boyutu/şifreleme sınırı aşıldı.")
                 files[name] = z.read(info)
     except (zipfile.BadZipFile, RuntimeError) as exc:
         raise UpdateError("Bozuk ZIP.") from exc
+    # A file may not also be the parent directory of another file.
+    for key in seen:
+        parts = key.split("/")
+        if any("/".join(parts[:i]) in seen for i in range(1, len(parts))):
+            raise UpdateError("Dosya ve dizin yolu çakışıyor.")
     try:
         manifest = json.loads(files.pop(MANIFEST).decode("utf-8"))
     except (KeyError, ValueError, UnicodeError) as exc:
@@ -183,11 +191,15 @@ def validate_archive(data, expected_sha, expected_version=None):
         except (KeyError, UnicodeError) as exc:
             raise UpdateError("CHANGELOG eksik veya bozuk.") from exc
     if version(versions[SKILLS[0]]) >= (4, 0, 0):
-        required = {"requirements.txt", "config/ajan-politikasi.json",
-                    "scripts/ajan_yonetimi.py", "scripts/ajan_v4.py", "scripts/kayit_temeli.py", "scripts/model_secimi.py", "scripts/butce.py",
+        required = {"requirements.txt", "config/ajan-politikasi.json", "scripts/ajan_yonetimi.py",
+                    "scripts/ajan_v4.py", "scripts/kayit_temeli.py", "scripts/model_secimi.py", "scripts/butce.py",
                     "scripts/veri_kontrol.py", "scripts/teklif_motoru.py", "scripts/excel_uret.py",
                     "scripts/excel_dogrula.py", "scripts/ortam_ve_belge.py", "scripts/cikti_denetimi.py",
                     "scripts/oturum_kaydi.py", "scripts/baslangic_mesaji.py"}
+        # Do not reject old v4 releases for a file introduced later. Check the actual entrypoint contract.
+        entry = files[f"skills/{SKILLS[0]}/SKILL.md"].decode("utf-8")
+        if "scripts/oturum_kontrol.py" in entry:
+            required.add("scripts/oturum_kontrol.py")
         missing = sorted(p for p in required if not files.get(f"skills/{SKILLS[0]}/{p}"))
         if missing or (manifest["schema"] != 3 and not files.get(f"skills/{SKILLS[1]}/scripts/guncelle.py")):
             raise UpdateError("v4 çalıştırma dosyaları eksik: " + ", ".join(missing))
@@ -238,6 +250,8 @@ def update_lock(root):
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as out:
             json.dump({"pid": os.getpid()}, out)
+            out.flush()
+            os.fsync(out.fileno())
         if (root / ANALYSIS_LOCK).exists():
             raise UpdateError("Aktif analiz var; güncelleme yapılamaz.")
         if (root / JOURNAL).exists():
@@ -248,6 +262,7 @@ def update_lock(root):
 
 
 def install(root, data, expected_sha, *, register=False, expected_version=None, replace_local=False):
+    """Legacy paired installer retained for backwards-compatibility tests, not the chat entrypoint."""
     root = Path(root).resolve()
     manifest, files = validate_archive(data, expected_sha, expected_version)
     with update_lock(root):
@@ -268,12 +283,9 @@ def install(root, data, expected_sha, *, register=False, expected_version=None, 
             assert_upgrade(old, manifest)
         if not old and any((root / name).exists() or linked(root / name) for name in SKILLS):
             raise UpdateError("Yönetimsiz/eski kurulum üzerine yazılmaz.")
-        # Python 3.13 Windows mkdtemp uses a private 0700 DACL. Moving its children
-        # into the installation can make them unreadable to sandboxed clients.
-        # Inherit the chosen installation root's existing permissions instead.
         stage = root / (".teklif-stage-" + uuid.uuid4().hex)
         stage.mkdir(mode=0o755, exist_ok=False)
-        moved = []; placed = []; rollback_ok = True
+        moved, placed, rollback_ok = [], [], True
         try:
             for relative, content in files.items():
                 dest = stage / "new" / PurePosixPath(relative).relative_to("skills")
@@ -289,8 +301,10 @@ def install(root, data, expected_sha, *, register=False, expected_version=None, 
             for name in SKILLS:
                 target = root / name
                 if target.exists():
-                    replace_path(target, stage / "old" / name); moved.append(name)
-                replace_path(stage / "new" / name, target); placed.append(name)
+                    replace_path(target, stage / "old" / name)
+                    moved.append(name)
+                replace_path(stage / "new" / name, target)
+                placed.append(name)
             write_json(root / STATE, manifest)
             verify_install(root)
         except BaseException:
@@ -309,7 +323,6 @@ def install(root, data, expected_sha, *, register=False, expected_version=None, 
         finally:
             if rollback_ok:
                 (root / JOURNAL).unlink(missing_ok=True)
-                # Stage is generated under this explicit install root, never a user-selected tree.
                 if stage.parent != root or not stage.name.startswith(".teklif-stage-") or linked(stage):
                     raise UpdateError("Geçici işlem yolu doğrulanamadı.")
                 shutil.rmtree(stage)
@@ -319,8 +332,11 @@ def install(root, data, expected_sha, *, register=False, expected_version=None, 
 
 
 def allowed_url(url):
-    p = urllib.parse.urlsplit(url)
-    return p.scheme == "https" and p.hostname in {"api.github.com", "github.com", "release-assets.githubusercontent.com", "objects.githubusercontent.com"} and not p.username and not p.password and p.port in {None, 443}
+    try:
+        p = urllib.parse.urlsplit(url)
+        return p.scheme == "https" and p.hostname in {"api.github.com", "github.com", "release-assets.githubusercontent.com", "objects.githubusercontent.com"} and not p.username and not p.password and p.port in {None, 443}
+    except ValueError:
+        return False
 
 
 class SafeRedirect(urllib.request.HTTPRedirectHandler):
@@ -334,8 +350,19 @@ def download(url, limit=MAX_DOWNLOAD):
     if not allowed_url(url):
         raise UpdateError("Yalnız güvenilen HTTPS indirme adresleri kullanılabilir.")
     req = urllib.request.Request(url, headers={"User-Agent": "teklif-degerlendirme-updater", "Accept": "application/vnd.github+json"})
-    with urllib.request.build_opener(SafeRedirect()).open(req, timeout=30) as response:
-        data = response.read(limit + 1)
+    for attempt in range(2):
+        try:
+            with urllib.request.build_opener(SafeRedirect()).open(req, timeout=30) as response:
+                data = response.read(limit + 1)
+            break
+        except urllib.error.HTTPError as exc:
+            if attempt or exc.code not in (429, 500, 502, 503, 504):
+                raise
+            time.sleep(0.8)
+        except (TimeoutError, urllib.error.URLError):
+            if attempt:
+                raise
+            time.sleep(0.8)
     if len(data) > limit:
         raise UpdateError("İndirme boyutu sınırı aşıldı.")
     return data
@@ -368,47 +395,17 @@ def latest_release():
 
 def check(root):
     root = Path(root).resolve()
-    installed = None; installed_skills = None; managed = (root / STATE).exists()
+    installed, installed_skills = None, None
+    managed = (root / STATE).exists()
     if managed:
         state = verify_install(root)
-        installed = state["version"]; installed_skills = component_versions(state)
+        installed, installed_skills = state["version"], component_versions(state)
     release = latest_release()
     if release is None:
         return {"status": "no_release_or_repository_not_accessible", "installed": installed, "managed": managed}
     newer = installed is None or version(release["version"]) > version(installed)
     return {"status": "available" if newer else "up_to_date", "installed": installed,
             "installed_skills": installed_skills, "managed": managed, "release": release}
-
-
-def main(argv=None):
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=("check", "update", "install", "register", "verify"))
-    parser.add_argument("--root", type=Path, required=True)
-    parser.add_argument("--archive", type=Path)
-    parser.add_argument("--sha256")
-    parser.add_argument("--replace-local", action="store_true", help="Yalnız açık yerel geliştirmede aynı sürüm adayını yeniden kur; normal update kullanmaz.")
-    args = parser.parse_args(argv)
-    try:
-        if args.replace_local and args.action != "install":
-            raise UpdateError("--replace-local yalnız yerel install eyleminde kullanılabilir.")
-        if args.action == "verify":
-            state = verify_install(args.root.resolve())
-            result = {"status": "verified", "version": state["version"], "skill_versions": component_versions(state)}
-        elif args.action in {"install", "register"}:
-            if not args.archive or not args.sha256:
-                raise UpdateError("Yerel paket ve doğrulanmış --sha256 gerekli.")
-            result = install(args.root, args.archive.read_bytes(), args.sha256, register=args.action == "register", replace_local=args.replace_local)
-        else:
-            result = check(args.root)
-            if args.action == "update" and result["status"] == "available":
-                rel = result["release"]
-                checksum = download(rel["checksum_url"], 4096).decode("ascii").strip().split()
-                if len(checksum) != 2 or checksum[1].lstrip("*") != rel["name"]:
-                    raise UpdateError("Paket checksum kaydı geçersiz.")
-                result = install(args.root, download(rel["archive_url"]), checksum[0], expected_version=rel["version"])
-        print(json.dumps(result, ensure_ascii=False)); return 0
-    except (UpdateError, OSError, ValueError, KeyError) as exc:
-        print(json.dumps({"status": "error", "error": str(exc)}, ensure_ascii=False)); return 2
 
 
 if __name__ == "__main__":

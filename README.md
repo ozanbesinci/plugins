@@ -1,9 +1,11 @@
 # Kılıç Satınalma eklentisi
 
-Bu özel depo, Kılıç Holding ChatGPT Business çalışma alanı için Kılıç Satınalma v1.1.3 eklentisini içerir.
+**Kılıç Satınalma1.1.4**, geliştirici **Ozan Beşinci**. Güncelleyici **2.2.1**, teklif-degerlendirme **4.0.5** içerir. Eklenti kimliği, Kılıç ikonu, marketplace yolu ve teklif payload'ı korunmuştur.
 
-İçerik: guncelleyici v2.1.0 ve teklif-degerlendirme v4.0.5. Geliştirici: Ozan Beşinci.
+## Paket ve kabul durumu
 
-Teklif değerlendirmede ana koordinatör ve bütün alt ajanlar GPT-6.1 / High kullanır. İlk adım aktif oturumun model/efor kontrolüdür; yanlış seçim düzeltilip doğrulanana kadar analiz bekler. Başlangıçta otomatik güncelleyici çağrısı yoktur.
+**Genel Windows kabulü BLOCKED / production_approved=false**: pnpm staging FAIL, teklif scan TLS BLOCKED, Excel yokluğu FAIL; gerçek istemci/kalan native matris NOT_RUN. Python/Node/DuckDB/PBI server ve test ayarı koruma PASS.
 
-95 dosyalı eklenti paketi, iki skill'in ZIP içerikleriyle birebir doğrulanmıştır. Teklif sürümünün model/oturum/koşu denetimleri 50 testten geçmiştir. Gerçek teklif analizi kabulü ayrı izlenir.
+Native test edilen scripts/tests/config byte'ları aynıdır; yayın metadata güncellenmiştir. [BUILD](plugins/kilic-satinalma/skills/guncelleyici/BUILD.json), [Windows kanıtı](plugins/kilic-satinalma/skills/guncelleyici/references/WINDOWS_KABUL_2026-10-04.json).
+
+Release:kilic-satinalma-plugin-v1.1.4.zip ve SHA-256. Yerel istemci kurulumu/ayar değişikliği ayrı yetkidir.

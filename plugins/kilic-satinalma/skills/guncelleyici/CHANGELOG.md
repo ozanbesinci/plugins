@@ -4,6 +4,40 @@ Sürümleme: büyük sürüm akış değişikliklerini, küçük sürüm yeni a�
 kontrolleri, yama sürümü düzeltmeleri belirtir. Yayımlanmamış değişiklikler
 yerel geliştirme durumundadır.
 
+## v2.2.1 — 2026-10-04 — Windows düzeltmeleri ve plugin paketi
+
+- Gerçek PowerShell5.1 atomik JSON yazımında null yedek yolu düzeltildi; otomatik Bypass kaldırıldı.
+- Python/Node release dizilerinin JSON açılması, sabit kütüphane setinin korunması, Power BI home değişkeni ve tr-TR pnpm sürüm karşılaştırması düzeltildi.
+- Python kurucusu sınırlı bekleme900→1200 saniye; yalnız kendi süreç ağacı ve kalıcı kurtarma mekanizmaları korundu.
+- pypdf yoksa isteğe bağlı PDF fixture NOT_RUN; bozuk fixture FAIL kalır.29 yeni scan regresyon kontrolü eklendi.
+- Native normal kullanıcı PS5.1 x64: Python/Node/DuckDB/PBI server gerçek kurulum ve ayrı verify PASS;108 Python PASS/2 NOT_RUN,42Windows+29scan PASS.
+- pnpm staging FAIL, teklif TLS BLOCKED, Excel yokluğu FAIL ve gerçek istemci/kalan matris NOT_RUN açık tutulur. Kurtarma kapısı PASS; production_approved=false.
+- Kaynak2.2.1 ve Kılıç Satınalma plugin1.1.4 ZIP/SHA-256/manifest hazırlanır. Yayın ve canlı kurulum ayrı yetkilerdir.
+
+## v2.2.0 — 2026-10-04 — Pro denetimi, Work/Codex sohbet yüzeyi ve kontrollü PDF
+
+- GitHub Release `v2.2.0`, doğrulanmış `skill.zip` ve `skill.zip.sha256` varlıklarıyla yayımlandı; bu işlem `production_approved=false` durumunu değiştirmez ve native Windows kabulü yerine geçmez.
+- Son kullanıcı yüzeyi ChatGPT Desktop Work/Codex sohbeti olarak sabitlendi; kullanıcıdan Terminal/PowerShell açması, komut kopyalaması veya script çalıştırması istenmez. Teknik PowerShell örnekleri ajan-içi yerel yürütme komutları olarak işaretlendi.
+- Power BI MCP ertelenmiş bağlama akışı terminal talimatı vermek yerine istemciyi kapatıp sohbette bağlamayı yeniden istemeye çevrildi; Work/Codex `-BindOnly` bakım adımını yerel araçla yürütür.
+
+
+- Windows PowerShell 5.1 kabulünde bulunan parser hatası düzeltildi: PowerShell tipografik `’` karakterini string sonlandırıcısı olarak yorumladığı için `core.ps1` içindeki `hash’i` ifadesi güvenli ASCII metne çevrildi. Tüm `.ps1` dosyalarında tipografik tırnak yasağı ve UTF-8 BOM regresyon kontrolleri eklendi.
+- Uygulama girişine ayrıca `-ConfirmApply` zorunluluğu eklendi; seçim düzenleme artık kod seviyesinde de uygulama yetkisi sayılmaz.
+- Plan çıktısı seçili bileşen yan etkilerini makine-okunur `effects` kayıtlarıyla taşır; sabit Python setindeki gerçek paket düşürmeleri ad/sürüm bazında onay öncesi görünür. Operasyonel referans/config dosyaları da plan kod parmak izine bağlandı.
+- Pro ikinci denetimi sonrası Windows amd64/64-bit çalışma sözleşmesi bütün ana girişlerde erken doğrulanır; farklı mimaride indirme veya kurulum başlatılmaz.
+- Kaynak sürüm `2.2.0` olarak yayımlandı. GitHub kaynak yayını, native Windows kabulü veya personel genel dağıtım onayı değildir; tamamlanmamış kabul adımları `BUILD.json` içinde açık tutulur.
+- Sohbet orkestrasyonu core.ps1, ortak program yardımcıları program-ortak.ps1 olarak ayrıldı. Eski grafik panelin doğrudan çalıştırılması kapatıldı.
+- Seçim değiştirme ile uygulama onayı ayrıldı. Plan; tam hedef, paket hash'i, yorumlayıcı/yerel durum, kullanıcı/bilgisayar/kod hash'i ve süre sınırına bağlandı. Kilit altında yeniden gözlem eklendi; uygulamada yeni latest seçimi kaldırıldı.
+- Program kurucuları yalnız onaylı hedef dosyası/hash ile çalışır. Python doğrudan doğrulanan python.org kurucusunu kullanır; farklı winget artefaktı ve otomatik sözleşme kabulü kullanılmaz.
+- Codex/Claude Desktop alan koruma, exact-byte yedek, atomik yazım/semantik kontrol; Claude Code'un kendi CLI'sıyla basit kayıt güncelleme/geri dönüş eklendi. Açık istemcide bağlama ertelenir.
+- Node/pnpm son konum kontrolü ve eski sürüm yedeği; PBI ayrı ve doğrulanmış sürüm klasörü; teklif/PDF işlem günlüğü ve doğrulanan eski duruma dönüş geliştirildi.
+- Sürüm ve sağlık ayrıldı; NOT_RUN/FAIL/WARNING görünür, açık verify/repair yolu eklendi. Paket hatasında sonraki belirsiz değişiklikler engellenir.
+- Scan kurulum/sağlık kaydı yazmaz. Session planı, seçilenler, temizleme notları, nihai yerel gözlem ve kurtarma gereği kalıcı sonuçta bulunur.
+- Sabit 12 Python paketi ayrı JSON kilidine taşındı. Ortak --user ortamı sessizce venv'e taşınmadı; bakım kontrolü ve kısmi pip hatasında recovery_required davranışı eklendi.
+- DuckDB PDF ayrı, varsayılan seçili olmayan satırdır. Sürüm/platform/ikili hash'i sabitlenir; native imza ve golden metin testi için kod eklendi. Native PDF ve Türkçe OCR/tablo kabulü bu oturumda çalıştırılmadı.
+- Yeni çevrimdışı Python regresyon testleri ve Windows PowerShell parser/orkestrasyon test koşucusu eklendi. Çalıştırılan ve çalıştırılmayan testler raporda ayrı tutulur.
+- Bu paket, değişmeden kalan bir kurulum klonu değil, kaynakları revize edilmiş tam `2.2.0` sürüm paketidir. Native kabul ve kalan riskler `references/degisiklik-haritasi.md` ile `BUILD.json` içinde açıklanır.
+
 ## v2.1.0 — 2026-09-28
 
 - Masaüstü Work ve Codex için sürüm seçimi sohbet tablosuna taşındı; PowerShell penceresi açılmadan `scan` ve açık kullanıcı seçiminden sonra `apply` çalışır.

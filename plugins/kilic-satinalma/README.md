@@ -1,8 +1,6 @@
-# Kılıç Satınalma
+# Kılıç Satınalma1.1.4
 
-Bu plugin iki kararlı skill içerir:
+- guncelleyici2.2.1: Windows düzeltmeleri, açık onaylı plan/hash ve kalıcı kurtarma.
+- teklif-degerlendirme4.0.5: yayımlanan ZIP byte'ları korunmuştur.
 
-- `guncelleyici` 2.1.0: https://github.com/ozanbesinci/guncelleyici
-- `teklif-degerlendirme` 4.0.5: https://github.com/ozanbesinci/teklif-degerlendirme
-
-Güncelleyici seçimleri sohbet tablosunda gösterir; kurulum yalnız kullanıcı Güncelle dediğinde başlar.
+Geliştirici:Ozan Beşinci. Güncelleyici genel kabulü BLOCKED, production_approved=false; pnpm/TLS/Excel ve gerçek istemci kabulü açıktır. Ayrıntı:skills/guncelleyici/BUILD.json ve references/WINDOWS_KABUL_2026-10-04.json. GitHub yayını yerel kurulum veya personel genel dağıtım onayı değildir.

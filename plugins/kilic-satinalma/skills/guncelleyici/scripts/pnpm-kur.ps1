@@ -1,257 +1,93 @@
 ﻿#requires -Version 5.1
-<#
-  program-guncelle — Aşama 6: pnpm
-  Node.js aşamasından sonra çalışır. npm kayıt deposundaki latest etiketinin gösterdiği
-  kararlı pnpm sürümünü kullanıcı alanına kurar; kurulu sürüm yeni veya eşitse dokunmaz.
-  -YalnizBul hiçbir kurulum, PATH veya rapor yazımı yapmaz.
-  Son satır: @@SONUC {json}
-#>
-param([switch]$YalnizBul, [string]$Rapor, [string]$NodeYolu)
-
-$ErrorActionPreference = 'Stop'
-$ProgressPreference = 'SilentlyContinue'
-try { [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding $false } catch {}
-
-$KURULUM_KLASORU = Join-Path $env:LOCALAPPDATA 'Programs\pnpm'
-$KARANTINA = Join-Path $env:LOCALAPPDATA 'Programs\_karantina'
-$NPM_REGISTRY = 'https://registry.npmjs.org/pnpm/latest'
-$testler = New-Object System.Collections.Generic.List[object]
-$ilkPnpm = @()
-$hedefSurum = $null
-$hedefKaynak = 'npm latest (kararlı)'
-$node = $null
-$skillSurum = '?'
-try { $skillSurum = (Get-Content -LiteralPath (Join-Path (Split-Path $PSScriptRoot -Parent) 'VERSION') -TotalCount 1).Trim() } catch {}
-$AMAC = 'Satınalma Departmanının kullandığı yapay zekâ projelerinde gerekli olan programların personel bilgisayarına yüklenmesini sağlar.'
-
-function Yaz([string]$Metin) { Write-Host "  $Metin" }
-function Surum([string]$Metin) {
-    if ($Metin -match '^(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$') { return [version]("$($Matches[1]).$($Matches[2]).$($Matches[3])") }
+param([switch]$YalnizBul,[switch]$LocalOnly,[switch]$TestOnly,[string]$NodeYolu,[string]$TargetFile,[string]$TargetSha256)
+. (Join-Path $PSScriptRoot 'program-ortak.ps1')
+Assert-SupportedPlatform
+$KURULUM_KLASORU=Join-Path $env:LOCALAPPDATA 'Programs\pnpm'
+function ProbePnpm([string]$Root) {
+    $manifest=Join-Path $Root 'node_modules\pnpm\package.json'
+    if (-not (Test-Path -LiteralPath $manifest)) { return $null }
+    try {
+        $p=Get-Content -LiteralPath $manifest -Raw -Encoding UTF8 | ConvertFrom-Json
+        $entry=[string]$p.bin.pnpm
+        if ($entry -match '(^|[\\/])\.\.([\\/]|$)|[:]' -or [IO.Path]::IsPathRooted($entry)) { return $null }
+        $bin=Join-Path (Split-Path $manifest -Parent) $entry
+        $r=Invoke-Native $NodeYolu @($bin,'--version') 30
+        if ($r.ExitCode -ne 0 -or $r.Output.Trim() -notmatch '^\d+\.\d+\.\d+(?:[-+][\w.-]+)?$') { return $null }
+        return [pscustomobject]@{version=$r.Output.Trim();path=(Join-Path $Root 'pnpm.cmd');root=$Root}
+    } catch { return $null }
+}
+function Find-Pnpm {
+    if (-not $NodeYolu) { return $null }
+    foreach ($root in @(@(Get-PathFolders)+@($KURULUM_KLASORU) | Select-Object -Unique)) {
+        $v=ProbePnpm $root;if($v){$v|Add-Member -NotePropertyName path_visible -NotePropertyValue ($root -in @(Get-PathFolders)) -Force;return $v}
+        # Unknown shims/standalone binaries are not overwritten based on guessed metadata.
+        if ((Test-Path (Join-Path $root 'pnpm.cmd')) -or (Test-Path (Join-Path $root 'pnpm.exe'))) {
+            return [pscustomobject]@{version=$null;path=$root;root=$root;unmanaged=$true}
+        }
+    }
     return $null
 }
-function Kapsam([string]$Yol) {
-    if ($Yol.StartsWith($env:LOCALAPPDATA.TrimEnd('\') + '\', [StringComparison]::OrdinalIgnoreCase) -or
-        $Yol.StartsWith($env:APPDATA.TrimEnd('\') + '\', [StringComparison]::OrdinalIgnoreCase)) { return 'kullanıcı' }
-    return 'makine geneli'
-}
-function PathKlasorleri {
-    $liste = @()
-    foreach ($ad in 'Machine', 'User') {
-        $ham = [Environment]::GetEnvironmentVariable('Path', $ad)
-        foreach ($parca in @("$ham" -split ';')) {
-            $d = [Environment]::ExpandEnvironmentVariables($parca.Trim()).TrimEnd('\')
-            if ($d -and $liste -notcontains $d) { $liste += $d }
-        }
+try {
+    $installed=Find-Pnpm
+    $local=[pscustomobject]@{version=(Read-Field $installed 'version');path=(Read-Field $installed 'path');node=$NodeYolu;unmanaged=[bool](Read-Field $installed 'unmanaged' $false);path_visible=[bool](Read-Field $installed 'path_visible' $false)}
+    if($TestOnly){
+        if(-not $installed -or $local.unmanaged -or -not $local.version){throw 'Doğrulanmış pnpm yerel kurulumu yok.'}
+        Emit-Result ([pscustomobject]@{key='pnpm';local=$local;surum=$local.version;ozet=$(if($local.path_visible){'GEÇTİ'}else{'UYARI'});health=$(if($local.path_visible){'PASS'}else{'WARNING'});test_scope='explicit Node + pnpm executable version'})
     }
-    return $liste
-}
-function Calistir([string]$Dosya, [string]$Argumanlar, [int]$SureMs, [string]$EkPath = '') {
+    if ($YalnizBul -or $LocalOnly) {
+        $target=$null;$why=''
+        if(-not $LocalOnly){try{
+            $m=Get-RemoteJson 'https://registry.npmjs.org/pnpm/latest'
+            $null=Stable-Version $m.version
+            if($m.name -ne 'pnpm' -or $m.dist.integrity -cnotmatch '^sha512-[A-Za-z0-9+/=]+$'){throw 'pnpm metadata geçersiz.'}
+            $target=[pscustomobject]@{version=$m.version;url=$m.dist.tarball;integrity=$m.dist.integrity;engine=$m.engines.node;source='npm';node=$NodeYolu}
+            if(-not $NodeYolu){$why='Node.js gerekli; önce Node.js kurulup yeniden taranmalı.'}
+        }catch{$why=Hide-Secrets $_.Exception.Message}}
+        Emit-Result ([pscustomobject]@{key='pnpm';local=$local;surum=$local.version;target=$target;hedef_surum=(Read-Field $target 'version');neden=$why;blocked=($local.unmanaged -or -not $NodeYolu);health='NOT_RUN'})
+    }
+    $target=Read-Target 'pnpm' $TargetFile $TargetSha256
+    $v=[string]$target.version;$null=Stable-Version $v
+    if($target.url -cne "https://registry.npmjs.org/pnpm/-/pnpm-$v.tgz"){throw 'pnpm paket adresi geçersiz.'}
+    if(-not $NodeYolu -or $NodeYolu -cne $target.node){throw 'Seçilen Node.js yolu değişmiş/eksik.'}
+    Assert-MaintenanceWindow
+    if($local.version -and [version]($local.version -split '[-+]')[0] -gt [version]$v){throw 'Daha yeni pnpm sürümü düşürülmez.'}
+    if($local.unmanaged){throw 'Yönetilmeyen pnpm/Corepack kurulumu korunuyor; BT incelemesi gerekli.'}
+    if($installed -and -not (Test-UserScope $installed.path)){throw 'Makine geneli pnpm için BT işlemi gerekli.'}
+    $nodeRoot=Split-Path $NodeYolu -Parent
+    $semver=Join-Path $nodeRoot 'node_modules\npm\node_modules\semver'
+    $nodeVersion=Invoke-Native $NodeYolu @('-p','process.versions.node') 20
+    $engineTest=Invoke-Native $NodeYolu @('-e','process.stdout.write(String(require(process.argv[1]).satisfies(process.argv[2],process.argv[3])))',$semver,$nodeVersion.Output.Trim(),[string]$target.engine) 30
+    if($engineTest.ExitCode -ne 0 -or $engineTest.Output.Trim() -ne 'true'){throw 'Onaylanan pnpm sürümü Node.js ile uyumlu değil.'}
+    $programs=Split-Path $KURULUM_KLASORU -Parent;[void][IO.Directory]::CreateDirectory($programs)
+    $stage=Join-Path $programs ('pnpm.yeni-'+[guid]::NewGuid().ToString('N'))
+    $tgz=Join-Path $env:TEMP ('guncelleyici-pnpm-'+[guid]::NewGuid().ToString('N')+'.tgz')
+    $backup=$null;$placed=$false;$committed=$false;$recovery=$false
     try {
-        $psi = New-Object System.Diagnostics.ProcessStartInfo
-        $psi.FileName = $Dosya
-        $psi.Arguments = $Argumanlar
-        $psi.UseShellExecute = $false
-        $psi.RedirectStandardOutput = $true
-        $psi.RedirectStandardError = $true
-        $psi.CreateNoWindow = $true
-        $psi.WorkingDirectory = $env:TEMP
-        $psi.EnvironmentVariables['COREPACK_ENABLE_NETWORK'] = '0'
-        $psi.EnvironmentVariables['npm_config_manage_package_manager_versions'] = 'false'
-        $path = @($EkPath, (Split-Path $node.Yol -Parent), ([Environment]::GetEnvironmentVariable('Path', 'Machine')), ([Environment]::GetEnvironmentVariable('Path', 'User'))) |
-            Where-Object { $_ }
-        $psi.EnvironmentVariables['Path'] = $path -join ';'
-        $p = [System.Diagnostics.Process]::Start($psi)
-        $o = $p.StandardOutput.ReadToEndAsync(); $e = $p.StandardError.ReadToEndAsync()
-        if (-not $p.WaitForExit($SureMs)) {
-            try { $p.Kill() } catch {}
-            return [pscustomobject]@{ Kod = -1; Cikti = ''; Hata = 'zaman aşımı' }
-        }
-        return [pscustomobject]@{ Kod = $p.ExitCode; Cikti = $o.Result.Trim(); Hata = $e.Result.Trim() }
+        Download-VerifiedSource $target.url $tgz 134217728
+        $hash=[Security.Cryptography.SHA512]::Create();$stream=[IO.File]::OpenRead($tgz)
+        try{$actual='sha512-'+[Convert]::ToBase64String($hash.ComputeHash($stream))}finally{$hash.Dispose();$stream.Dispose()}
+        if($actual -cne $target.integrity){throw 'pnpm onaylanan SHA-512 özetiyle eşleşmiyor.'}
+        $cli=Join-Path $nodeRoot 'node_modules\npm\bin\npm-cli.js'
+        $r=Invoke-Native $NodeYolu @($cli,'install','--global','--prefix',$stage,$tgz,'--offline','--ignore-scripts','--engine-strict','--no-audit','--no-fund','--registry=https://registry.npmjs.org') 600
+        if($r.ExitCode -ne 0){throw 'Hash doğrulanmış yerel pnpm paketinin çevrimdışı kurulumu başarısız.'}
+        $before=ProbePnpm $stage;if(-not $before -or $before.version -ne $v){throw 'pnpm hazırlık testi başarısız.'}
+        Assert-PlainPath $KURULUM_KLASORU
+        if(Test-Path -LiteralPath $KURULUM_KLASORU){$backup=$KURULUM_KLASORU+'.eski-'+[guid]::NewGuid().ToString('N');Move-Item -LiteralPath $KURULUM_KLASORU -Destination $backup -ErrorAction Stop}
+        Move-Item -LiteralPath $stage -Destination $KURULUM_KLASORU -ErrorAction Stop;$placed=$true
+        $after=ProbePnpm $KURULUM_KLASORU;if(-not $after -or $after.version -ne $v){throw 'pnpm son konum testi başarısız.'}
+        $committed=$true;$warning=''
+        try{Add-UserPath $KURULUM_KLASORU}catch{$warning='pnpm çalışıyor; PATH kaydı tamamlanamadı.'}
+        Emit-Result ([pscustomobject]@{key='pnpm';durum='KURULDU';surum=$after.version;pnpm=$after.path;ozet=$(if($warning){'UYARI'}else{'GEÇTİ'});neden=$warning;backup=$backup;restart_required=$true;health='PASS'})
     } catch {
-        return [pscustomobject]@{ Kod = -2; Cikti = ''; Hata = $_.Exception.Message }
+        $why=Hide-Secrets $_.Exception.Message
+        if(-not $committed){try{
+            if($placed){Move-Item -LiteralPath $KURULUM_KLASORU -Destination ($KURULUM_KLASORU+'.basarisiz-'+[guid]::NewGuid().ToString('N')) -ErrorAction Stop}
+            if($backup){Move-Item -LiteralPath $backup -Destination $KURULUM_KLASORU -ErrorAction Stop}
+        }catch{$recovery=$true;$why+='; geri dönüş tamamlanamadı, yedek: '+$backup}}
+        $after=Find-Pnpm
+        Emit-Result ([pscustomobject]@{key='pnpm';durum='BASARISIZ';ozet='ENGEL';surum=(Read-Field $after 'version');neden=$why;backup=$backup;recovery_required=$recovery;health='FAIL'}) 2
+    } finally {
+        Remove-Item -LiteralPath $tgz -Force -ErrorAction SilentlyContinue
+        if(-not $recovery){Remove-Item -LiteralPath $stage -Recurse -Force -ErrorAction SilentlyContinue}
     }
-}
-function PnpmDogrula([string]$Dosya) {
-    if (-not (Test-Path -LiteralPath $Dosya)) { return $null }
-    if ([IO.Path]::GetExtension($Dosya) -eq '.exe') { $r = Calistir $Dosya '--version' 30000 (Split-Path $Dosya -Parent) }
-    else { $r = Calistir $env:ComSpec ("/d /c `"`"$Dosya`" --version`"") 30000 (Split-Path $Dosya -Parent) }
-    if ($r.Kod -ne 0 -or $r.Cikti -notmatch '^(\d+\.\d+\.\d+)(?:[-+][\w.-]+)?$') { return $null }
-    return [pscustomobject]@{ Surum = $r.Cikti; Yol = $Dosya }
-}
-function KullaniciPathEkle {
-    $kullaniciPath = [Environment]::GetEnvironmentVariable('Path', 'User')
-    $parcalar = @($kullaniciPath -split ';' | Where-Object { $_.Trim() })
-    $kalanPath = @($parcalar | Where-Object { [Environment]::ExpandEnvironmentVariables($_).TrimEnd('\') -ne $KURULUM_KLASORU })
-    $yeniPath = (@($KURULUM_KLASORU) + $kalanPath) -join ';'
-    if ($yeniPath -ne $kullaniciPath) { [Environment]::SetEnvironmentVariable('Path', $yeniPath, 'User') }
-}
-function Israrla([scriptblock]$Is) {
-    # Çalıştırılan yeni ikili kısa süreli tarama kilidi bırakabilir; aynı işlem en çok 15 sn bekler.
-    for ($i = 1; ; $i++) {
-        try { & $Is; return } catch { if ($i -ge 20) { throw }; Start-Sleep -Milliseconds 750 }
-    }
-}
-function YeniPnpmDogrula([string]$Dosya) {
-    Israrla {
-        $bulunan = PnpmDogrula $Dosya
-        if (-not $bulunan) { throw 'yeni pnpm çalıştırılamadı' }
-        return $bulunan
-    }
-}
-function Bitir([string]$Durum, $Etkin, [string]$Yontem, [string]$Neden, [string]$ItIsi) {
-    $mevcutListe = New-Object System.Collections.Generic.List[string]
-    foreach ($p in $ilkPnpm) { $mevcutListe.Add("$($p.Surum) — $($p.Yol)") }
-    $ozet = switch ($Durum) {
-        { $_ -in 'MEVCUT', 'KURULDU', 'GUNCELLENDI' } { 'GEÇTİ'; break }
-        { $_ -in 'ESKI_SURUM', 'YOK', 'KONTROL_EDILEMEDI' } { 'UYARI'; break }
-        default { 'ENGEL' }
-    }
-    if ($Durum -eq 'KONTROL_EDILEMEDI' -and -not $Etkin) { $ozet = 'ENGEL' }
-    if ($ItIsi -and $ozet -eq 'GEÇTİ') { $ozet = 'UYARI' }
-    $sonuc = [ordered]@{
-        durum = $Durum; ozet = $ozet
-        surum = $(if ($Etkin) { $Etkin.Surum } else { $null })
-        pnpm = $(if ($Etkin) { $Etkin.Yol } else { $null })
-        kapsam = $(if ($Etkin) { Kapsam $Etkin.Yol } else { '' })
-        hedef_surum = $hedefSurum; hedef_kaynagi = $hedefKaynak
-        mevcut_pnpmler = $mevcutListe.ToArray()
-        yontem = $Yontem; neden = $Neden; it_isi = $ItIsi; testler = $testler.ToArray()
-        bilgisayar = $env:COMPUTERNAME; zaman = (Get-Date).ToString('s')
-    }
-    $satirlar = @('', 'AŞAMA 6 — PNPM', '--------------',
-        "[BİLGİ] Önceki pnpm: $(if ($ilkPnpm.Count) { $sonuc.mevcut_pnpmler -join '; ' } else { 'yoktu' })",
-        "[BİLGİ] Hedef: $(if ($hedefSurum) { $hedefSurum } else { 'öğrenilemedi' }) ($hedefKaynak)",
-        "[$ozet] Durum: $Durum$(if ($Etkin) { " — $($Etkin.Surum), $($Etkin.Yol)" })$(if ($Yontem) { "; $Yontem" })$(if ($Neden) { "; $Neden" })")
-    foreach ($t in $testler) { $satirlar += "[$($t.durum)] $($t.ad): $($t.ayrinti)" }
-    if ($ItIsi) { $satirlar += "IT'den gereken: $ItIsi" }
-    if (-not $YalnizBul) {
-        if ($Rapor -and (Test-Path -LiteralPath $Rapor)) {
-            [IO.File]::AppendAllText($Rapor, (($satirlar -join "`r`n") + "`r`n"), (New-Object Text.UTF8Encoding $false))
-            $sonuc['rapor'] = $Rapor
-        } elseif ($Durum -eq 'BASARISIZ' -or $ItIsi) {
-            $masaustu = [Environment]::GetFolderPath('Desktop')
-            if (-not $masaustu -or -not (Test-Path -LiteralPath $masaustu)) { $masaustu = Join-Path $env:LOCALAPPDATA 'program-guncelle' }
-            New-Item -ItemType Directory -Path $masaustu -Force | Out-Null
-            $dosya = Join-Path $masaustu ("pnpm-kurulumu-{0}-{1}.txt" -f $env:COMPUTERNAME, (Get-Date).ToString('yyyyMMdd-HHmm'))
-            @("GÜNCELLEYİCİ · sürüm $skillSurum — PNPM KURULUMU", $AMAC) + $satirlar | Out-File -LiteralPath $dosya -Encoding utf8
-            $sonuc['rapor'] = $dosya
-        }
-    }
-    $json = $sonuc | ConvertTo-Json -Compress -Depth 5
-    Write-Output "@@SONUC $json"
-    exit 0
-}
-
-Write-Host ''
-Yaz "Güncelleyici · sürüm $skillSurum — pnpm"
-Yaz $AMAC
-Yaz 'Aşama 6 — pnpm'
-
-# Aşama 5'in seçtiği Node.js'i kullan. Açık terminalin eski PATH'ine güvenme.
-if ($NodeYolu) {
-    if (-not (Test-Path -LiteralPath $NodeYolu -PathType Leaf)) { Bitir 'BASARISIZ' $null '' 'Aşama 5 tarafından seçilen Node.js yolu bulunamadı' 'Node.js kurulum yolu incelenmeli.' }
-    $adayNode = $NodeYolu
-}
-else {
-    $adayNode = @(PathKlasorleri | ForEach-Object { Join-Path $_ 'node.exe' } | Where-Object { Test-Path -LiteralPath $_ }) | Select-Object -First 1
-}
-if (-not $adayNode) { Bitir 'BASARISIZ' $null '' 'Node.js bulunamadı; pnpm kurulamaz' 'Node.js kullanıcı alanında çalışır durumda olmalı.' }
-$node = [pscustomobject]@{ Yol = $adayNode }
-$nodeV = Calistir $node.Yol '-p "process.versions.node"' 15000
-if ($nodeV.Kod -ne 0 -or -not (Surum $nodeV.Cikti)) { Bitir 'BASARISIZ' $null '' 'Node.js çalışmadı; pnpm kurulamaz' 'Node.js çalıştırma engeli incelenmeli.' }
-$npmCli = Join-Path (Split-Path $node.Yol -Parent) 'node_modules\npm\bin\npm-cli.js'
-
-$adaylar = @()
-foreach ($klasor in @(@(PathKlasorleri) + @($KURULUM_KLASORU) | Select-Object -Unique)) {
-    foreach ($ad in 'pnpm.exe', 'pnpm.cmd') {
-        $p = PnpmDogrula (Join-Path $klasor $ad)
-        if ($p) { $adaylar += $p; break }
-    }
-}
-$ilkPnpm = @($adaylar)
-$etkin = $adaylar | Select-Object -First 1
-if ($etkin) { Yaz "pnpm yüklü: $($etkin.Surum) — $($etkin.Yol)" } else { Yaz 'pnpm yüklü değil.' }
-
-try {
-    try { [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 } catch {}
-    try { [Net.WebRequest]::DefaultWebProxy.Credentials = [Net.CredentialCache]::DefaultNetworkCredentials } catch {}
-    $meta = Invoke-RestMethod -Uri $NPM_REGISTRY -TimeoutSec 30 -UseBasicParsing
-    if ($meta.name -ne 'pnpm' -or $meta.version -notmatch '^\d+\.\d+\.\d+$' -or
-        $meta.dist.integrity -notmatch '^sha512-[A-Za-z0-9+/=]+$') { throw 'npm kayıt verisi doğrulanamadı' }
-    $hedefSurum = [string]$meta.version
-    $engine = [string]$meta.engines.node
-    $semver = Join-Path (Split-Path $node.Yol -Parent) 'node_modules\npm\node_modules\semver'
-    if (-not $engine -or $engine -notmatch '^[0-9.xX*<>=|~^+ -]+$' -or -not (Test-Path -LiteralPath $semver)) { throw 'Node.js uyumluluk şartı doğrulanamadı' }
-    $uyum = Calistir $node.Yol ("-e `"process.stdout.write(String(require(process.argv[1]).satisfies(process.argv[2],process.argv[3])))`" `"$semver`" `"$($nodeV.Cikti)`" `"$engine`"") 15000
-    if ($uyum.Kod -ne 0 -or $uyum.Cikti -notin 'true', 'false') { throw 'Node.js uyumluluğu ölçülemedi' }
-    if ($uyum.Cikti -eq 'false') { Bitir 'BASARISIZ' $etkin '' "pnpm $hedefSurum için Node.js şartı: $engine" "Node.js $($nodeV.Cikti), pnpm $hedefSurum şartını karşılamıyor ($engine)." }
-} catch {
-    Bitir 'KONTROL_EDILEMEDI' $etkin '' 'npm kayıt deposundaki kararlı sürüm doğrulanamadı; kurulum yapılmadı' 'registry.npmjs.org HTTPS erişimi veya kayıt yanıtı incelenmeli.'
-}
-Yaz "Son kararlı sürüm: pnpm $hedefSurum (npm latest)."
-
-if ($etkin -and ((Surum $etkin.Surum) -gt (Surum $hedefSurum) -or $etkin.Surum -eq $hedefSurum)) {
-    if (-not $YalnizBul -and (Split-Path $etkin.Yol -Parent) -eq $KURULUM_KLASORU) {
-        try { KullaniciPathEkle } catch { Bitir 'MEVCUT' $etkin 'kurulu ve çalışıyor' 'kullanıcı PATH kaydı güncellenemedi' 'pnpm kullanıcı PATH kaydı incelenmeli.' }
-    }
-    $testler.Add([ordered]@{ ad = 'pnpm sürüm testi'; durum = 'GEÇTİ'; ayrinti = $etkin.Surum })
-    Bitir 'MEVCUT' $etkin 'zaten kurulu' '' ''
-}
-if ($YalnizBul) {
-    if ($etkin) { Bitir 'ESKI_SURUM' $etkin 'yalnız bakıldı' 'kararlı sürüm daha yeni' '' }
-    Bitir 'YOK' $null 'yalnız bakıldı' 'pnpm kurulu değil' ''
-}
-if ($etkin -and (Kapsam $etkin.Yol) -eq 'makine geneli') {
-    Bitir 'ESKI_SURUM' $etkin 'zaten kurulu' 'makine PATH önceliğindeki pnpm kullanıcı kurulumu ile güncellenemez' "Makine geneline kurulu pnpm $($etkin.Surum), $hedefSurum sürümüne güncellenmeli."
-}
-if (-not (Test-Path -LiteralPath $npmCli)) { Bitir 'BASARISIZ' $etkin '' 'Seçilen Node.js yanında npm bulunamadı' 'Node.js kurulumundaki npm eksik veya engelli.' }
-
-$programs = Split-Path $KURULUM_KLASORU -Parent
-$hazirlik = Join-Path $programs ('pnpm.yeni-' + [guid]::NewGuid().ToString('N').Substring(0, 8))
-$eski = $null
-$yerlestirildi = $false
-try {
-    New-Item -ItemType Directory -Path $programs -Force | Out-Null
-    Yaz "pnpm $hedefSurum npm üzerinden kullanıcı klasörüne kuruluyor (birkaç dakika sürebilir)..."
-    $npmArgumanlar = "`"$npmCli`" install --global --prefix `"$hazirlik`" pnpm@$hedefSurum --registry=https://registry.npmjs.org --engine-strict --no-audit --no-fund"
-    $kur = Calistir $node.Yol $npmArgumanlar 600000
-    if ($kur.Kod -ne 0) { throw "npm kurulumu başarısız (çıkış kodu $($kur.Kod))" }
-    $yeni = YeniPnpmDogrula (Join-Path $hazirlik 'pnpm.cmd')
-    if (-not $yeni -or $yeni.Surum -ne $hedefSurum) { throw 'kurulan pnpm çalışmadı veya sürümü uyuşmadı' }
-    if (Test-Path -LiteralPath $KURULUM_KLASORU) {
-        New-Item -ItemType Directory -Path $KARANTINA -Force | Out-Null
-        $eski = Join-Path $KARANTINA ('pnpm-eski-' + (Get-Date).ToString('yyyyMMdd-HHmmss') + '-' + [guid]::NewGuid().ToString('N').Substring(0, 4))
-        Israrla { Move-Item -LiteralPath $KURULUM_KLASORU -Destination $eski -ErrorAction Stop }
-    }
-    try { Israrla { Rename-Item -LiteralPath $hazirlik -NewName (Split-Path $KURULUM_KLASORU -Leaf) -ErrorAction Stop } }
-    catch {
-        $tasimaHatasi = $_.Exception.Message
-        if ($eski) { Israrla { Move-Item -LiteralPath $eski -Destination $KURULUM_KLASORU -ErrorAction Stop }; $eski = $null }
-        throw "yeni pnpm yerine konamadı: $tasimaHatasi"
-    }
-    $yerlestirildi = $true
-    $son = YeniPnpmDogrula (Join-Path $KURULUM_KLASORU 'pnpm.cmd')
-    if (-not $son -or $son.Surum -ne $hedefSurum) { throw 'pnpm son konumunda çalışmadı' }
-    KullaniciPathEkle
-    $testler.Add([ordered]@{ ad = 'pnpm sürüm testi'; durum = 'GEÇTİ'; ayrinti = $son.Surum })
-    Yaz "pnpm $($son.Surum) hazır; yeni açılan pencerelerde kullanılabilir."
-    Bitir $(if ($etkin) { 'GUNCELLENDI' } else { 'KURULDU' }) $son 'npm kayıt deposu; bütünlük npm tarafından doğrulandı; kullanıcı kapsamı' '' ''
-} catch {
-    $neden = $_.Exception.Message
-    $kurulmus = PnpmDogrula (Join-Path $KURULUM_KLASORU 'pnpm.cmd')
-    if ($kurulmus -and $kurulmus.Surum -eq $hedefSurum) {
-        Bitir $(if ($etkin) { 'GUNCELLENDI' } else { 'KURULDU' }) $kurulmus 'kuruldu ve çalıştı' "kullanıcı PATH'i güncellenememiş olabilir: $neden" 'pnpm komutunun yeni pencerelerde bulunması için kullanıcı PATH kaydı incelenmeli.'
-    }
-    if ($yerlestirildi) {
-        try {
-            New-Item -ItemType Directory -Path $KARANTINA -Force | Out-Null
-            $bozuk = Join-Path $KARANTINA ('pnpm-basarisiz-' + [guid]::NewGuid().ToString('N'))
-            Israrla { Move-Item -LiteralPath $KURULUM_KLASORU -Destination $bozuk -ErrorAction Stop }
-            if ($eski) { Israrla { Move-Item -LiteralPath $eski -Destination $KURULUM_KLASORU -ErrorAction Stop }; $eski = $null }
-        } catch { $neden += "; geri dönüş tamamlanamadı, önceki klasör: $eski" }
-    }
-    $geri = if ($etkin) { PnpmDogrula $etkin.Yol }
-    if ($geri) { Bitir 'ESKI_SURUM' $geri 'önceki kurulum doğrulandı' $neden '' }
-    if ($eski) { $neden += "; önceki kurulum korunduğu klasör: $eski" }
-    Bitir 'BASARISIZ' $null '' $neden 'registry.npmjs.org erişimi ve npm/pnpm çalıştırma izni incelenmeli.'
-}
+}catch{Emit-Result ([pscustomobject]@{key='pnpm';durum='BASARISIZ';ozet='ENGEL';neden=(Hide-Secrets $_.Exception.Message)}) 2}

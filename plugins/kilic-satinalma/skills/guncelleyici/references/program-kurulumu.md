@@ -1,44 +1,100 @@
 # Program ve ortam bileşenleri
 
-Tüm programlar [sohbet içi seçim](../SKILL.md) üzerinden yönetilir. Betikler ilk
-taramada `-YalnizBul` veya `--yalniz-bul` ile çağrılır. Bu aşamada kurulum
-ve ayar değişikliği yapılmaz. Eski skill temizliği de bu aşamada çalışmaz.
-Kullanıcının sohbette **Güncelle** demesi, yalnız
-seçili satırların kurulumuna izin verir.
-Eksik bileşen “Yüklü değil” olarak gösterilir; eksik ve eski bileşenlerin
-satırları varsayılan seçilidir. Bütün satırlar doğrulanmış biçimde güncelse
-sohbette tablo gösterilmez. Güncelle yanıtında betik seçilenleri tamamlayıp
-sıralı sonuç verisini `@@SONUC` ile döndürür.
+Bu dosya yayımlanan `2.2.0` kaynak kodunun davranışını açıklar. Gerçek Windows kurulum
+kabulü yapılmadan üretim dağıtımı onayı sayılmaz. `BUILD.json` ile `VERSION`
+birlikte okunmalıdır.
 
-| Sohbet satırı | Sürüm kaynağı | Kurulum betiği |
+## Bileşen sözleşmesi
+
+| Bileşen | Planlanan kaynak / kimlik | Uygulama ve doğrulama |
 |---|---|---|
-| Python | python.org, desteklenen serinin son kararlı yaması | `scripts/python-kur.ps1` |
-| Python kütüphaneleri (12) | Skill içinde sabit sürüm ve PyPI SHA-256 özetleri | `scripts/kurulum-testi.py` |
-| Node.js LTS | nodejs.org, son LTS | `scripts/node-kur.ps1` |
-| pnpm | npm `latest` kararlı etiketi | `scripts/pnpm-kur.ps1` |
-| DuckDB | PyPI, seçilen Python ile uyumlu son sürüm | `scripts/python-paket-kur.py duckdb` |
-| Power BI Modeling MCP | Microsoft Marketplace, son kararlı sürüm | `scripts/powerbi-mcp-kur.ps1` |
+| Python | python.org, 3.14 serisinin kararlı x64 yaması, boyut ve SHA-256 | Aynı kurucu baytları + PSF imzası; kurulum kodu, gerçek sürüm ve pip kontrolü |
+| Python paket seti | `config/paket-seti.json`, 12 sabit sürüm ve wheel hash'leri | `--require-hashes`, hazır wheel; bağımsız süreçte sürümler, dosya işlevleri, Excel ve pip check |
+| Node.js | nodejs.org son LTS, ZIP SHA-256 | OpenJS imzası, hazırlık ve son konumda Node/npm/hash testi; eski klasör korunur |
+| pnpm | npm kararlı sürüm, ilk metadata içindeki SHA-512 | İndirilen aynı tarball doğrulanır; yerel/offline npm kurulumu, yaşam döngüsü scriptleri kapalı; son konum testi |
+| DuckDB | Bu Python ile uyumlu PyPI wheel çözümü, tam sürüm/hash listesi | Çözülen listeye hash zorunluluğuyla kurulum; Türkçe CSV/gruplu toplam testi |
+| Power BI MCP | Microsoft Marketplace kararlı win32-x64 VSIX, planlama anında hesaplanan hash | Aynı VSIX + kimlik + Microsoft ana EXE imzası; initialize/tools/list doğrulaması; yeni sürüm ayrı klasöre |
+| Teklif skill'i | Doğrulanmış GitHub Release ZIP'i, bileşen sürümü ve dosya manifesti | Yalnız teklif ağacı; dosya bütünlüğü, geri dönüş, kurulum kaydı |
+| PDF eklentisi | Açık istekle DuckDB sürüm/platformuna ait Community ikilisi | İmza kontrolleri açık; izole kurulum testi, son konum testi, eski ikili yedeği |
 
-Python kütüphaneleri tek set olarak seçilir. Sürüm sütunundaki “12 paket · sabit set”,
-skill ile doğrulanan paket sürümlerini temsil eder; internetin en yeni sürümleri
-olduğu iddia edilmez. Yüklü/hedef paket sürümleri `ayrinti` alanında görünür.
-`kurulum-testi.py` indirilen her dağıtımın özetini doğrular ve kütüphaneleri
-gerçek işle sınar. Python veya Node.js gerektiren satırlar, bağımlılık satırı
-seçilmemiş ve bilgisayarda mevcut değilse **hata** ile biter; diğer seçili
-satırlar devam eder.
+Kaynak türleri farklı güven zincirleridir: dosya hash'i yayıncı güvenliğini tek başına
+kanıtlamaz. PBI VSIX için planlama anında hesaplanan hash, bağımsız bir Microsoft
+paket imzası değildir. Aynı kaynağın ele geçirilmesine karşı bağımsız imza sistemi
+bu adayın kapsamı dışındadır.
 
-Kurulum veya kontrolü gerçekten engelleyen açık kullanıcı programları,
-mevcut kural uyarınca önce normal, gerekirse zorla kapatılır; yalnız açık
-olmaları kapatma gerekçesi değildir. Güvenlik politikası, ağ veya yetki engeli
-atlatılmaz. Power BI sunucusu kurulumdan önce çalıştırılarak doğrulanır, sonra
-Codex ve Claude ayarlarına bağlanır. Kullanım sözleşmesi kullanıcı adına
-onaylanmaz. Betiklerin `@@SONUC` içindeki `it_isi`, `ozet`, `neden` ve `rapor`
-alanları hata ve uyarı yorumunun kaynağıdır.
-Alt süreç çıktıları UTF-8 olarak okunur. Sıfır olmayan çıkış kodu, eksik sonuç
-ve kurulum sonrası sürümün doğrulanamaması başarı sayılmaz. Tamamlanan işlemde
-hedef sürüme ulaşılamadıysa uyarı gösterilir; uzun ayrıntılar sonuç hücresinin
-ipucunda ve varsa betiğin raporunda bulunur.
+## Önce plan, sonra uygulama
 
-İnternet veya sürüm kaynağı erişilemezse sohbet tablosu o satırı “Kontrol edilemedi”
-gösterir; bilinen eski sürüm güncelmiş gibi sunulmaz. Kurulum yapılmış her
-satırın son durumu sohbet tablosuna aktarılacak sonuç kaydında bulunur.
+`scan` geçici plan/önbellek üretir; kurulu program, PATH, istemci ayarı veya önceki
+kurulum/sağlık kayıtlarını değiştirmez. Paket indirmenin kendisi üçüncü taraf kodu
+çalıştırmaz; PDF'nin `LOAD` komutu ancak açık kontrol/uygulama isteğinde kullanılır.
+Planın süresi bir saattir. Plan dosyasının tam SHA-256 değeri, kullanıcı/bilgisayar/
+skill kökü, operasyonel script/config/referans talimatlarının parmak izi, bileşenlerin
+önceki yerel durumları, tam hedefleri ve yan etki kayıtları saklanır. Uygulama ayrıca
+açık `-ConfirmApply` bayrağı olmadan reddedilir. Uygulama, ortak dosya kilidini aldıktan sonra yerel durumu yeniden kontrol
+eder; yeni bir çevrimiçi hedef seçmez.
+
+İlk kez kurulan bilgisayarda Python yoksa bağımlı paketlerin doğru hedefi henüz
+çözülemez. Bu satırlar engellenir; Python kurulduktan sonra ikinci tarama gerekir.
+Bu davranış bir hata değil, bilinmeyen bağımlılığı kullanıcı adına onaylamamaktır.
+
+`repair` varsayılan değildir. Node/pnpm/kütüphane/DuckDB/PBI aynı sürüm onarımı yeni
+plan ve yeni açık onay gerektirir. Python kurucusu ve değiştirilmiş teklif ağacı
+zorla üzerine yazılmaz. Sürüm numarasının büyük olması kurulum sağlığının kanıtı değildir.
+
+## Paylaşılan Python ve bakım penceresi
+
+Bu aday, mevcut teklif iş akışını sessizce farklı Python yoluna taşımamak için
+`--user` yaklaşımını otomatik olarak venv'e dönüştürmez. Bu **artık risk** açıkça
+korunur: pip tüm paketler için atomik bir geri dönüş sağlamaz. Kurulum öncesinde
+bakım penceresi istenir, görünür Python/Node iş yükleri kontrol edilir; kullanıcı
+programları zorla kapatılmaz. Bu kontrol, başka bir işlemin hemen sonra başlamasını
+engelleyen OS düzeyinde sandbox değildir. Çalışma penceresi operasyonel olarak da
+korunmalıdır.
+
+Pip kısmi başarısızlık veya doğrulanamayan son durumda `recovery_required` kaydı
+bırakır; yeni toplu kurulum durur. BT önce ortamı ölçer. Otomatik global paket silme,
+sanal ortama geçiş, güvenlik istisnası ekleme veya eski sürüme körlemesine dönüş yoktur.
+
+İleride ayrı venv kullanılacaksa `teklif-degerlendirme` koşularının yorumlayıcı
+seçimiyle birlikte tasarlanmalıdır. Yalnız bu güncelleyiciye venv eklemek yeterli
+değildir. Onaylı şirket sürüm kataloğu da ayrı yönetişim işidir; bu aday upstream
+kararlı sürümü seçip **işlem başına sabitler**, şirketçe onaylandı iddiasında bulunmaz.
+
+## MCP ayar bağlama
+
+Codex TOML ve Claude Desktop JSON'da yalnız desteklenen kayıt biçimindeki `command`
+alanı değiştirilir. Ortam değişkenleri, zaman aşımı, enabled ve bilinmeyen alanlar
+korunur. Belirsiz/özel/uzak kayıt değiştirilmez. Dosya birebir yedeklenir; geçici
+yazım, semantik doğrulama ve değişiklik kontrolü yapılır. Bu bir düşmanca eşzamanlı
+yazara karşı kernel CAS değildir; istemciler kapalı olmalıdır.
+
+Claude Code'un `.claude.json` dosyası doğrudan yazılmaz. Yerel `claude.exe` varsa
+sadece basit stdio kaydı kendi `mcp add/remove --scope user` komutlarıyla değiştirilir.
+Özel env/argüman/kayıt alanları veya yalnız `.cmd` kurulum varsa bağlama ertelenir.
+Başarısız basit kayıtta CLI ile önceki sunucuya geri dönme denenip doğrulanır.
+
+Açık Codex/ChatGPT/Claude bulunduğunda sunucu kurulabilir, ancak ayar bağlama ertelenir.
+Kullanıcı istemcileri kapatıp sohbette bağlamayı yeniden istediğinde **Work/Codex yerel
+yürütme aracı** aşağıdaki iç bakım adımını çalıştırır. Son kullanıcıdan PowerShell veya
+terminal açması istenmez.
+
+```powershell
+powershell.exe -NoProfile -File "<SKILL>\scripts\powerbi-mcp-kur.ps1" -BindOnly -ExePath "<doğrulanmış sunucunun tam exe yolu>" -PythonYolu "<Python 3.14 tam yolu>"
+```
+
+Bu iç adım sunucunun imzasını/çalışmasını yeniden sınar, ortak güncelleme kilidini
+kullanır. Yarım işlem günlüğü varsa çalışmaz. Sunucu testi, bütün istemcilerin gerçekten
+bağlandığını kanıtlamaz; uygulamalar yeniden açıldıktan sonra araçların görünmesi
+Windows kabul kontrolünde ayrıca doğrulanır. Kullanım sözleşmesi kabul edilmez.
+
+## Gözlem, sağlık ve rapor
+
+Sağlık makbuzu gözlenen yerel durum hash'ine bağlıdır. Kurulum sonrası yerel sürüm
+onaylanan hedefle tam eşleşmelidir; daha yeni bir sürümün ortaya çıkması sessizce
+başarı sayılmaz. `NOT_RUN`, `PASS`, `FAIL`, `WARNING` ile yalnız teklif dosya
+bütünlüğünü anlatan `INTEGRITY_PASS` birbirinden ayrıdır.
+
+Kayıtlar `%LOCALAPPDATA%\guncelleyici\sessions` ve `health` altındadır.
+`active-transaction.json` yarım/şüpheli değişikliği işaret eder; kendiliğinden silinmez.
+İndirilen paket, kurulum yedeği ve raporların saklama/silme politikası BT tarafından
+yönetilmelidir. Bu aday eski yedekleri otomatik topluca silmez.

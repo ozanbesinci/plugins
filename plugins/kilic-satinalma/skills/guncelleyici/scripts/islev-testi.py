@@ -1,250 +1,134 @@
-"""program-guncelle — islev testi.
-
-kurulum-testi.py tarafindan, kurulan kutuphanelerle ayni Python'da alt surec olarak calistirilir.
-Her kutuphaneyi gercek bir isle dener ve her sonucu tek satirda "@@T {json}" olarak basar.
-Bir testin cokmesi digerlerini durdurmaz. Yalniz verilen calisma klasorune yazar.
-
-Kullanim: python islev-testi.py <calisma-klasoru>
-"""
+"""Functional fixture tests; never opens user documents or a pre-existing Excel session."""
+from __future__ import annotations
+import importlib
 import json
-import os
+from pathlib import Path
 import sys
 import time
-import traceback
-
-try:
-    sys.stdout.reconfigure(encoding="utf-8")
-except Exception:  # noqa: BLE001
-    pass
-
-CALISMA = sys.argv[1]
-os.makedirs(CALISMA, exist_ok=True)
-METIN = "PROGRAM GUNCELLE TESTI 12345"
 
 
-def bildir(kalem, ad, durum, ayrinti):
-    print("@@T " + json.dumps({"kalem": kalem, "ad": ad, "durum": durum, "ayrinti": ayrinti},
-                              ensure_ascii=False), flush=True)
+def emit(name, status, detail):
+    print("@@T " + json.dumps({"name": name, "status": status, "detail": str(detail)}, ensure_ascii=False), flush=True)
 
 
-def hata_ozeti(exc):
-    son = traceback.format_exception_only(type(exc), exc)[-1].strip()
-    return son[-400:]
+def pdf_fixture(path):
+    content = b"BT /F1 20 Tf 72 760 Td (GUNCELLEYICI TEST 12345) Tj ET"
+    objects = [b"<< /Type /Catalog /Pages 2 0 R >>", b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+               b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>",
+               b"<< /Length %d >>\nstream\n" % len(content) + content + b"\nendstream",
+               b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"]
+    data = bytearray(b"%PDF-1.4\n"); offsets = []
+    for i, obj in enumerate(objects, 1):
+        offsets.append(len(data)); data += b"%d 0 obj\n" % i + obj + b"\nendobj\n"
+    xref = len(data); data += b"xref\n0 6\n0000000000 65535 f \n"
+    for offset in offsets: data += b"%010d 00000 n \n" % offset
+    data += b"trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n" % xref
+    Path(path).write_bytes(data)
 
 
-def test(kalem, ad):
-    def sarici(fn):
-        try:
-            ayrinti = fn()
-            bildir(kalem, ad, "GEÇTİ", ayrinti)
-            return True
-        except Exception as exc:  # noqa: BLE001 — her hata rapora gitmeli
-            bildir(kalem, ad, "ENGEL", hata_ozeti(exc))
-            return False
-    return sarici
-
-
-def surum(paket):
-    from importlib.metadata import version
-    try:
-        return version(paket)
-    except Exception:  # noqa: BLE001
-        return "?"
-
-
-# ------------------------------------------------------------------ kutuphane yukleme
-K2 = "Kalem 2 - Kütüphane kurulumu"
-K3 = "Kalem 3 - Excel otomasyonu"
-
-yuklenen = {}
-for modul, paket in [("openpyxl", "openpyxl"), ("pypdf", "pypdf"), ("pdfplumber", "pdfplumber"),
-                     ("pypdfium2", "pypdfium2"), ("PIL.Image", "pillow"),
-                     ("cryptography.hazmat.primitives.hashes", "cryptography"),
-                     ("pythoncom", "pywin32"), ("win32com.client", "pywin32")]:
-    @test(K2, f"{modul} yükleme")
-    def _yukle(modul=modul, paket=paket):
-        __import__(modul)
-        yuklenen[modul] = True
-        return f"{paket} {surum(paket)} yüklendi"
-
-
-# ------------------------------------------------------------------ islev testleri
-xlsx = os.path.join(CALISMA, "deneme.xlsx")
-pdf = os.path.join(CALISMA, "deneme.pdf")
-
-
-def pdf_olustur(yol, metin):
-    akis = f"BT /F1 24 Tf 72 760 Td ({metin}) Tj ET".encode("latin-1")
-    nesneler = [
-        b"<< /Type /Catalog /Pages 2 0 R >>",
-        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R "
-        b"/Resources << /Font << /F1 5 0 R >> >> >>",
-        b"<< /Length %d >>\nstream\n" % len(akis) + akis + b"\nendstream",
-        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
-    ]
-    cikti = bytearray(b"%PDF-1.4\n")
-    konumlar = []
-    for i, nesne in enumerate(nesneler, 1):
-        konumlar.append(len(cikti))
-        cikti += b"%d 0 obj\n" % i + nesne + b"\nendobj\n"
-    xref = len(cikti)
-    cikti += b"xref\n0 %d\n0000000000 65535 f \n" % (len(nesneler) + 1)
-    for k in konumlar:
-        cikti += b"%010d 00000 n \n" % k
-    cikti += b"trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n" % (len(nesneler) + 1, xref)
-    with open(yol, "wb") as f:
-        f.write(cikti)
-
-
-if yuklenen.get("openpyxl"):
-    @test(K2, "openpyxl: formüllü Excel yazma")
-    def _xlsx():
-        import openpyxl
-        wb = openpyxl.Workbook()
-        ws = wb.active
-        ws["A1"] = 21
-        ws["A2"] = "=A1*2"
-        wb.save(xlsx)
-        geri = openpyxl.load_workbook(xlsx)["Sheet"]["A2"].value
-        assert geri == "=A1*2", f"formül geri okunamadı: {geri!r}"
-        return "dosya yazıldı ve geri okundu"
-
-pdf_olustur(pdf, METIN)
-
-if yuklenen.get("pypdf"):
-    @test(K2, "pypdf: PDF metni okuma")
-    def _pypdf():
-        from pypdf import PdfReader
-        metin = PdfReader(pdf).pages[0].extract_text() or ""
-        assert "12345" in metin, f"metin bulunamadı: {metin!r}"
-        return f"okundu: {metin.strip()!r}"
-
-if yuklenen.get("pdfplumber"):
-    @test(K2, "pdfplumber: PDF metni çıkarma")
-    def _plumber():
-        import pdfplumber
-        with pdfplumber.open(pdf) as belge:
-            metin = belge.pages[0].extract_text() or ""
-        assert "12345" in metin, f"metin bulunamadı: {metin!r}"
-        return f"okundu: {metin.strip()!r}"
-
-if yuklenen.get("pypdfium2") and yuklenen.get("PIL.Image"):
-    @test(K2, "pypdfium2 + Pillow: PDF sayfasını görüntüye çevirme")
-    def _pdfium():
-        import pypdfium2 as pdfium
-        belge = pdfium.PdfDocument(pdf)
-        try:
-            goruntu = belge[0].render(scale=1).to_pil()
-            png = os.path.join(CALISMA, "sayfa.png")
-            goruntu.save(png)
-            boyut = goruntu.size
-        finally:
-            belge.close()
-        assert boyut[0] > 100 and os.path.getsize(png) > 0
-        return f"sayfa {boyut[0]}x{boyut[1]} piksel görüntüye çevrildi"
-
-if yuklenen.get("cryptography.hazmat.primitives.hashes"):
-    @test(K2, "cryptography: derlenmiş bileşen")
-    def _crypto():
-        from cryptography.hazmat.primitives import hashes
-        h = hashes.Hash(hashes.SHA256())
-        h.update(b"ksk")
-        return f"SHA-256 hesaplandı ({h.finalize().hex()[:12]}…)"
-
-
-# ------------------------------------------------------------------ Excel otomasyonu
-def excel_testi():
+def excel_test(path):
     import pythoncom
     import win32api
     import win32con
     import win32event
     import win32process
     import win32com.client
-
-    if not os.path.exists(xlsx):
-        bildir(K3, "Excel otomasyonu", "ENGEL", "test dosyası yok (openpyxl adımı başarısız)")
-        return
     pythoncom.CoInitialize()
-    xl = None
-    pid = None
-    baslangic = time.time()
+    xl = handle = None
+    independent = False
+    existing = set(win32process.EnumProcesses())
     try:
+        xl = win32com.client.DispatchEx("Excel.Application")
+        pid = win32process.GetWindowThreadProcessId(xl.Hwnd)[1]
+        if not pid or pid in existing:
+            raise RuntimeError("Ayrı test Excel süreci doğrulanamadı; mevcut oturuma dokunulmadı.")
+        handle = win32api.OpenProcess(win32con.SYNCHRONIZE | win32con.PROCESS_TERMINATE, False, pid)
+        independent = True
+        xl.Visible = False; xl.DisplayAlerts = False; xl.ScreenUpdating = False
+        wb = xl.Workbooks.Open(str(path), 0, True)
         try:
-            xl = win32com.client.DispatchEx("Excel.Application")
-        except Exception as exc:  # noqa: BLE001
-            bildir(K3, "Excel'i görünmez açma", "ENGEL", hata_ozeti(exc))
-            return
+            xl.CalculateFull()
+            value = wb.Worksheets(1).Range("A2").Value
+            if value != 42: raise RuntimeError(f"Excel hesap sonucu farklı: {value!r}")
+        finally:
+            wb.Close(False); del wb
+        emit("Excel calculate", "PASS", "21*2=42")
+        Path(str(path) + ":Zone.Identifier").write_text("[ZoneTransfer]\nZoneId=3\n", encoding="ascii")
         try:
-            pid = win32process.GetWindowThreadProcessId(xl.Hwnd)[1]
-        except Exception:  # noqa: BLE001
-            pid = None
-        xl.Visible = False
-        xl.DisplayAlerts = False
-        xl.ScreenUpdating = False
-        xl_surum = xl.Version
-
-        wb = xl.Workbooks.Open(xlsx, 0, True)
-        xl.CalculateFull()
-        deger = wb.Worksheets(1).Range("A2").Value
-        wb.Close(False)
-        del wb
-        if deger == 42:
-            bildir(K3, "Görünmez açma + yeniden hesaplama", "GEÇTİ",
-                   f"Excel {xl_surum} Python'dan görünmez açıldı, formül hesaplandı (=A1*2 → {deger:g})")
-        else:
-            bildir(K3, "Görünmez açma + yeniden hesaplama", "UYARI",
-                   f"Excel açıldı ama hesap beklenen sonucu vermedi (A2={deger!r})")
-
-        # Mailden/internetten gelmis dosya: Windows'un "internetten indirildi" isareti
-        with open(xlsx + ":Zone.Identifier", "w", encoding="ascii") as f:
-            f.write("[ZoneTransfer]\nZoneId=3\n")
-        try:
-            wb2 = xl.Workbooks.Open(xlsx, 0, True)
-            d2 = wb2.Worksheets(1).Range("A2").Value
-            pv = xl.ProtectedViewWindows.Count
-            wb2.Close(False)
-            del wb2
-            bildir(K3, "İnternetten gelmiş dosyayı açma", "GEÇTİ",
-                   f"otomasyonla açıldı (A2={d2!r}, korumalı görünüm penceresi: {pv})")
-        except Exception as exc:  # noqa: BLE001
-            bildir(K3, "İnternetten gelmiş dosyayı açma", "UYARI", hata_ozeti(exc))
-    except Exception as exc:  # noqa: BLE001
-        bildir(K3, "Excel otomasyonu", "ENGEL", hata_ozeti(exc))
+            wb = xl.Workbooks.Open(str(path), 0, True)
+            try:
+                if wb.Worksheets(1).Range("A2").Value != 42: raise RuntimeError("Internet-zone workbook result mismatch")
+            finally: wb.Close(False); del wb
+            emit("Excel internet-zone fixture", "PASS", "Kaynak fixture değişmeden açıldı")
+        except Exception as exc:
+            emit("Excel internet-zone fixture", "WARNING", exc)
     finally:
         if xl is not None:
-            try:
-                xl.Quit()
-            except Exception:  # noqa: BLE001
-                pass
+            if independent:
+                try: xl.Quit()
+                except Exception: pass
             del xl
         pythoncom.CoUninitialize()
+        if handle is not None:
+            try:
+                if win32event.WaitForSingleObject(handle, 20000) != win32event.WAIT_OBJECT_0:
+                    win32api.TerminateProcess(handle, 1)
+                    emit("Excel cleanup", "WARNING", "Yalnız testin açtığı süreç kapatıldı")
+                else: emit("Excel cleanup", "PASS", "Test süreci kapandı")
+            finally: win32api.CloseHandle(handle)
 
-    # Yalniz bu testin actigi Excel'i bekle; kullanicinin acik Excel'ine dokunma
-    if pid:
+
+def main():
+    root = Path(sys.argv[1]).resolve(); root.mkdir(parents=True, exist_ok=True)
+    pdf, xlsx = root / "test.pdf", root / "test.xlsx"
+    pdf_fixture(pdf)
+    loaded = set()
+    for module in ("openpyxl", "pypdf", "pdfplumber", "pypdfium2", "PIL.Image", "cryptography.hazmat.primitives.hashes", "pythoncom", "win32com.client"):
+        try: importlib.import_module(module); loaded.add(module); emit(module, "PASS", "import")
+        except Exception as exc: emit(module, "FAIL", exc)
+    tests = []
+    def xlsx_test():
+        import openpyxl
+        wb = openpyxl.Workbook(); ws = wb.active; ws["A1"] = 21; ws["A2"] = "=A1*2"; wb.save(xlsx); wb.close()
+        back = openpyxl.load_workbook(xlsx)
         try:
-            tutamak = win32api.OpenProcess(win32con.SYNCHRONIZE | win32con.PROCESS_TERMINATE, False, pid)
-        except Exception:  # noqa: BLE001
-            tutamak = None  # surec zaten kapanmis
-        if tutamak:
-            kapandi = win32event.WaitForSingleObject(tutamak, 20000) == win32event.WAIT_OBJECT_0
-            if not kapandi:
-                win32api.TerminateProcess(tutamak, 1)
-                bildir(K3, "Temiz kapanış", "UYARI",
-                       "Excel 20 sn içinde kapanmadı; testin açtığı süreç sonlandırıldı")
-            win32api.CloseHandle(tutamak)
-            if kapandi:
-                bildir(K3, "Temiz kapanış", "GEÇTİ",
-                       f"Excel kapandı, arkada süreç kalmadı; toplam {time.time() - baslangic:.1f} sn")
-        else:
-            bildir(K3, "Temiz kapanış", "GEÇTİ",
-                   f"Excel kapandı, arkada süreç kalmadı; toplam {time.time() - baslangic:.1f} sn")
+            if back.active["A2"].value != "=A1*2": raise RuntimeError("Formula missing")
+        finally: back.close()
+    def pypdf_test():
+        from pypdf import PdfReader
+        if "12345" not in (PdfReader(pdf).pages[0].extract_text() or ""): raise RuntimeError("PDF text missing")
+    def plumber_test():
+        import pdfplumber
+        with pdfplumber.open(pdf) as doc:
+            if "12345" not in (doc.pages[0].extract_text() or ""): raise RuntimeError("PDF text missing")
+    def render_test():
+        import pypdfium2
+        with pypdfium2.PdfDocument(pdf) as doc:
+            page = doc[0]; bitmap = page.render(scale=1)
+            try:
+                image = bitmap.to_pil(); image.save(root / "page.png")
+                if image.width < 100: raise RuntimeError("Render dimensions invalid")
+                image.close()
+            finally: bitmap.close(); page.close()
+    def crypto_test():
+        from cryptography.hazmat.primitives import hashes
+        import hashlib
+        h = hashes.Hash(hashes.SHA256()); h.update(b"fixture")
+        if h.finalize() != hashlib.sha256(b"fixture").digest(): raise RuntimeError("Hash mismatch")
+    tests = [("openpyxl", xlsx_test), ("pypdf", pypdf_test), ("pdfplumber", plumber_test),
+             ("pypdfium2", render_test), ("cryptography.hazmat.primitives.hashes", crypto_test)]
+    for module, fn in tests:
+        if module not in loaded:
+            emit(module + " functional", "NOT_RUN", "Import failed"); continue
+        try: fn(); emit(module + " functional", "PASS", "Fixture doğrulandı")
+        except Exception as exc: emit(module + " functional", "FAIL", exc)
+    if "pythoncom" in loaded and "win32com.client" in loaded and xlsx.exists():
+        try: excel_test(xlsx)
+        except Exception as exc: emit("Excel", "FAIL", exc)
+    else: emit("Excel", "NOT_RUN", "Windows/pywin32/fixture hazır değil")
+    return 0
 
 
-if yuklenen.get("pythoncom") and yuklenen.get("win32com.client"):
-    try:
-        excel_testi()
-    except Exception as exc:  # noqa: BLE001
-        bildir(K3, "Excel otomasyonu", "ENGEL", hata_ozeti(exc))
-else:
-    bildir(K3, "Excel otomasyonu", "ENGEL", "pywin32 yüklenemediği için Excel denenemedi")
+if __name__ == "__main__":
+    if hasattr(sys.stdout, "reconfigure"): sys.stdout.reconfigure(encoding="utf-8")
+    raise SystemExit(main())

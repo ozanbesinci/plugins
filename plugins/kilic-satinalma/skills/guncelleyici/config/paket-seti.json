@@ -1,0 +1,20 @@
+{
+  "schema": "guncelleyici-package-set/v1",
+  "python_series": "3.14",
+  "platform": "Windows amd64",
+  "source_note": "Mevcut guncelleyici v2.1.0 paket listesi. Internetin son surumleri oldugu iddia edilmez.",
+  "packages": [
+    {"name":"openpyxl","version":"3.1.5","hashes":["5282c12b107bffeef825f4617dc029afaf41d0ea60823bbb665ef3079dc79de2"]},
+    {"name":"et-xmlfile","version":"2.0.0","hashes":["7a91720bc756843502c3b7504c77b8fe44217c85c537d85037f0f536151b2caa"]},
+    {"name":"pypdf","version":"6.13.2","hashes":["6eeb9e57693f29d41bd01255d02660cbbb41fd7fc818a982677389a35e4f2083"]},
+    {"name":"pdfplumber","version":"0.11.10","hashes":["7741ea81bf165b474b153e6789d10d18e06b6ddcf3ec84289c3ef2fed6802580"]},
+    {"name":"pdfminer.six","version":"20260107","hashes":["366585ba97e80dffa8f00cebe303d2f381884d8637af4ce422f1df3ef38111a9"]},
+    {"name":"charset-normalizer","version":"3.4.7","hashes":["92a0a01ead5e668468e952e4238cccd7c537364eb7d851ab144ab6627dbbe12f","3dce51d0f5e7951f8bb4900c257dad282f49190fdbebecd4ba99bcc41fef404d"]},
+    {"name":"cryptography","version":"48.0.0","hashes":["5b012212e08b8dd5edc78ef54da83dd9892fd9105323b3993eff6bea65dc21d7","16cd65b9330583e4619939b3a3843eec1e6e789744bb01e7c7e2e62e33c239c8"]},
+    {"name":"cffi","version":"2.0.0","hashes":["203a48d1fb583fc7d78a4c6655692963b860a417c0528492a6bc21f1aaefab25"]},
+    {"name":"pycparser","version":"3.0","hashes":["b727414169a36b7d524c1c3e31839a521725078d7b2ff038656844266160a992"]},
+    {"name":"pillow","version":"12.2.0","hashes":["4e6c62e9d237e9b65fac06857d511e90d8461a32adcc1b9065ea0c0fa3a28150"]},
+    {"name":"pypdfium2","version":"5.10.1","hashes":["58da5b51fb7884c7d21a05062ab13edb011d1a08dfd9694f3d5d685df62796b9"]},
+    {"name":"pywin32","version":"312","hashes":["a4dd3a848290ef724347b19f301045831d8e802fa4464f491b98b1e0a081432e"]}
+  ]
+}
