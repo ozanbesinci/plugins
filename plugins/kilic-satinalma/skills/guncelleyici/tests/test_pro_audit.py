@@ -46,14 +46,12 @@ class ProHighPriorityContracts(unittest.TestCase):
         py = text(S / "python-kur.ps1")
         libs = text(S / "kurulum-testi.py")
         duck = text(S / "python-paket-kur.py")
-        offer = text(S / "teklif-guncelle.py")
         for src in (node, pnpm):
             self.assertIn("backup", src)
             self.assertIn("recovery_required", src)
         self.assertIn("MutationStarted", py)
         self.assertIn("recovery_required", libs)
         self.assertIn("recovery_required", duck)
-        self.assertIn("JOURNAL", offer)
 
     def test_Y5_shared_python_is_guarded_and_nontransactional_risk_is_disclosed(self):
         core = text(S / "core.ps1")
@@ -106,10 +104,12 @@ class ProMediumPriorityContracts(unittest.TestCase):
         self.assertIn("SHA512", pnpm)
         self.assertIn("Microsoft Corporation", pbi)
 
-    def test_O4_offer_validation_has_single_python_prepare_update_path(self):
+    def test_O4_removed_offer_component_has_no_dispatch_or_installer(self):
         core = text(S / "core.ps1")
-        self.assertIn("teklif-guncelle.py'),$action", core)
+        self.assertNotIn("teklif-guncelle.py", core)
         self.assertNotIn("Get-OfferLatest", core)
+        self.assertFalse((S / "teklif-guncelle.py").exists())
+        self.assertFalse((S / "teklif_paket_legacy.py").exists())
 
     def test_O5_json_and_process_exit_contract_are_coupled(self):
         common = text(S / "program-ortak.ps1")

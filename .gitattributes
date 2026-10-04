@@ -1,1 +1,1 @@
-plugins/** -text
+plugins/** -text whitespace=cr-at-eol

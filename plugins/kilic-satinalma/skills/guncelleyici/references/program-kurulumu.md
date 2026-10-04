@@ -11,11 +11,16 @@ birlikte okunmalıdır.
 | Python | python.org, 3.14 serisinin kararlı x64 yaması, boyut ve SHA-256 | Aynı kurucu baytları + PSF imzası; kurulum kodu, gerçek sürüm ve pip kontrolü |
 | Python paket seti | `config/paket-seti.json`, 12 sabit sürüm ve wheel hash'leri | `--require-hashes`, hazır wheel; bağımsız süreçte sürümler, dosya işlevleri, Excel ve pip check |
 | Node.js | nodejs.org son LTS, ZIP SHA-256 | OpenJS imzası, hazırlık ve son konumda Node/npm/hash testi; eski klasör korunur |
-| pnpm | npm kararlı sürüm, ilk metadata içindeki SHA-512 | İndirilen aynı tarball doğrulanır; yerel/offline npm kurulumu, yaşam döngüsü scriptleri kapalı; son konum testi |
+| pnpm | npm kararlı sürüm, ilk metadata içindeki SHA-512; pnpm 12+ için `@pnpm/exe.win32-x64` aynı sürüm tarball'ı ve SHA-512'si de planda sabitlenir | İndirilen aynı tarball(lar) doğrulanır; yerel/offline npm kurulumu, yaşam döngüsü scriptleri ve isteğe bağlı bağımlılıklar kapalı; yerel `pnpm.exe` doğrulanmış paketten çıkarılır, shim'ler doğrudan bu ikiliyi çağırır; hazırlık ve son konum testi |
 | DuckDB | Bu Python ile uyumlu PyPI wheel çözümü, tam sürüm/hash listesi | Çözülen listeye hash zorunluluğuyla kurulum; Türkçe CSV/gruplu toplam testi |
 | Power BI MCP | Microsoft Marketplace kararlı win32-x64 VSIX, planlama anında hesaplanan hash | Aynı VSIX + kimlik + Microsoft ana EXE imzası; initialize/tools/list doğrulaması; yeni sürüm ayrı klasöre |
-| Teklif skill'i | Doğrulanmış GitHub Release ZIP'i, bileşen sürümü ve dosya manifesti | Yalnız teklif ağacı; dosya bütünlüğü, geri dönüş, kurulum kaydı |
 | PDF eklentisi | Açık istekle DuckDB sürüm/platformuna ait Community ikilisi | İmza kontrolleri açık; izole kurulum testi, son konum testi, eski ikili yedeği |
+
+pnpm 12+ npm paketi bir JS başlatıcı ve `@pnpm/exe.<platform>` yerel ikilisinden oluşur.
+Tespit yerel düzende `node_modules\pnpm\pnpm.exe --version` komutunu doğrudan çalıştırır;
+`.exe` hiçbir zaman Node'a betik olarak verilmez, scriptsiz kurulumdaki başlatıcı çalıştırılmaz.
+Komut dosyası bulunup sürümü doğrulanamayan kurulum "Yüklü · sürüm doğrulanamadı" olarak
+gösterilir, gerekçesiyle engellenir ve değiştirilmez.
 
 Kaynak türleri farklı güven zincirleridir: dosya hash'i yayıncı güvenliğini tek başına
 kanıtlamaz. PBI VSIX için planlama anında hesaplanan hash, bağımsız bir Microsoft
@@ -38,8 +43,8 @@ eder; yeni bir çevrimiçi hedef seçmez.
 Bu davranış bir hata değil, bilinmeyen bağımlılığı kullanıcı adına onaylamamaktır.
 
 `repair` varsayılan değildir. Node/pnpm/kütüphane/DuckDB/PBI aynı sürüm onarımı yeni
-plan ve yeni açık onay gerektirir. Python kurucusu ve değiştirilmiş teklif ağacı
-zorla üzerine yazılmaz. Sürüm numarasının büyük olması kurulum sağlığının kanıtı değildir.
+plan ve yeni açık onay gerektirir. Python kurucusu aynı sürümde zorla üzerine
+yazılmaz. Sürüm numarasının büyük olması kurulum sağlığının kanıtı değildir.
 
 ## Paylaşılan Python ve bakım penceresi
 
@@ -91,8 +96,7 @@ Windows kabul kontrolünde ayrıca doğrulanır. Kullanım sözleşmesi kabul ed
 
 Sağlık makbuzu gözlenen yerel durum hash'ine bağlıdır. Kurulum sonrası yerel sürüm
 onaylanan hedefle tam eşleşmelidir; daha yeni bir sürümün ortaya çıkması sessizce
-başarı sayılmaz. `NOT_RUN`, `PASS`, `FAIL`, `WARNING` ile yalnız teklif dosya
-bütünlüğünü anlatan `INTEGRITY_PASS` birbirinden ayrıdır.
+başarı sayılmaz. `NOT_RUN`, `PASS`, `FAIL` ve `WARNING` sonuçları birbirinden ayrıdır.
 
 Kayıtlar `%LOCALAPPDATA%\guncelleyici\sessions` ve `health` altındadır.
 `active-transaction.json` yarım/şüpheli değişikliği işaret eder; kendiliğinden silinmez.

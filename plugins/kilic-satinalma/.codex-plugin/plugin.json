@@ -1,7 +1,7 @@
 {
   "name": "kilic-satinalma",
-  "version": "1.1.4",
-  "description": "Satınalma tekliflerini değerlendiren ve çalışma ortamını güncelleyen iki skill.",
+  "version": "1.1.5",
+  "description": "Satınalma teklif değerlendirme ve açık onaylı Windows güncelleyici skill'leri.",
   "author": {
     "name": "Ozan Beşinci"
   },
@@ -9,14 +9,14 @@
   "interface": {
     "displayName": "Kılıç Satınalma",
     "shortDescription": "Teklif değerlendirme ve güncelleyici",
-    "longDescription": "Satınalma tekliflerini karşılaştırır ve gerekli programlar ile teklif skill sürümünü kullanıcı seçimleriyle yönetir.",
+    "longDescription": "Satınalma tekliflerini karşılaştırır. Windows program sürümlerini kontrol eder, açık seçim ve onayla günceller. DuckDB PDF desteği isteğe bağlıdır.",
     "developerName": "Ozan Beşinci",
     "category": "Productivity",
     "capabilities": [
       "Interactive",
       "Write"
     ],
-    "defaultPrompt": "Teklifleri değerlendir veya güncelleyiciyi çalıştır.",
+    "defaultPrompt": "Satınalma tekliflerini değerlendir.",
     "websiteURL": "https://github.com/ozanbesinci/kilic-satinalma-openai-plugin",
     "brandColor": "#163E70",
     "composerIcon": "./assets/kilic-logo.svg",

@@ -24,13 +24,12 @@ Onun geçmesi de gerçek kurulum kabulü değildir.
 | Aşama | Ortam / senaryo | Başarı koşulu |
 |---|---|---|
 | Sözdizimi ve birim test | Windows PowerShell 5.1, normal kullanıcı | Python testleri ve test_windows.ps1 geçer |
-| Temiz kurulum | İzole test bilgisayarı veya geri alınabilir VM; x64; normal kullanıcı | Yedi bileşenin bağımlılık sırası, iki aşamalı tarama ve sonuçları doğru |
+| Temiz kurulum | İzole test bilgisayarı veya geri alınabilir VM; x64; normal kullanıcı | Altı bileşenin bağımlılık sırası, iki aşamalı tarama ve sonuçları doğru |
 | Var olan ortam | Eski/güncel sürüm, makine geneli kurulum, PATH önceliği | Yetkisiz ikinci kopya/üzerine yazma yok; gerçek son konum doğru |
 | Ağ ve bütünlük | Çevrimdışı, proxy, geçersiz TLS, değiştirilmiş hash/paket | Hedef uydurulmaz; kurulum başlamaz; hassas bilgi sızmaz |
 | Arıza enjeksiyonu | Dosya kilidi, PATH/ayar yazımı hatası, düşük disk, süreç kesilmesi | Eski çalışan durum korunur veya kurtarma gereği açık, kalıcı kayda dönüşür |
 | MCP | Özel env/args/TOML alanları, açık/kapalı istemci, bozuk JSON | Özel alanlar kaybolmaz; belirsiz kayıt korunur; her istemci bağlantısı ayrı doğrulanır |
 | Excel | Gerçek masaüstü Excel + pywin32 | Kullanıcının açık Excel'i korunur; yalnız teste ait süreç kapanır |
-| Teklif | Şema 1/2/3, yerel değiştirilmiş dosya, snapshot hazırlığı | Yalnız teklif ağacı değişir; bütünlük ve geri dönüş doğru |
 | PDF | Gerçek motor/sürüm/platform + metin ve tablo test belgeleri | Native imza/LOAD testi ve gerçek belge kabulü geçer; eşleşme kaydedilir |
 
 Önce tek BT test cihazı, sonra iki temsilî personel cihazı ile pilot önerilir.
@@ -41,7 +40,7 @@ ve eklenti genel dağıtımı kullanıcıdan ayrıca açık yayın yetkisi gerek
 ## Yarım işlemde davranış
 
 1. Yeni `apply` veya kör onarım başlatma. `active-transaction.json`, ilgili session
-   raporu, teklif/PDF alt günlükleri ve yedek yollarını koru.
+   raporu, PDF alt günlükleri ve yedek yollarını koru.
 2. BT, hangi işlem ve çocuk süreçlerin hâlâ çalıştığını belirlesin. Güncelleme kilidi
    dosyalarını sırf eski göründüğü için silme. İlgisiz kullanıcı süreçlerini kapatma.
 3. Yerel sürüm, dosya hash'i, PATH ve etkilenen istemci ayarlarını oku. Yedeklerin

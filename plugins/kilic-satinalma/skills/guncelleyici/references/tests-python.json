@@ -1,35 +1,32 @@
 {
-  "created_at": "2026-10-03T20:49:55.721180+00:00",
-  "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
-  "python": "3.13.5",
+  "created_at": "2026-10-04T17:53:42.828585+00:00",
+  "platform": "Windows-11-10.0.26300-SP0",
+  "python": "3.14.8",
   "status": "PASS",
-  "tests_run": 110,
+  "tests_run": 80,
   "failures": 0,
   "errors": 0,
-  "skipped": 0,
+  "skipped": 2,
   "categories": {
-    "source_contract_assertions": 10,
+    "source_contract_assertions": 12,
     "pro_audit_contracts": 14,
-    "python_fixture_tests": 86
+    "python_fixture_tests": 54
   },
   "python_syntax_checked": [
-    "scripts/teklif-guncelle.py",
-    "scripts/duckdb_pdf.py",
-    "scripts/islem_guvencesi.py",
-    "scripts/python-paket-kur.py",
-    "scripts/teklif_paket_legacy.py",
-    "scripts/kurulum-testi.py",
-    "scripts/mcp_ayar.py",
-    "scripts/claude_bagla.py",
-    "scripts/islev-testi.py",
-    "tests/test_pro_audit.py",
-    "tests/run_tests.py",
-    "tests/test_powershell_compat.py",
-    "tests/test_cli_and_edges.py",
-    "tests/test_bilesenler.py",
-    "tests/test_guvence.py",
-    "tests/test_teklif_paket.py",
-    "tests/test_chat_surface.py"
+    "scripts\\claude_bagla.py",
+    "scripts\\duckdb_pdf.py",
+    "scripts\\islem_guvencesi.py",
+    "scripts\\islev-testi.py",
+    "scripts\\kurulum-testi.py",
+    "scripts\\mcp_ayar.py",
+    "scripts\\python-paket-kur.py",
+    "tests\\run_tests.py",
+    "tests\\test_bilesenler.py",
+    "tests\\test_chat_surface.py",
+    "tests\\test_cli_and_edges.py",
+    "tests\\test_guvence.py",
+    "tests\\test_powershell_compat.py",
+    "tests\\test_pro_audit.py"
   ],
   "results": [
     {
@@ -66,7 +63,8 @@
     },
     {
       "test": "test_bilesenler.PackageTests.test_linux_installer_rejected_before_pip",
-      "status": "PASS"
+      "status": "NOT_RUN",
+      "reason": "Linux guard case"
     },
     {
       "test": "test_bilesenler.PackageTests.test_lock_hash_and_python_in_target",
@@ -121,6 +119,10 @@
       "status": "PASS"
     },
     {
+      "test": "test_bilesenler.SourceContractTests.test_blocked_rows_never_lose_reason_or_claim_absent",
+      "status": "PASS"
+    },
+    {
       "test": "test_bilesenler.SourceContractTests.test_core_and_wrapper_verify_defined",
       "status": "PASS"
     },
@@ -142,6 +144,10 @@
     },
     {
       "test": "test_bilesenler.SourceContractTests.test_pdf_unsigned_disabled_and_no_bulk_update",
+      "status": "PASS"
+    },
+    {
+      "test": "test_bilesenler.SourceContractTests.test_pnpm_native_binary_is_plan_pinned_and_never_run_through_node",
       "status": "PASS"
     },
     {
@@ -170,14 +176,6 @@
     },
     {
       "test": "test_cli_and_edges.CliTests.test_duckdb_local_scan_has_no_state_writes",
-      "status": "PASS"
-    },
-    {
-      "test": "test_cli_and_edges.CliTests.test_legacy_module_cannot_be_executed_as_installer",
-      "status": "PASS"
-    },
-    {
-      "test": "test_cli_and_edges.CliTests.test_offer_update_cannot_resolve_latest_implicitly",
       "status": "PASS"
     },
     {
@@ -282,7 +280,8 @@
     },
     {
       "test": "test_guvence.SafetyTests.test_symlink_rejected",
-      "status": "PASS"
+      "status": "NOT_RUN",
+      "reason": "symlink privilege unavailable"
     },
     {
       "test": "test_guvence.SafetyTests.test_wrong_identity",
@@ -337,7 +336,7 @@
       "status": "PASS"
     },
     {
-      "test": "test_pro_audit.ProMediumPriorityContracts.test_O4_offer_validation_has_single_python_prepare_update_path",
+      "test": "test_pro_audit.ProMediumPriorityContracts.test_O4_removed_offer_component_has_no_dispatch_or_installer",
       "status": "PASS"
     },
     {
@@ -350,126 +349,6 @@
     },
     {
       "test": "test_pro_audit.ProMediumPriorityContracts.test_O7_upstream_stable_is_not_mislabeled_corporate_approved",
-      "status": "PASS"
-    },
-    {
-      "test": "test_teklif_paket.ArchiveTests.test_bounded_replace_retry",
-      "status": "PASS"
-    },
-    {
-      "test": "test_teklif_paket.ArchiveTests.test_case_collision",
-      "status": "PASS"
-    },
-    {
-      "test": "test_teklif_paket.ArchiveTests.test_expanded_and_download_and_count_limits",
-      "status": "PASS"
-    },
-    {
-      "test": "test_teklif_paket.ArchiveTests.test_file_directory_collision",
-      "status": "PASS"
-    },
-    {
-      "test": "test_teklif_paket.ArchiveTests.test_hash_mismatch",
-      "status": "PASS"
-    },
-    {
-      "test": "test_teklif_paket.ArchiveTests.test_header_crlf",
-      "status": "PASS"
-    },
-    {
-      "test": "test_teklif_paket.ArchiveTests.test_manifest_mismatch",
-      "status": "PASS"
-    },
-    {
-      "test": "test_teklif_paket.ArchiveTests.test_reject_foreign_http_and_invalid_port",
-      "status": "PASS"
-    },
-    {
-      "test": "test_teklif_paket.ArchiveTests.test_release_mismatch",
-      "status": "PASS"
-    },
-    {
-      "test": "test_teklif_paket.ArchiveTests.test_schema3_cannot_add_other_skill",
-      "status": "PASS"
-    },
-    {
-      "test": "test_teklif_paket.ArchiveTests.test_semver",
-      "status": "PASS"
-    },
-    {
-      "test": "test_teklif_paket.ArchiveTests.test_symlink",
-      "status": "PASS"
-    },
-    {
-      "test": "test_teklif_paket.ArchiveTests.test_three_schemas",
-      "status": "PASS"
-    },
-    {
-      "test": "test_teklif_paket.ArchiveTests.test_unicode_collision",
-      "status": "PASS"
-    },
-    {
-      "test": "test_teklif_paket.ArchiveTests.test_unsafe_paths",
-      "status": "PASS"
-    },
-    {
-      "test": "test_teklif_paket.ArchiveTests.test_v4_missing_runtime",
-      "status": "PASS"
-    },
-    {
-      "test": "test_teklif_paket.OfferTests.test_bad_hash_no_mutation",
-      "status": "PASS"
-    },
-    {
-      "test": "test_teklif_paket.OfferTests.test_committed_cleanup_failure_is_warning",
-      "status": "PASS"
-    },
-    {
-      "test": "test_teklif_paket.OfferTests.test_component_version_not_release_label",
-      "status": "PASS"
-    },
-    {
-      "test": "test_teklif_paket.OfferTests.test_downgrade_and_same_version_rejected",
-      "status": "PASS"
-    },
-    {
-      "test": "test_teklif_paket.OfferTests.test_existing_locks_never_removed",
-      "status": "PASS"
-    },
-    {
-      "test": "test_teklif_paket.OfferTests.test_fresh_install_only_offer",
-      "status": "PASS"
-    },
-    {
-      "test": "test_teklif_paket.OfferTests.test_local_added_file_preserved",
-      "status": "PASS"
-    },
-    {
-      "test": "test_teklif_paket.OfferTests.test_pinned_component_rejected",
-      "status": "PASS"
-    },
-    {
-      "test": "test_teklif_paket.OfferTests.test_register_exact_tree",
-      "status": "PASS"
-    },
-    {
-      "test": "test_teklif_paket.OfferTests.test_rollback_failure_retains_journal",
-      "status": "PASS"
-    },
-    {
-      "test": "test_teklif_paket.OfferTests.test_state_version_mismatch_rejected",
-      "status": "PASS"
-    },
-    {
-      "test": "test_teklif_paket.OfferTests.test_state_write_failure_rolls_back",
-      "status": "PASS"
-    },
-    {
-      "test": "test_teklif_paket.OfferTests.test_unmanaged_tree_preserved",
-      "status": "PASS"
-    },
-    {
-      "test": "test_teklif_paket.OfferTests.test_upgrade_and_verify",
       "status": "PASS"
     }
   ],

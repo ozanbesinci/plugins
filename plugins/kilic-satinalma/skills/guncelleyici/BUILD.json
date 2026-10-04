@@ -1,35 +1,43 @@
 {
   "schema": "guncelleyici-build/v1",
-  "base_version": "2.2.1",
-  "build_id": "2026-10-04-v2.2.1-plugin-release",
-  "state": "source-release",
+  "base_version": "2.3.0",
+  "build_id": "2026-10-04-v2.3.0-standalone-release",
+  "state": "stable-source-release",
   "production_approved": false,
-  "windows_acceptance": "BLOCKED",
-  "native_pdf_extension_acceptance": "NOT_RUN",
-  "pro_audit_findings_applied": true,
+  "windows_acceptance": "PARTIAL",
+  "native_pnpm_staging_acceptance": "PASS",
+  "native_pdf_extension_acceptance": "PASS-smoke-only",
   "platform_contract": "Windows amd64 / Windows PowerShell 5.1",
   "explicit_apply_confirmation": "implemented",
   "approval_effects": "machine-readable",
-  "pro_audit_tests": "Historical110/110; current Windows108 PASS/2 NOT_RUN; native PS5.1 fixtures42+29 PASS",
   "shared_python_isolation": "mitigated-maintenance-window; dedicated-venv-not-activated",
   "corporate_approved_version_catalog": "not-configured",
   "production_blockers": [
-    "pnpm12.9.1 verified launcher requires secondary binary download; offline/ignore-scripts safeguards preserved",
-    "Offer scan Python TLS certificate chain validation blocked",
-    "Excel COM FAIL: Excel absent from Sandbox",
-    "Actual Codex/Claude clients and remaining native fault/existing-environment matrix NOT_RUN",
-    "Optional native DuckDB PDF and personnel pilot NOT_RUN"
+    "Excel COM and actual Codex/Claude client integration not revalidated for v2.3.0",
+    "Full native installation/recovery fault matrix and personnel pilot NOT_RUN",
+    "PDF Turkish OCR and real table accuracy NOT_RUN"
   ],
   "user_surface": "chatgpt-desktop-work-or-codex-chat-only",
   "terminal_required_for_end_user": false,
-  "source_release_version": "2.2.1",
+  "source_release_version": "2.3.0",
   "source_repository": "ozanbesinci/guncelleyici",
   "distribution_path": "skills/guncelleyici/",
-  "github_release_note": "Versioned source/package release; actual publication is tracked by GitHub Release and external receipt. production_approved=false; Windows acceptance BLOCKED.",
-  "github_release_tag": "v2.2.1",
+  "github_release_note": "Stable standalone source/package release; GitHub publication is verified externally. This is not personnel-wide production approval.",
+  "github_release_tag": "v2.3.0",
   "github_release_assets": [
     "skill.zip",
     "skill.zip.sha256"
   ],
-  "windows_evidence": "references/WINDOWS_KABUL_2026-10-04.json"
+  "windows_evidence": "references/RELEASE_TESTS_2.3.0.json",
+  "historical_windows_evidence": "references/WINDOWS_KABUL_2026-10-04.json",
+  "managed_components": [
+    "python",
+    "libraries",
+    "node",
+    "pnpm",
+    "duckdb",
+    "powerbi",
+    "pdf (opt-in)"
+  ],
+  "offer_skill_management": "removed"
 }

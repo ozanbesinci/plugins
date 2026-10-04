@@ -4,6 +4,17 @@ Sürümleme: büyük sürüm akış değişikliklerini, küçük sürüm yeni a�
 kontrolleri, yama sürümü düzeltmeleri belirtir. Yayımlanmamış değişiklikler
 yerel geliştirme durumundadır.
 
+## v2.3.0 — 2026-10-04 — Bağımsız güncelleyici ve pnpm native düzeltmesi
+
+- 2026-10-04: Ortak'ın talimatıyla teklif-değerlendirme sürüm kontrolü, kurulum/güncelleme/doğrulama yolu ve ilgili araç/talimatlar kaldırıldı. Ana tablo altı program bileşeni içerir; PDF destekleyen kaynakta isteğe bağlı yedinci satır korunur.
+
+- pnpm 12+ yerel (`pnpm.exe`) kurulumları Node ile betik gibi çalıştırıldığı için sürümsüz/yönetilmeyen görünüyordu; yerel ikili artık doğrudan sorgulanır. Kurulu pnpm "Yüklü değil" olarak raporlanmaz; engelli satırlar gerekçesiz kalmaz.
+- pnpm 12+ güncellemesi: `@pnpm/exe.win32-x64` tarball'ı ve SHA-512'si taramada plana bağlanır; uygulamada iki paket de doğrulanır, scriptler/isteğe bağlı bağımlılıklar kapalı kalır, ikili doğrulanmış paketten çıkarılıp shim'ler doğrudan ona bağlanır. Offline/ignore-scripts koruması kaldırılmadı; başlatıcı çalıştırılmadığı için ikinci indirmeye gerek kalmaz.
+- Test düzeneği: `test_scan.ps1` fixture kökü 8.3 kısa TEMP yolundan (`OZANBE~1`) kanonik uzun yola çevrildi; Power BI kontrolü gevşetilmedi. pnpm regresyonları bağımsız koşabilen `tests/test_pnpm.ps1` girişine taşındı ve `test_windows.ps1` tarafından da çağrılır.
+- Gerçek pnpm 12.9.1 geçici kurulumu: ana/ikili tarball SHA-512, offline npm kurulumu, native probe ve CMD/PowerShell shim'leri dahil altı kontrol PASS. Kullanıcının canlı pnpm kurulumu değiştirilmedi.
+- Windows PowerShell 5.1: genel47 + pnpm29 + tarama21 PASS. Python78 PASS/2 NOT_RUN. DuckDB1.5.6 PDF6535c81 imzalı LOAD ve sentetik metin smoke testi PASS.
+- Bağımsız ZIP için deterministik paketleyici ve güncel manifest eklendi. Plugin kurulumundan bağımsız kaynak/paket yayınıdır. `production_approved=false`; kalan gerçek istemci/Excel/kurtarma matrisi ve personel pilotu açık.
+
 ## v2.2.1 — 2026-10-04 — Windows düzeltmeleri ve plugin paketi
 
 - Gerçek PowerShell5.1 atomik JSON yazımında null yedek yolu düzeltildi; otomatik Bypass kaldırıldı.

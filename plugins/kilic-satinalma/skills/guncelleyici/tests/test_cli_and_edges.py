@@ -31,12 +31,6 @@ class CliTests(unittest.TestCase):
             p=Path(td)/'config.toml';p.write_bytes(b'model="keep"\n')
             r=self.call('mcp_ayar.py','codex','--path',str(p),'--exe','fixture.exe')
             self.assertEqual(r.returncode,2);self.assertEqual(p.read_bytes(),b'model="keep"\n')
-    def test_offer_update_cannot_resolve_latest_implicitly(self):
-        with tempfile.TemporaryDirectory() as td:
-            root=Path(td)/'skills';r=self.call('teklif-guncelle.py','update','--root',str(root))
-            self.assertEqual(r.returncode,2);self.assertEqual(json.loads(r.stdout)['status'],'error');self.assertFalse(root.exists())
-    def test_legacy_module_cannot_be_executed_as_installer(self):
-        r=self.call('teklif_paket_legacy.py');self.assertNotEqual(r.returncode,0)
 
 class ConfigEdgeTests(unittest.TestCase):
     def test_duplicate_json_keys_rejected(self):

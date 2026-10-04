@@ -131,6 +131,16 @@ class SourceContractTests(unittest.TestCase):
         s=self.text('panel.ps1');self.assertNotIn('Remove-LegacySkill',s);self.assertNotIn('ShowDialog',s)
     def test_pnpm_pinned_hash_and_no_install_scripts(self):
         s=self.text('pnpm-kur.ps1');self.assertIn('$target.integrity',s);self.assertIn("'--offline'",s);self.assertIn("'--ignore-scripts'",s)
+    def test_pnpm_native_binary_is_plan_pinned_and_never_run_through_node(self):
+        s=self.text('pnpm-kur.ps1')
+        # The platform binary is resolved only at scan time and verified against the approved SHA-512 at apply.
+        self.assertIn("$NATIVE_PAKET='@pnpm/exe.win32-x64'",s);self.assertIn('$native.integrity',s);self.assertIn("'--omit=optional'",s)
+        self.assertEqual(s.count('Get-RemoteJson'),2);self.assertLess(s.index('Get-RemoteJson ('),s.index('$target=Read-Target'))
+        self.assertIn("if ($entry -like '*.exe') { $r=Invoke-Native $bin @('--version') 30 }",s)
+        self.assertIn("Save-TgzMember $exeTgz 'package/pnpm.exe' $exeFile",s);self.assertNotIn('npx',s)
+    def test_blocked_rows_never_lose_reason_or_claim_absent(self):
+        s=self.text('core.ps1')
+        self.assertIn("if(-not $note){$note=",s);self.assertIn("'Yüklü · sürüm doğrulanamadı'",s)
     def test_pdf_unsigned_disabled_and_no_bulk_update(self):
         s=self.text('duckdb_pdf.py');self.assertIn('"allow_unsigned_extensions": False',s);self.assertNotIn('UPDATE EXTENSIONS;',s)
     def test_all_installers_require_explicit_target(self):

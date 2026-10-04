@@ -2,7 +2,7 @@
 
 ## İş akışı
 
-PDF, mevcut yedi bileşenden ayrı sekizinci satırdır; varsayılan seçim kapalıdır.
+PDF, mevcut altı bileşenden ayrı yedinci satırdır; varsayılan seçim kapalıdır.
 `sohbet.ps1 -Action scan -IncludePdf` sırasında kurulu DuckDB'nin sürümü, platformu,
 yorumlayıcısı ve eklenti dizini gözlenir. PDF yüklenmez. İlgili `windows_amd64`
 Community ikilisi HTTPS üzerinden sınırlandırılmış indirmeyle önbelleğe alınır;

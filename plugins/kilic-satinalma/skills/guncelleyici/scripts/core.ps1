@@ -9,10 +9,9 @@ if($skillItem.Attributes -band [IO.FileAttributes]::ReparsePoint){
     if(-not [IO.Path]::IsPathRooted($resolved)){$resolved=Join-Path (Split-Path $script:Skill -Parent) $resolved}
     $script:Skill=[IO.Path]::GetFullPath($resolved)
 }
-$script:SkillsRoot=Split-Path $script:Skill -Parent
 $script:Python=$null;$script:Node=$null
 $script:StateRoot=Join-Path $env:LOCALAPPDATA 'guncelleyici'
-$script:Names=[ordered]@{python='Python';libraries='Python kütüphaneleri (12)';node='Node.js LTS';pnpm='pnpm';duckdb='DuckDB';powerbi='Power BI Modeling MCP';offer='teklif-degerlendirme';pdf='DuckDB PDF eklentisi (isteğe bağlı)'}
+$script:Names=[ordered]@{python='Python';libraries='Python kütüphaneleri (12)';node='Node.js LTS';pnpm='pnpm';duckdb='DuckDB';powerbi='Power BI Modeling MCP';pdf='DuckDB PDF eklentisi (isteğe bağlı)'}
 function Invoke-PS([string]$Name,[string[]]$Extra,[int]$Timeout=1800){
     return Invoke-Json "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" (@('-NoProfile','-File',(Join-Path $PSScriptRoot $Name))+$Extra) $Timeout
 }
@@ -61,19 +60,6 @@ function Get-Observation([string]$Key,[switch]$LocalOnly,[string]$Cache,[bool]$R
             $args=@($psMode,'-PythonYolu',([string]$script:Python));if($Cache){$args+=@('-CacheRoot',$Cache)}
             return Invoke-PS 'powerbi-mcp-kur.ps1' $args 600
         }
-        'offer'{
-            $path=Join-Path $script:SkillsRoot 'teklif-degerlendirme'
-            if(-not $script:Python){
-                $v=$null;$vf=Join-Path $path 'VERSION';if(Test-Path -LiteralPath $vf){$v=(Get-Content -LiteralPath $vf -Raw).Trim()}
-                return [pscustomobject]@{local=@{version=$v;path=$path};target=$null;blocked=$true;neden='Paket bütünlüğünü doğrulamak için desteklenen Python gerekli.'}
-            }
-            $action=if($LocalOnly){'probe'}else{'prepare'}
-            $args=@('-B',(Join-Path $PSScriptRoot 'teklif-guncelle.py'),$action,'--root',$script:SkillsRoot)
-            if(-not $LocalOnly){$args+=@('--cache',$Cache)}
-            $r=Invoke-Json $script:Python $args 300
-            $r|Add-Member -NotePropertyName blocked -NotePropertyValue (-not [bool](Read-Field (Read-Field $r 'local') 'managed' $false)) -Force
-            return $r
-        }
         'pdf'{
             if(-not $script:Python){return [pscustomobject]@{local=@{python=$null};target=$null;blocked=$true;neden='Önce Python ve DuckDB kurulmalı.'}}
             $action=if($LocalOnly){'probe'}else{'scan'}
@@ -96,6 +82,8 @@ function Get-DisplayVersion([string]$Key,$Observation){
     $v=Read-Field $Observation 'surum'
     if(-not $v){$v=Read-Field (Read-Field $Observation 'local') 'version'}
     if($v){return [string]$v}
+    # A found-but-unverifiable install must never be reported as absent.
+    if([bool](Read-Field (Read-Field $Observation 'local') 'unmanaged' $false)){return 'Yüklü · sürüm doğrulanamadı'}
     return 'Yüklü değil / doğrulanamadı'
 }
 function Get-LibraryEffects($Before,$Target,[bool]$Repair){
@@ -119,7 +107,6 @@ function Get-ComponentEffects([string]$Key,$Before,$Target,[bool]$Repair){
         'pnpm'{return @([pscustomobject]@{type='shared_runtime';action=$(if($Repair){'reinstall'}else{'install_or_upgrade'});target=[string]$Target.version;user_path_change=$true;previous_tree_backup=$true})}
         'duckdb'{return @([pscustomobject]@{type='shared_python_environment';action=$(if($Repair){'force_reinstall'}else{'install_or_upgrade'});target=[string]$Target.version;pip_user_possible=$true;transactional_rollback=$false})}
         'powerbi'{return @([pscustomobject]@{type='mcp_server';action=$(if($Repair){'reinstall'}else{'install_or_upgrade'});target=[string]$Target.version;client_binding='Codex/Claude only when clients are closed; unknown fields preserved';restart_required=$true})}
-        'offer'{return @([pscustomobject]@{type='skill_tree';action='replace_verified_managed_tree';target=[string]$Target.version;local_modifications_block_update=$true;previous_tree_backup=$true})}
         'pdf'{return @([pscustomobject]@{type='community_extension';action=$(if($Repair){'reinstall'}else{'install_or_upgrade'});engine=[string]$Target.engine;sha256=[string]$Target.sha256;optional=$true;native_test_required=$true})}
     }
     return @()
@@ -149,10 +136,10 @@ function Build-Plan([bool]$IncludePdf,[string[]]$RepairKeys){
                     if(-not $installedVersion){$ready=$true;$status='Kurulum seçilebilir'}
                     elseif($installedVersion -notmatch '^\d+\.\d+\.\d+$'){$blocked=$true;$status='Özel/ön sürüm kurulum; otomatik değişiklik yok'}
                     elseif([version]$installedVersion -lt [version]$target.version){$ready=$true;$status='Güncelleme seçilebilir'}
-                    elseif([version]$installedVersion -eq [version]$target.version){$ready=$repair -and $key -ne 'offer';$status=if($ready){'Açık onarım seçimi'}else{'Sürüm güncel'}}
+                    elseif([version]$installedVersion -eq [version]$target.version){$ready=$repair;$status=if($ready){'Açık onarım seçimi'}else{'Sürüm güncel'}}
                     else{$status='Yüklü sürüm yayından yeni; değiştirilmez'}
                 }
-            }elseif($blocked){$status='Bağımlılık/bütünlük nedeniyle uygulanamaz'}
+            }elseif($blocked){$status='Bağımlılık/bütünlük nedeniyle uygulanamaz';if(-not $note){$note='Bileşen engel nedeni bildirmedi; otomatik değişiklik yapılmaz, yeniden tarayın.'}}
             $health=Read-Health $key $before
             $pending=$health -and ((Read-Field $health 'health') -eq 'FAIL' -or [bool](Read-Field $health 'pending' $false))
             if($pending){$status+=' · önceki kontrol/bağlantı eksikliği sürüyor'}
@@ -196,10 +183,6 @@ function Invoke-Selected([string]$Key,$Component,[string]$SessionPath){
         'libraries'{if(-not $script:Python){throw 'Python yok.'};return Invoke-Json $script:Python (@('-B',(Join-Path $PSScriptRoot 'kurulum-testi.py'))+$py) 1800}
         'duckdb'{if(-not $script:Python){throw 'Python yok.'};return Invoke-Json $script:Python (@('-B',(Join-Path $PSScriptRoot 'python-paket-kur.py'),'duckdb')+$py) 1800}
         'powerbi'{return Invoke-PS 'powerbi-mcp-kur.ps1' ($ps+@('-PythonYolu',([string]$script:Python))) 900}
-        'offer'{
-            $t=$Component.target
-            return Invoke-Json $script:Python @('-B',(Join-Path $PSScriptRoot 'teklif-guncelle.py'),'update','--root',$script:SkillsRoot,'--archive',$t.archive,'--sha256',$t.sha256,'--release',$t.release,'--expected-version',$t.version) 600
-        }
         'pdf'{return Invoke-Json $script:Python (@('-B',(Join-Path $PSScriptRoot 'duckdb_pdf.py'),'apply')+$py) 600}
     }
     throw 'Bilinmeyen bileşen.'
@@ -276,7 +259,7 @@ function Apply-Plan([string]$PlanFile,[string]$Fingerprint,[string[]]$Keys,[bool
                 $state=Read-Field $r 'ozet' ''
                 if(-not $state){$state=if((Read-Field $r 'status') -in 'installed','up_to_date'){'GEÇTİ'}else{'ENGEL'}}
                 $actual=Read-Field (Read-Field $after 'local') 'version'
-                if($component.key -in 'python','node','pnpm','duckdb','powerbi','offer' -and $state -eq 'GEÇTİ' -and $actual -cne $component.target.version){$state='ENGEL';$r|Add-Member -NotePropertyName neden -NotePropertyValue 'Yerel son durum onaylanan hedefle aynı değil.' -Force}
+                if($component.key -in 'python','node','pnpm','duckdb','powerbi' -and $state -eq 'GEÇTİ' -and $actual -cne $component.target.version){$state='ENGEL';$r|Add-Member -NotePropertyName neden -NotePropertyValue 'Yerel son durum onaylanan hedefle aynı değil.' -Force}
                 if($component.key -eq 'pdf' -and (Read-Field (Read-Field $after 'local') 'sha256') -cne $component.target.sha256){$state='ENGEL'}
                 $health=Read-Field $r 'health' 'NOT_RUN';if($state -eq 'ENGEL'){$health='FAIL'}
                 $receipt=@{checked_at=[DateTime]::UtcNow.ToString('o');local_fingerprint=(Object-Fingerprint (Read-Field $after 'local'));health=$health;pending=($state -ne 'GEÇTİ');result=$r}
@@ -304,7 +287,7 @@ function Apply-Plan([string]$PlanFile,[string]$Fingerprint,[string[]]$Keys,[bool
 }
 
 function Verify-Selected([string[]]$Keys){
-    if(-not $Keys.Count){$Keys=@('python','libraries','node','pnpm','duckdb','powerbi','offer')}
+    if(-not $Keys.Count){$Keys=@('python','libraries','node','pnpm','duckdb','powerbi')}
     foreach($key in $Keys){if($key -notin $script:Names.Keys){throw 'Bilinmeyen kontrol bileşeni.'}}
     $guard=Enter-Guard
     try{
@@ -326,11 +309,6 @@ function Verify-Selected([string[]]$Keys){
                     'duckdb'{
                         if(-not $script:Python){throw 'Python bulunamadı.'}
                         $r=Invoke-Json $script:Python @('-B',(Join-Path $PSScriptRoot 'python-paket-kur.py'),'duckdb','--test-only') 180
-                    }
-                    'offer'{
-                        if(-not $script:Python){throw 'Python bulunamadı.'}
-                        $r=Invoke-Json $script:Python @('-B',(Join-Path $PSScriptRoot 'teklif-guncelle.py'),'verify','--root',$script:SkillsRoot) 180
-                        $r|Add-Member -NotePropertyName ozet -NotePropertyValue $(if((Read-Field $r 'status') -eq 'verified'){'GEÇTİ'}else{'ENGEL'}) -Force
                     }
                     'pdf'{
                         if(-not $script:Python){throw 'Python bulunamadı.'}

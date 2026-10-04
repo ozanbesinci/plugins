@@ -1,4 +1,29 @@
-# Güncelleyici2.2.1 — Windows kabul ve paket durumu
+# Güncelleyici 2.3.0 — Sürüm doğrulama raporu
+
+4 Ekim 2026, Windows amd64 / Windows PowerShell 5.1 / Python 3.14.8.
+
+| Kontrol | Sonuç |
+|---|---|
+| Python regresyon ve kaynak sözleşmeleri | 78 PASS, 2 NOT_RUN; 0 hata |
+| PS5.1 parser/orkestrasyon | 47 PASS |
+| pnpm regresyonları | 29 PASS |
+| Sürüm tarama regresyonları | 21 PASS |
+| Gerçek pnpm 12.9.1 geçici kurulum | 6 PASS; ana/ikili tarball SHA-512, offline/ignore-scripts, dört shim, gerçek CMD ve PowerShell yürütme |
+| DuckDB PDF | PASS: 1.5.6/windows_amd64, 6535c81; imza doğrulaması açık, sentetik tek sayfa golden metin |
+| Teklif yönetimi | Kaldırıldı; eski offer apply/verify seçimi reddedilir |
+| Genel üretim onayı | false; kalan native matris, Excel COM, gerçek istemciler ve personel pilotu NOT_RUN |
+
+Makine-okunur güncel kanıt: [RELEASE_TESTS_2.3.0.json](RELEASE_TESTS_2.3.0.json).
+Python NOT_RUN kayıtları: Windows'ta Linux platform vakası ve symlink oluşturma yetkisinin yokluğu.
+Native pnpm testi yalnız kendisine ait geçici prefix kullanır ve başarılı sonuçta temizler; canlı kurulum yapmaz.
+PDF kontrolü kurulu imzalı eklentiyi yükler; Türkçe OCR/gerçek tablo doğruluğu veya PDF kurulum/kurtarma matrisi kabulü değildir.
+Manifest ve ZIP byte eşleşmesi `tools/build_release.py` ile paket üretiminde doğrulanır; nihai ZIP SHA-256 ayrı varlıkta yayımlanır.
+
+---
+
+## Tarihsel 2.2.1 — Windows kabul ve paket durumu
+
+> Yerel kaynak kapsamı 2026-10-04'te değişti: pnpm düzeltmesinden sonra teklif-değerlendirme kontrol/kurulum yolu kaldırıldı. Aşağıdaki teklif satırları ve kaynak parmak izi eski yayımlanmış paketin tarihsel kanıtıdır. Yeni yerel kaynak: Python 78 PASS/2 skip, Windows pnpm29 + tarama21 + genel46 PASS; canlı kurulum ve native staging bu değişiklikte çalıştırılmadı. Yeni paket/üretim kabulü anlamına gelmez.
 
 4 Ekim2026 normal test hesabında gerçek Windows PowerShell5.1 x64. Native kaynak294cae9f831bcdade53fc1f87c446fb73a794fcbee02faab70e1db1926172deb;2.2.1 yayın metadata/dokümantasyonudur, scripts/tests/config byte'ları aynıdır.
 

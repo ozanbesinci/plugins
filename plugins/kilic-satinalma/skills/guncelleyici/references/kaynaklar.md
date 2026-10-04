@@ -2,6 +2,7 @@
 
 ## Esas alınan kaynak
 
+- 2.3.0: yayımlanmış 2.2.1 temeli `ec37678d8f031f0b253c327592dc4984b02aaf31`; pnpm native düzeltmesi ve teklif yönetimi kaldırma değişiklikleri. Güncel ölçümler: `RELEASE_TESTS_2.3.0.json`. Aşağıdaki 2.1/2.2 kaynak izi tarihsel kökendir.
 - Kurulu `kilic-satinalma/guncelleyici` skill'i; 2.1.0 giriş ve betik davranışları.
 - Bağlı GitHub üzerinden okunmuş `ozanbesinci/guncelleyici`, `skills/guncelleyici`.
   İnceleme sırasında görülen ağaç kimliği: `d1ec8ffdd38b087775cd1fddcd87324b21885553`.

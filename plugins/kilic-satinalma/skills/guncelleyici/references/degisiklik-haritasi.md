@@ -2,8 +2,7 @@
 
 ## Uygulanan kaynak değişiklikleri
 
-Bu paket 2.1.0 giriş davranışı, program kaynakları, 12 paket kilidi ve teklif arşivi
-kuralları esas alınarak yayımlanmış **2.2.0 kaynak sürümüdür**. Native Windows kabulü
+Bu paket **2.3.0 bağımsız kaynak sürümüdür**; 2.2.1 temelinde pnpm native düzeltmesi ve teklif yönetiminin çıkarılmasını içerir. PS5.1 regresyonları, gerçek pnpm geçici kurulumu ve PDF smoke testi geçti. Genel üretim kabulü
 tamamlanmadığı için `production_approved=false` korunur. Çalışan kurulumun
 birebir klonu veya yalnız metin düzeltmesi değildir: ortak `core.ps1` ve
 `program-ortak.ps1` çıkarılmış, kurucu girişleri hash-bağlı hedef arayüzüne uyarlanmış,
@@ -15,7 +14,7 @@ bazı eski kod yolları değiştirilmiştir. Dolayısıyla yeni Windows regresyo
 | TOCTOU | Hedefler taramada sabit; kilit altında yerel yeniden doğrulama; uygulamada rolling latest yok; operasyonel scripts/config/references/SKILL/BUILD parmak izine bağlı |
 | MCP ayarı | JSON/TOML alan koruma, byte yedeği, doğrulama; açık istemcide erteleme; Claude Code için kendi CLI'sı |
 | Sürüm/sağlık | Sürüm güncelliği ayrı; işlev makbuzu, pending, NOT_RUN; açık verify/repair |
-| Geri dönüş | Node/pnpm son konum testi; PBI yeni klasör; teklif/PDF günlük ve yedek; belirsiz kısmi değişimde durma |
+| Geri dönüş | Node/pnpm son konum testi; PBI yeni klasör; PDF günlük ve yedek; belirsiz kısmi değişimde durma |
 | Rapor | Session planı, seçilenler, eski skill temizliği, son gözlem, alt sonuçlar ve kurtarma gereği |
 | PDF | İsteğe bağlı ayrı satır, motor/platform/hash eşleşmesi, imzasız mod yok |
 
@@ -35,8 +34,7 @@ güvenlik ayarını değiştirmeyen, Excel'i başlatmayan dar ön kontrol vardı
 
 ## Kalan / ayrıca doğrulanacak işler
 
-- Gerçek Windows PowerShell 5.1, native kurucular, Authenticode, Excel COM ve native
-  DuckDB PDF testi bu hazırlama ortamında çalıştırılmadı.
+- Güncel PS5.1 regresyonları, gerçek pnpm geçici kurulumu ve imzalı DuckDB PDF LOAD/metin smoke testi PASS. Tüm native kurucuların hata/kurtarma matrisi, Excel COM ve gerçek istemci entegrasyonu 2.3.0 ile tamamlanmadı.
 - Python venv'e otomatik taşınmadı. Ortak paket ortamı için bakım kısıtı var; dış
   süreçlerin sonradan başlamasını OS düzeyinde engellemez. Tüketici skill'le birlikte
   yorumlayıcı/venv geçişi ayrı entegrasyon ve kabul gerektirir.
@@ -45,5 +43,4 @@ güvenlik ayarını değiştirmeyen, Excel'i başlatmayan dar ön kontrol vardı
   sabitlenir; kurumsal onaylı olduğu ileri sürülmez.
 - PDF'nin Türkçe OCR / gerçek teklif tablosu doğruluğu ölçülmedi. Smoke testi bunu
   yerine geçmez. Community eklentisi OS sandbox içinde çalıştırılmıyor.
-- Kurulu ChatGPT eklentisi, yerel personel bilgisayarları ve GitHub depoları bu
-  dosya teslimiyle güncellenmiş değildir; paket yalnız geliştirme çıktısıdır.
+- Kaynak/paket GitHub yayını, kurulu plugin'i veya personel bilgisayarlarını güncellemez. Gerçek yayın etiketi ve varlıklar GitHub Release üzerinden doğrulanır.

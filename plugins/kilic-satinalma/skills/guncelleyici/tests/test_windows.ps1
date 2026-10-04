@@ -68,7 +68,7 @@ $result=[ordered]@{version=$PSVersionTable.PSVersion.ToString();edition=$PSVersi
         . (Join-Path $skill 'scripts\core.ps1')
         $script:StateRoot=Join-Path $testRoot 'state'
     }
-    $script:Versions=@{python='1.0.0';node='1.0.0';pnpm='1.0.0';duckdb='1.0.0';powerbi='1.0.0';offer='1.0.0';libraries='1.0.0';pdf='1.0.0'}
+    $script:Versions=@{python='1.0.0';node='1.0.0';pnpm='1.0.0';duckdb='1.0.0';powerbi='1.0.0';libraries='1.0.0';pdf='1.0.0'}
     $script:InstallCalls=0
     function Get-Observation([string]$Key,[switch]$LocalOnly,[string]$Cache,[bool]$Repair=$false){
         return [pscustomobject]@{local=[ordered]@{version=$script:Versions[$Key];path=('fixture/'+$Key)};surum=$script:Versions[$Key];target=$(if($LocalOnly){$null}else{[pscustomobject]@{version='2.0.0';repair=$Repair}});blocked=$false;matched=0;health='NOT_RUN'}
@@ -96,7 +96,14 @@ $result=[ordered]@{version=$PSVersionTable.PSVersion.ToString();edition=$PSVersi
     Check ((File-Sha256 $atomicPath) -ceq $atomicBefore) 'Atomic JSON failed replacement preserves original'
     Check (@(Get-ChildItem -LiteralPath $testRoot -Filter '.write-*' -File).Count -eq 0) 'Atomic JSON temporary files cleared after failure'
     $scan=Build-Plan $false @()
-    Check ($scan.rows.Count -eq 8) 'Eight rows including optional PDF'
+    Check ($scan.rows.Count -eq 7) 'Seven rows including optional PDF'
+    Check (@($scan.rows|Where-Object {$_.key -eq 'offer'}).Count -eq 0) 'Removed offer component absent from scan'
+    $removedRejected=$false
+    try{$null=Apply-Plan $scan.plan_file $scan.fingerprint @('offer') $true $true}catch{$removedRejected=$true}
+    Check ($removedRejected -and $script:InstallCalls -eq 0) 'Former offer selection rejected before installation'
+    $removedRejected=$false
+    try{$null=Verify-Selected @('offer')}catch{$removedRejected=$true}
+    Check $removedRejected 'Former offer verification rejected'
     Check ($scan.status -eq 'selection_required') 'Update candidates returned'
     Check ($script:InstallCalls -eq 0) 'Scan never invokes install'
     Check (-not (Test-Path -LiteralPath $script:StateRoot)) 'Scan does not persist installation state'
@@ -123,7 +130,7 @@ $result=[ordered]@{version=$PSVersionTable.PSVersion.ToString();edition=$PSVersi
     Check ($done.status -eq 'completed') 'Approved fixture installation completes'
     Check ($script:InstallCalls -eq 1) 'Only selected component invoked'
     Check ($done.maintenance.Count -eq 1) 'Maintenance result retained'
-    Check ((Get-Content -LiteralPath $done.report -Raw|ConvertFrom-Json).rows.Count -eq 8) 'Audit result contains final rows'
+    Check ((Get-Content -LiteralPath $done.report -Raw|ConvertFrom-Json).rows.Count -eq 7) 'Audit result contains final rows'
     Check (-not (Test-Path -LiteralPath (Join-Path $script:StateRoot 'active-transaction.json'))) 'Completed transaction journal cleared'
     $guard=Enter-Guard
     try{
@@ -133,6 +140,7 @@ $result=[ordered]@{version=$PSVersionTable.PSVersion.ToString();edition=$PSVersi
     $sample=[pscustomobject]@{tools=@([pscustomobject]@{name='single'})}
     $value=Read-Field $sample 'tools'
     Check ($value -is [array] -and $value.Count -eq 1) 'Single-item arrays preserved by field reader'
+    & (Join-Path $PSScriptRoot 'test_pnpm.ps1')
     & (Join-Path $PSScriptRoot 'test_scan.ps1')
     $summary=[ordered]@{suite='Windows PowerShell 5.1 offline syntax/orchestration';status='PASS';assertions=$results.Count;results=$results.ToArray();live_installations='NOT_RUN';excel_com='NOT_RUN';authenticode_chain='NOT_RUN';pdf_native_extension='NOT_RUN'}
     '@@TEST '+($summary|ConvertTo-Json -Depth 8 -Compress)

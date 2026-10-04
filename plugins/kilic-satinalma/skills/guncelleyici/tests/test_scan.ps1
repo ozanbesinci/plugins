@@ -19,14 +19,13 @@ function Function-Source([string]$File,[string]$Name){
 . ([scriptblock]::Create((Function-Source 'python-kur.ps1' 'Python-Target')))
 . ([scriptblock]::Create((Function-Source 'node-kur.ps1' 'NodeTarget')))
 . ([scriptblock]::Create((Function-Source 'powerbi-mcp-kur.ps1' 'PbiLocal')))
-. ([scriptblock]::Create((Function-Source 'pnpm-kur.ps1' 'Find-Pnpm')))
+# pnpm regressions live in test_pnpm.ps1 so they run even when an unrelated fixture here fails.
 # Retain the production HTTP helper. Replace only HTTP transport with JSON-shaped fixtures.
 function Invoke-RestMethod {
     param($Uri,$Method,$MaximumRedirection,$TimeoutSec,$Headers,[switch]$UseBasicParsing,$ErrorAction)
     if($Uri -like '*release_file/*'){return ,$script:Files}
     if($Uri -like '*downloads/release/*'){return ,$script:Releases}
     if($Uri -eq 'https://nodejs.org/dist/index.json'){return ,$script:NodeReleases}
-    if($Uri -eq 'https://registry.npmjs.org/pnpm/latest'){return $script:PnpmMetadata}
     throw ('Unexpected offline request: '+$Uri)
 }
 function Invoke-WebRequest {
@@ -77,10 +76,13 @@ Check ($effects[2].package -ceq 'package3' -and $effects[2].action -ceq 'install
 Check (@(Get-LibraryEffects $before ([pscustomobject]@{packages=@()}) $false).Count -eq 0) 'Empty library list produces no effects'
 $single=@(Get-LibraryEffects ([pscustomobject]@{packages=@{}}) ([pscustomobject]@{packages=@($packages[0])}) $false)
 Check ($single.Count -eq 1 -and $single[0].package -ceq 'package1') 'Single library array retains package identity'
-$testRoot=Join-Path $env:TEMP ('s-'+[guid]::NewGuid().ToString('N').Substring(0,8))
-[void][IO.Directory]::CreateDirectory($testRoot)
+$rawRoot=Join-Path $env:TEMP ('s-'+[guid]::NewGuid().ToString('N').Substring(0,8))
+[void][IO.Directory]::CreateDirectory($rawRoot)
+# TEMP may be an 8.3 short path (C:\Users\OZANBE~1\...). Get-ChildItem returns long FullName values,
+# so expected paths must be built from the same canonical root or exact path checks compare two spellings.
+$testRoot=(Get-Item -LiteralPath $rawRoot -Force).FullName
+'@@SCAN_DIAG '+([ordered]@{temp=$env:TEMP;raw_root=$rawRoot;canonical_root=$testRoot;short_name_expanded=($rawRoot -cne $testRoot)}|ConvertTo-Json -Compress)
 $oldEnv=@{};foreach($key in @('USERPROFILE','APPDATA','LOCALAPPDATA','CODEX_HOME','CLAUDE_CONFIG_DIR')){$oldEnv[$key]=[Environment]::GetEnvironmentVariable($key,'Process')}
-$oldCulture=[Threading.Thread]::CurrentThread.CurrentCulture
 $oldHome=$HOME
 try{
     $env:USERPROFILE=Join-Path $testRoot 'profile';$env:APPDATA=Join-Path $testRoot 'roaming';$env:LOCALAPPDATA=Join-Path $testRoot 'local'
@@ -102,43 +104,18 @@ try{
     $config=Join-Path $codex 'config.toml';[IO.File]::WriteAllText($config,'fixture-config')
     $configHash=File-Sha256 $config
     $pbi=PbiLocal
+    if($pbi.path -cne $exe){'@@SCAN_DIAG '+([ordered]@{pbi_expected=$exe;pbi_observed=$pbi.path;pbi_version=$pbi.version}|ConvertTo-Json -Compress)}
     Check ($pbi.version -ceq '1.0.0' -and $pbi.path -ceq $exe) 'Power BI fixture metadata and binary discovered without server launch'
     Check ($pbi.config_hashes[$config] -ceq $configHash -and (File-Sha256 $config) -ceq $configHash -and $HOME -ceq $oldHome) 'Power BI default config discovery preserves config and HOME'
     $env:CODEX_HOME=Join-Path $testRoot 'custom codex';[void][IO.Directory]::CreateDirectory($env:CODEX_HOME)
     $custom=Join-Path $env:CODEX_HOME 'config.toml';[IO.File]::WriteAllText($custom,'custom-fixture')
     Check ((PbiLocal).config_hashes.Contains($custom)) 'Power BI honors explicit CODEX_HOME in fixture'
-    $script:PnpmRoot=Join-Path $testRoot 'pnpm';[void][IO.Directory]::CreateDirectory($script:PnpmRoot)
-    [IO.File]::WriteAllText((Join-Path $script:PnpmRoot 'pnpm.cmd'),'fixture shim; never executed')
-    function Get-PathFolders {return @($script:PnpmRoot)}
-    function ProbePnpm {return $null}
-    $KURULUM_KLASORU=$script:PnpmRoot;$NodeYolu='fixture-node'
-    $installed=Find-Pnpm
-    Check ([bool]$installed.unmanaged) 'pnpm unknown fixture shim remains unmanaged'
-    $local=[pscustomobject]@{version=$null;path=$installed.path;node=$NodeYolu;unmanaged=[bool]$installed.unmanaged;path_visible=$false}
-    function Emit-Result($Object){$script:PnpmResult=$Object}
-    $tokens=$null;$errors=$null
-    $ast=[Management.Automation.Language.Parser]::ParseFile((Join-Path $skill 'scripts\pnpm-kur.ps1'),[ref]$tokens,[ref]$errors)
-    $branches=@($ast.FindAll({param($n) $n -is [Management.Automation.Language.IfStatementAst] -and $n.Clauses[0].Item1.Extent.Text -eq '$YalnizBul -or $LocalOnly'},$true))
-    if($errors.Count -or $branches.Count -ne 1){throw 'Unexpected pnpm scan branch.'}
-    $scanBranch=[scriptblock]::Create($branches[0].Extent.Text);$YalnizBul=$true;$LocalOnly=$false
-    [Threading.Thread]::CurrentThread.CurrentCulture=[Globalization.CultureInfo]::GetCultureInfo('tr-TR')
-    $integrity='sha512-'+[Convert]::ToBase64String([byte[]](0..63))
-    Check ($integrity.Contains('I') -and [Convert]::FromBase64String($integrity.Substring(7)).Length -eq 64) 'SHA512 fixture includes Turkish case-sensitive ASCII I'
-    $script:PnpmMetadata=[pscustomobject]@{name='pnpm';version='12.9.1';dist=@{tarball='https://registry.npmjs.org/pnpm/-/pnpm-12.9.1.tgz';integrity=$integrity};engines=@{node='>=18'}}
-    . $scanBranch
-    Check ($script:PnpmResult.target.integrity -ceq $integrity -and $script:PnpmResult.blocked -and $script:PnpmResult.health -ceq 'NOT_RUN') 'pnpm valid SHA512 accepted in tr-TR while unmanaged guard remains blocked'
-    foreach($bad in @('sha512-!','SHA512-AAAA','sha512-ıAAA','sha512-İAAA')){
-        $script:PnpmMetadata.dist.integrity=$bad;. $scanBranch
-        Check ($null -eq $script:PnpmResult.target -and $script:PnpmResult.blocked) ('pnpm invalid integrity rejected: '+$bad)
-    }
 }finally{
-    [Threading.Thread]::CurrentThread.CurrentCulture=$oldCulture
     foreach($key in $oldEnv.Keys){[Environment]::SetEnvironmentVariable($key,$oldEnv[$key],'Process')}
-    $resolved=[IO.Path]::GetFullPath($testRoot)
+    $resolved=[IO.Path]::GetFullPath($rawRoot)
     $tempPrefix=[IO.Path]::GetFullPath($env:TEMP).TrimEnd('\')+'\'
     if(-not $resolved.StartsWith($tempPrefix,[StringComparison]::OrdinalIgnoreCase)){throw 'Fixture cleanup path escaped TEMP.'}
     if(Microsoft.PowerShell.Management\Test-Path -LiteralPath $resolved){Remove-Item -LiteralPath $resolved -Recurse -Force}
 }
-Check ([Threading.Thread]::CurrentThread.CurrentCulture.Name -ceq $oldCulture.Name) 'Scan regressions restore process culture'
 $summary=[ordered]@{suite='Windows PowerShell 5.1 offline scan regressions';status='PASS';assertions=$results.Count;results=$results.ToArray();installations='NOT_RUN';server_launch='NOT_RUN'}
 '@@SCAN_TEST '+($summary|ConvertTo-Json -Depth 8 -Compress)

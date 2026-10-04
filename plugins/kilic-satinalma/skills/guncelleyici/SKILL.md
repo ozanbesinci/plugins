@@ -1,6 +1,6 @@
 ---
 name: guncelleyici
-description: Windows'ta Python, sabit Python paket seti, Node.js, pnpm, DuckDB, Power BI Modeling MCP ve teklif-degerlendirme sürümlerini kontrol eder; yalnız açık kullanıcı onayıyla sabitlenmiş planı uygular. İsteğe bağlı DuckDB PDF eklentisi, işlev kontrolü ve onarım planı sunar. "Güncelleyiciyi çalıştır", "programları güncelle", "teklif skill'ini güncelle", "DuckDB PDF eklentisini ekle" veya bu kurulumları doğrulama isteklerinde kullan. Bir skill'i inceleme/geliştirme isteğini canlı kurulum yetkisi sayma.
+description: Windows'ta Python, sabit Python paket seti, Node.js, pnpm, DuckDB, Power BI Modeling MCP sürümlerini kontrol eder; yalnız açık kullanıcı onayıyla sabitlenmiş planı uygular. İsteğe bağlı DuckDB PDF eklentisi, işlev kontrolü ve onarım planı sunar. "Güncelleyiciyi çalıştır", "programları güncelle", "DuckDB PDF eklentisini ekle" veya bu kurulumları doğrulama isteklerinde kullan. Bir skill'i inceleme/geliştirme isteğini canlı kurulum yetkisi sayma.
 ---
 
 # Güncelleyici
@@ -42,7 +42,7 @@ powershell.exe -NoProfile -File "<SKILL>\scripts\sohbet.ps1" -Action scan
 
 Son `@@SONUC` JSON'unu oku. `rows` ve `global_effects` verisini **Seçim / Bileşen / Yüklü / Hedef /
 Durum** sütunlarıyla sohbet içinde göster. `secili=true` için ☑, diğerleri için ☐
-kullan. İlk yedi satır eski sıradadır; isteğe bağlı PDF satırı sekizincidir.
+kullan. İlk altı satır eski sıradadır; isteğe bağlı PDF satırı yedincidir.
 Sürüm/tarih/hash uydurma; `blocked`, `pending`, `health` ve hata ayrıntılarını gizleme.
 `up_to_date`, yalnız sürüm uygunluğudur: **"Sürüm kontrolü güncel; bu taramada işlev
 testi çalıştırılmadı."** de. Önceki başarısız kontrol/bağlantı varsa onu da göster.
@@ -74,7 +74,7 @@ powershell.exe -NoProfile -File "<SKILL>\scripts\sohbet.ps1" -Action apply -Plan
 ```
 
 `-Keys` sadece kullanıcının onayladığı seçimi içerir. `-ConfirmApply` yalnız kullanıcının açık **Güncelle / bu seçimleri uygula** yanıtından sonra verilir; yalnız seçim düzenleme yanıtında bu bayrağı verme ve `apply` çağırma. `-MaintenanceWindow` yalnız
-kullanıcı bakım durumunu teyit etmişse verilir. Yalnız Power BI/teklif/PDF için bu
+kullanıcı bakım durumunu teyit etmişse verilir. Yalnız Power BI/PDF için bu
 parametre gerekmeyebilir. Plan dosyasını düzenleme, yeniden hash üretip eski onayı
 kullanma veya installer hedefini değiştirerek engeli aşma. Hedefler uygulamada yeniden
 "latest" olarak seçilmez. Süresi dolmuş veya değişmiş plan için yeniden seçim al.
@@ -107,8 +107,7 @@ powershell.exe -NoProfile -File "<SKILL>\scripts\sohbet.ps1" -Action verify -Key
 
 Aynı sürümde yeniden kurma/onarım gerektiğinde `scan -RepairKeys "libraries,duckdb"`
 ile **yeni** plan çıkar. Kullanıcı onayı olmadan zorla yeniden kurma. Python ana
-kurucusu ve teklif için aynı sürüm zorla üzerine yazma desteklenmez. Teklifte yerel
-değişiklikleri örtmek için `register --replace-local` kullanma.
+kurucusu için aynı sürüm zorla üzerine yazma desteklenmez.
 
 Power BI sunucusu çalışsa bile açık Codex/Claude istemcisinin ayarlarını değiştirme;
 bağlantıyı ertelenmiş göster. Kapalı istemcide ayrı açık bağlama isteği için
@@ -117,7 +116,5 @@ bağlantıyı ertelenmiş göster. Kapalı istemcide ayrı açık bağlama iste�
 ## Başvuru
 
 Program ayrıntıları: [program-kurulumu.md](references/program-kurulumu.md).
-Teklif paketi: [teklif-paketi.md](references/teklif-paketi.md).
-Geçmişe yönelik not: [teklif-surum-gecmisi.md](references/teklif-surum-gecmisi.md).
 Tasarım değişiklikleri ve ertelenen işler: [degisiklik-haritasi.md](references/degisiklik-haritasi.md).
 Harici teknik kaynaklar: [kaynaklar.md](references/kaynaklar.md).
