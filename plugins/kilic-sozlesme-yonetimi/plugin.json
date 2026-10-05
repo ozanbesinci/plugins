@@ -3,6 +3,7 @@
   "name": "kilic-sozlesme-yonetimi",
   "version": "0.1.0-dev.3",
   "description": "Satınalma sözleşmeleri için kaynak koruma ve yerel kayıt çekirdeği; geliştirme sürümü.",
+  "homepage": "https://github.com/ozanbesinci/kilic-sozlesme-yonetimi-plugin",
   "author": {
     "name": "Ozan Beşinci"
   },
