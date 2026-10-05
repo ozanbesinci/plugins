@@ -1,0 +1,4 @@
+interface:
+  display_name: "Teminat Takibi"
+  short_description: "Teminat Takibi için kaynaklı karar desteği"
+  default_prompt: "$teminat-takibi ile uzatma, azaltma, iade ne durumda."

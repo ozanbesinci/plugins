@@ -1,0 +1,17 @@
+{
+  "source": "docs/2026-10-05-eposta-gonderimi-kaldirildi.md",
+  "overrides": {
+    "K29": {
+      "name": "Yazışma Hazırlama",
+      "slug": "yazisma-hazirlama",
+      "trigger": "Cevap metni veya e-posta taslağı hazırla",
+      "inputs": "Amaç, mevcut yazışma ve ilgili kaynaklar",
+      "outputs": "Yalnız sohbet içinde yazışma taslağı",
+      "boundary": "Gönderim, mailbox taslağı oluşturma ve dış paylaşım yok; kullanıcı göndermeyi kendi yapar.",
+      "tools": [
+        "dosya_baglamini_getir",
+        "baglam_paketi_hazirla"
+      ]
+    }
+  }
+}

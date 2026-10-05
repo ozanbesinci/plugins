@@ -1,0 +1,34 @@
+{
+  "scope_version": "2026-10-05-no-email-send",
+  "source": "docs/2026-10-05-eposta-gonderimi-kaldirildi.md",
+  "removed_actions": [
+    "SEND_EMAIL",
+    "EMAIL_SEND",
+    "MAILBOX_DRAFT",
+    "EMAIL_SEND_VIA_OTHER_CONNECTOR"
+  ],
+  "remaining_mail_features": [
+    "READ_EML",
+    "CHAT_CORRESPONDENCE_DRAFT"
+  ],
+  "original_regressions_out_of_scope": [
+    "T33",
+    "T34",
+    "T44"
+  ],
+  "scenario_overrides": {
+    "E27": {
+      "scenario_id": "S-27",
+      "title": "Yazışma taslağı hazırla",
+      "expected_outputs": [
+        "Yalnız sohbet içinde kaynaklı cevap taslağı"
+      ],
+      "must_not_do": [
+        "E-posta gönderme",
+        "Mailbox taslağı oluşturma",
+        "Başka connector/plugin ile gönderme"
+      ]
+    }
+  },
+  "original_sources_unchanged": true
+}

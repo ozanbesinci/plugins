@@ -1,0 +1,4 @@
+interface:
+  display_name: "İşe Başlama Kontrolü"
+  short_description: "İşe Başlama Kontrolü için kaynaklı karar desteği"
+  default_prompt: "$ise-baslama-kontrolu ile sahaya/ödemeye başlamadan ne eksik."

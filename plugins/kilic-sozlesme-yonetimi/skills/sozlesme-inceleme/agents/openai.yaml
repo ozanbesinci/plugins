@@ -1,0 +1,4 @@
+interface:
+  display_name: "Sözleşme İnceleme"
+  short_description: "Sözleşme İnceleme için kaynaklı karar desteği"
+  default_prompt: "$sozlesme-inceleme ile taslağı ve ekleri incele."

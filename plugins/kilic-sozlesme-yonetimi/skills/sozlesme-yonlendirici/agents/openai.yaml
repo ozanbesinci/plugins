@@ -1,0 +1,4 @@
+interface:
+  display_name: "Sözleşme Yönlendirici"
+  short_description: "Sözleşme Yönlendirici için kaynaklı karar desteği"
+  default_prompt: "$sozlesme-yonlendirici ile sözleşmeyle ilgili her doğal dil talebi."

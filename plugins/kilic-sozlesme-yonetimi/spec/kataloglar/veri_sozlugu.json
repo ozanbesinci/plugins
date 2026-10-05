@@ -1,0 +1,232 @@
+{
+  "Kimlik ve kaynak": [
+    {
+      "table": "dosyalar",
+      "columns": "case_id UUID PK; gorunen_kod VARCHAR; baslik VARCHAR; sorumlu_aktor_id UUID?; semantic_version BIGINT; asama VARCHAR; created_at TIMESTAMPTZ",
+      "rule": "İşe ait kalıcı kimlik; şirket ve taraf bilgisi `taraflar` ilişkisinden gelir. Semantik sürüm, salt telemetriyle artmaz."
+    },
+    {
+      "table": "aktorler",
+      "columns": "actor_id UUID PK; source VARCHAR; external_id VARCHAR?; display_name VARCHAR; identity_status VARCHAR",
+      "rule": "Model tarafından yetkili aktör oluşturulmaz. Kimlik doğrulama durumu görünür tutulur."
+    },
+    {
+      "table": "kayitlar",
+      "columns": "case_id UUID; record_id UUID; record_type VARCHAR; actor_id UUID?; recorded_at TIMESTAMPTZ; supersedes_id UUID?; PRIMARY KEY(case_id,record_id)",
+      "rule": "Ortak kayıt dizini. Aynı dosya yabancı anahtarı için birleşik anahtar kullanılır."
+    },
+    {
+      "table": "taraflar",
+      "columns": "K; legal_name VARCHAR?; country VARCHAR?; role VARCHAR; external_business_id VARCHAR?",
+      "rule": "K = case_id + record_id. Birden fazla şirket varsa hangi işlemde hangi rolün kullanıldığı açıktır."
+    },
+    {
+      "table": "belgeler",
+      "columns": "K; title VARCHAR; document_type VARCHAR; source_party_id UUID?",
+      "rule": "Mantıksal belge kimliği; dosya adı kimlik değildir."
+    },
+    {
+      "table": "belge_surumu",
+      "columns": "K; document_id UUID; sha256 VARCHAR(64); size_bytes BIGINT; media_type VARCHAR; storage_key VARCHAR; acquired_at TIMESTAMPTZ; business_status VARCHAR",
+      "rule": "Ham baytların hash değeri; kaynak sürüm içeriği değişmez. Son/final gibi adlara güvenilmez."
+    },
+    {
+      "table": "surum_ebeveynleri",
+      "columns": "case_id UUID; child_id UUID; parent_id UUID; relation VARCHAR; PK(case_id,child_id,parent_id)",
+      "rule": "Birleştirme/dallanma için birden fazla ebeveyn desteklenir; döngü yoktur."
+    },
+    {
+      "table": "isleme_calismalari",
+      "columns": "K; document_version_id UUID; tool VARCHAR; tool_version VARCHAR; settings_digest VARCHAR; started_at TIMESTAMPTZ; finished_at TIMESTAMPTZ?; status VARCHAR",
+      "rule": "Aynı belgeyi farklı okuyucu/ayar ile işleme ayrı kayıttır."
+    },
+    {
+      "table": "icerik_birimleri",
+      "columns": "K; version_id UUID; processing_id UUID; parent_unit_id UUID?; kind VARCHAR; order_index BIGINT; locator JSON; raw_text VARCHAR?; view_mode VARCHAR",
+      "rule": "Ham revizyon, öncesi, uygulanmış görünüm ayrıdır; konum ve metin kaynakla bağlıdır."
+    },
+    {
+      "table": "dogrulamalar",
+      "columns": "K; target_id UUID; dimension VARCHAR; method VARCHAR; method_version VARCHAR; scope JSON; outcome VARCHAR; checked_at TIMESTAMPTZ; limitations JSON",
+      "rule": "Dosya/kapsam/sadakat/anlam ayrı. Şema geçti diye semantic verified olmaz."
+    },
+    {
+      "table": "harici_kaynaklar",
+      "columns": "K; kind VARCHAR; title VARCHAR; url VARCHAR?; snapshot_version_id UUID?; retrieved_at TIMESTAMPTZ; published_date DATE?; effective_from DATE?; effective_until DATE?",
+      "rule": "Mevzuat veya dış bilgi. Sayfa çekildi tarihi ile hukuki yürürlük tarihi ayrıdır."
+    }
+  ],
+  "Bağlam ve kanıt": [
+    {
+      "table": "bilgiler",
+      "columns": "K; subject_id UUID; field_code VARCHAR; value_type VARCHAR; value_text VARCHAR?; value_decimal DECIMAL(24,6)?; value_date DATE?; value_bool BOOLEAN?; unit VARCHAR?; currency VARCHAR?; knowledge_kind VARCHAR; interpretation_status VARCHAR; valid_from TIMESTAMPTZ?; valid_until TIMESTAMPTZ?",
+      "rule": "Tür tek bir değer kolonunu etkinleştirir; null için eksiklik nedeni gerekir. Oran ayrı hassas türle projeksiyona alınır."
+    },
+    {
+      "table": "beyanlar",
+      "columns": "K; actor_id UUID; session_ref VARCHAR?; message_ref VARCHAR?; excerpt VARCHAR; statement_kind VARCHAR; stated_at TIMESTAMPTZ",
+      "rule": "Varsayım/tercih/kullanıcı talimatı ayrıdır. Mesaj kimliği yoksa uydurulmaz."
+    },
+    {
+      "table": "kanit_baglari",
+      "columns": "K; target_id UUID; source_id UUID; relation VARCHAR; source_locator JSON?",
+      "rule": "Destekler, çelişir, sınırlar, yerine geçer. Kaynak düşünce bağlı analiz yeniden açılır."
+    },
+    {
+      "table": "iliskiler",
+      "columns": "K; from_id UUID; to_id UUID; relation_type VARCHAR; origin VARCHAR; evidence_id UUID?; confirmation_status VARCHAR",
+      "rule": "EXTRACTED/INFERRED ayrımı ilişkilerde de vardır. Kaynakta açık ilişki hukuki gerçeklik onayı değildir."
+    },
+    {
+      "table": "acik_konular",
+      "columns": "K; target_id UUID; question VARCHAR; impact VARCHAR; priority VARCHAR; status VARCHAR; response_statement_id UUID?",
+      "rule": "Bloklayıcı/önemli/isteğe bağlı ayrımı. Cevap tekrarlanmadan mevcut bağlamdan aranır."
+    },
+    {
+      "table": "baglam_paketleri",
+      "columns": "K; request_id UUID; purpose VARCHAR; semantic_version BIGINT; dependency_digest VARCHAR; selection_policy_version VARCHAR; included_ids JSON; omitted_ids JSON; token_estimate BIGINT?; estimate_method VARCHAR?; limitations JSON",
+      "rule": "Host token kullanımı ölçümü ile tahmin ayrıdır. Kritik kanıt omit edilirse paket hazır sayılmaz."
+    },
+    {
+      "table": "gecersizlestirmeler",
+      "columns": "K; target_id UUID; cause_id UUID; reason VARCHAR; detected_at TIMESTAMPTZ; state VARCHAR",
+      "rule": "Kaynak, yorum, politika, yetki veya iş olgusu değiştiğinde yeniden değerlendirme bağı."
+    }
+  ],
+  "İş ve güvenceler": [
+    {
+      "table": "surec_adimlari",
+      "columns": "K; name VARCHAR; responsible_party_id UUID?; start_rule JSON?; end_rule JSON?; status VARCHAR",
+      "rule": "Teslim/montaj/test/kabul gibi aşamalar işe göre; her sözleşmeye aynı akış zorlanmaz."
+    },
+    {
+      "table": "yukumlulukler",
+      "columns": "K; obligated_party_id UUID; step_id UUID?; type VARCHAR; description VARCHAR; completion_criterion VARCHAR; due_date DATE?; due_rule JSON?; state VARCHAR",
+      "rule": "Sorumlu/tarih bilinmiyorsa unknown; tamamlanma kanıtı ayrı ilişkilenir."
+    },
+    {
+      "table": "gerceklesmeler",
+      "columns": "K; target_id UUID; event_type VARCHAR; event_at TIMESTAMPTZ?; amount DECIMAL(24,6)?; currency VARCHAR?; evidence_status VARCHAR",
+      "rule": "Bildirilen olay ile kanıtlı gerçekleşme ayrıdır."
+    },
+    {
+      "table": "odeme_asamalari",
+      "columns": "K; obligation_id UUID; basis_fact_id UUID?; amount DECIMAL(24,6)?; rate DECIMAL(18,10)?; currency VARCHAR; tax_status VARCHAR; offset_rule JSON?",
+      "rule": "%5 oranı 0.05 saklanır. KDV/para birimi karıştırılmaz; minimum matrah kuralı açık."
+    },
+    {
+      "table": "teminatlar",
+      "columns": "K; type VARCHAR; beneficiary_party_id UUID; issuer_party_id UUID?; amount DECIMAL(24,6)?; currency VARCHAR?; expiry DATE?; release_rule JSON?; document_version_id UUID?; external_verification_status VARCHAR",
+      "rule": "Talep, mektup, bankadan teyit, mahsup ve iade kararı ayrıdır."
+    },
+    {
+      "table": "policeler",
+      "columns": "K; insurer_id UUID?; policyholder_id UUID?; policy_no VARCHAR?; start_at TIMESTAMPTZ?; end_at TIMESTAMPTZ?; document_version_id UUID?; cover_basis VARCHAR?",
+      "rule": "Poliçe türü, taraf rolleri, ek sigortalılar ve zeyiller ilişkilerle tutulur."
+    },
+    {
+      "table": "sigorta_kalemleri",
+      "columns": "K; policy_id UUID; cover_type VARCHAR; limit_type VARCHAR; limit_amount DECIMAL(24,6)?; currency VARCHAR?; deductible_amount DECIMAL(24,6)?; deductible_rate DECIMAL(18,10)?; exclusion_source_id UUID?",
+      "rule": "Olay başı/toplam/alt limit ayrı; All Risk tür adı kapsam doğrulaması değildir."
+    },
+    {
+      "table": "riskler",
+      "columns": "K; subject_id UUID; event_description VARCHAR; category VARCHAR; impact VARCHAR; severity VARCHAR; rationale VARCHAR",
+      "rule": "Belgesiz 92/100 hukuki koruma puanı üretilmez; gerekçeli önem sınıfı kullanılır."
+    },
+    {
+      "table": "risk_kontrolleri",
+      "columns": "K; risk_id UUID; control_source_id UUID?; control_status VARCHAR; residual_risk VARCHAR",
+      "rule": "Sözleşme hükmü, gerçek güvence belgesi ve kalan risk birlikte tutulur."
+    }
+  ],
+  "Müzakere ve karar": [
+    {
+      "table": "muzakere_konulari",
+      "columns": "K; related_unit_id UUID?; title VARCHAR; status VARCHAR",
+      "rule": "Aynı konu birden fazla maddeyi etkileyebilir."
+    },
+    {
+      "table": "pozisyonlar",
+      "columns": "K; issue_id UUID; party_id UUID; proposed_text VARCHAR; reason VARCHAR?; conditions JSON?; state VARCHAR",
+      "rule": "Öneri/kullanıcı pozisyonu/karşı taraf kabulü ayrıdır."
+    },
+    {
+      "table": "uzman_gorusleri",
+      "columns": "K; issue_id UUID; expert_actor_id UUID?; expertise VARCHAR; opinion VARCHAR; conditions JSON; outcome VARCHAR; scope_digest VARCHAR",
+      "rule": "Belirli sürüm ve koşulların değişmesi görüşü yeniden açar."
+    },
+    {
+      "table": "kararlar",
+      "columns": "K; issue_id UUID; decision_text VARCHAR; actor_id UUID?; state VARCHAR; scope_digest VARCHAR",
+      "rule": "LLM kendi çıkarımıyla approved oluşturamaz."
+    },
+    {
+      "table": "onaylar",
+      "columns": "K; decision_id UUID; approver_id UUID; approval_type VARCHAR; result VARCHAR; evidence_id UUID; scope_digest VARCHAR; approved_at TIMESTAMPTZ?",
+      "rule": "Kurumsal iş kararı onayı. İşlem izni kaydıyla birleştirilmez."
+    },
+    {
+      "table": "kurallar",
+      "columns": "K; policy_type VARCHAR; scope JSON; version VARCHAR; effective_from TIMESTAMPTZ?; effective_until TIMESTAMPTZ?; source_id UUID?; approval_status VARCHAR; rule JSON",
+      "rule": "Aktif zorunlu kurallar güvenilir kaynaktan gelir; tedarikçi veya model bunları değiştiremez."
+    }
+  ],
+  "İşlem ve ölçüm": [
+    {
+      "table": "hesaplamalar",
+      "columns": "K; rule_id VARCHAR; rule_version VARCHAR; inputs JSON; results JSON; decimal_context JSON",
+      "rule": "Ondalık string girdilerle tekrar üretilebilir hesap; float sonucu ondalığa çevirip kesin sayı gibi verme."
+    },
+    {
+      "table": "islemler",
+      "columns": "K; action_type VARCHAR; idempotency_key VARCHAR; target_id UUID?; base_version_id UUID?; payload_digest VARCHAR; state VARCHAR; started_at TIMESTAMPTZ; finished_at TIMESTAMPTZ?; error_code VARCHAR?",
+      "rule": "Ağ yan etkisinde unknown/accepted ayrı. Exactly-once gönderim garantisi verilmez."
+    },
+    {
+      "table": "islem_izinleri",
+      "columns": "K; operation_id UUID; grantor_id UUID; payload_digest VARCHAR; authorization_source_id UUID; issued_at TIMESTAMPTZ; expires_at TIMESTAMPTZ?; revocation_state VARCHAR; consumed_by UUID?",
+      "rule": "Güvenilir izin yolu yazar. TTL belirtilmemişse süresiz ve her eyleme yayılan izin sayılmaz."
+    },
+    {
+      "table": "eylem_kararlari",
+      "columns": "K; operation_id UUID; action_risk VARCHAR; user_authorization VARCHAR; corporate_authority VARCHAR; policy_version VARCHAR; input_digest VARCHAR; outcome VARCHAR; reason VARCHAR; evaluated_at TIMESTAMPTZ",
+      "rule": "Muhafız kaydı; risk, kullanıcı izni ve şirket yetkisi ayrı."
+    },
+    {
+      "table": "degisiklikler",
+      "columns": "K; operation_id UUID; version_id UUID; target_unit_id UUID; expected_text_digest VARCHAR; new_text VARCHAR?; change_type VARCHAR; reason_id UUID?; order_index BIGINT",
+      "rule": "Değişiklik planı model metni değil hedefleri kesinleşmiş komuttur."
+    },
+    {
+      "table": "ciktilar",
+      "columns": "K; operation_id UUID; version_id UUID?; output_type VARCHAR; quality_state VARCHAR; receipt_id UUID?",
+      "rule": "QA öncesi karantina, QA sonrası teslim. Çıktı kimliği dosya varlığıyla eşleşir."
+    },
+    {
+      "table": "islem_olaylari",
+      "columns": "K; operation_id UUID; sequence BIGINT; event VARCHAR; occurred_at TIMESTAMPTZ; provider_ref VARCHAR?; details JSON",
+      "rule": "Kısa operasyonel gerekçe; gizli model iç düşünce kaydı hedef değildir."
+    },
+    {
+      "table": "depo_eslesmeleri",
+      "columns": "K; target_id UUID; provider VARCHAR; tenant_id VARCHAR?; site_id VARCHAR?; drive_id VARCHAR?; item_id VARCHAR?; remote_version_id VARCHAR?; etag VARCHAR?; status VARCHAR",
+      "rule": "SharePoint etag kaynağa bağlı; dosya hash'i ve kimlik ile karıştırılmaz."
+    },
+    {
+      "table": "onbellek",
+      "columns": "cache_key VARCHAR PK; input_dependencies JSON; tool_version VARCHAR; policy_version VARCHAR?; result_ids JSON; validity VARCHAR",
+      "rule": "Yalnız yeniden üretilebilir çıkarım/analiz; kullanıcı kararı cache değildir."
+    },
+    {
+      "table": "sema_gecmisi",
+      "columns": "migration_no BIGINT PK; schema_version VARCHAR; change_digest VARCHAR; applied_at TIMESTAMPTZ; backup_ref VARCHAR?; status VARCHAR",
+      "rule": "Migration öncesi yedek, migration sonrası bütünlük; geri dönüş testi."
+    },
+    {
+      "table": "calisma_olcumleri",
+      "columns": "K; request_id UUID; metric VARCHAR; value DECIMAL(24,6)?; unit VARCHAR; method VARCHAR; model_id VARCHAR?; host_version VARCHAR?",
+      "rule": "Tahmin/gerçek telemetri ayrı; eksik ölçüm null, sıfır değildir."
+    }
+  ]
+}

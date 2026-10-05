@@ -1,0 +1,163 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "source_node_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "scope_key": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+    },
+    "field": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{0,63}$"
+    },
+    "plane": {
+      "enum": [
+        "PLANNED",
+        "WRITTEN",
+        "REPORTED_EVENT",
+        "DOCUMENTED_EVENT",
+        "USER_POSITION"
+      ]
+    },
+    "normalization": {
+      "enum": [
+        "TEXT",
+        "DECIMAL_CANONICAL",
+        "DECIMAL_TR",
+        "INTEGER",
+        "PERCENT_TR",
+        "DATE_ISO"
+      ]
+    },
+    "value_span": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "start": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "end": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        }
+      },
+      "required": [
+        "start",
+        "end",
+        "text"
+      ]
+    },
+    "unit": {
+      "enum": [
+        null,
+        "months",
+        "days",
+        "calendar_days",
+        "business_days",
+        "ratio",
+        "money",
+        "quantity"
+      ]
+    },
+    "unit_span": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "start": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "end": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "text": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2000
+            }
+          },
+          "required": [
+            "start",
+            "end",
+            "text"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "currency": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "currency_span": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "start": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "end": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "text": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2000
+            }
+          },
+          "required": [
+            "start",
+            "end",
+            "text"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "supersedes_id": {
+      "type": "string",
+      "format": "uuid"
+    }
+  },
+  "required": [
+    "source_node_id",
+    "scope_key",
+    "field",
+    "plane",
+    "normalization",
+    "value_span",
+    "unit",
+    "unit_span",
+    "currency",
+    "currency_span"
+  ]
+}

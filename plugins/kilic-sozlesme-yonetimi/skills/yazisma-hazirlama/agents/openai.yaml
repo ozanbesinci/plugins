@@ -1,0 +1,4 @@
+interface:
+  display_name: "Yazışma Hazırlama"
+  short_description: "Kaynaklara bağlı yazışma ve e-posta taslağı hazırlama"
+  default_prompt: "$yazisma-hazirlama ile sohbet içinde cevap taslağı hazırla."

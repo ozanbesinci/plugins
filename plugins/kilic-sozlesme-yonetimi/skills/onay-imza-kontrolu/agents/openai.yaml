@@ -1,0 +1,4 @@
+interface:
+  display_name: "Onay ve İmza Kontrolü"
+  short_description: "Onay ve İmza Kontrolü için kaynaklı karar desteği"
+  default_prompt: "$onay-imza-kontrolu ile son nüsha imzaya hazır mı."

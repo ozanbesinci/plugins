@@ -1,0 +1,4 @@
+interface:
+  display_name: "Kurumsal Emsal Araştırma"
+  short_description: "Kurumsal Emsal Araştırma için kaynaklı karar desteği"
+  default_prompt: "$kurumsal-emsal-arastirma ile benzer görüş/şirket standardı var mı."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Poliçe Uygunluk Kontrolü"
+  short_description: "Poliçe Uygunluk Kontrolü için kaynaklı karar desteği"
+  default_prompt: "$police-uygunluk-kontrolu ile poliçe/zeyil yeterli mi."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Sigorta Hasar Dosyası"
+  short_description: "Sigorta Hasar Dosyası için kaynaklı karar desteği"
+  default_prompt: "$sigorta-hasar-dosyasi ile hasar oldu, ne hazırlayalım."

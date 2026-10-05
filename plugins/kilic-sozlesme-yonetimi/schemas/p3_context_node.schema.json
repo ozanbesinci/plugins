@@ -1,0 +1,170 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "node_kind": {
+          "const": "SOURCE_UNIT"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "version_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "reading_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "target": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "format",
+            "unit_id",
+            "view",
+            "start",
+            "end",
+            "expected_text",
+            "field_kind"
+          ],
+          "properties": {
+            "format": {
+              "enum": [
+                "DOCX",
+                "PDF",
+                "XLSX",
+                "EML"
+              ]
+            },
+            "unit_id": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "view": {
+              "enum": [
+                "RAW",
+                "BEFORE",
+                "AFTER",
+                "DISPLAY"
+              ]
+            },
+            "start": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "end": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "expected_text": {
+              "type": "string",
+              "maxLength": 20000
+            },
+            "field_kind": {
+              "enum": [
+                "AMOUNT",
+                "DATE",
+                "RATE",
+                "OBLIGATION",
+                "OTHER"
+              ]
+            }
+          }
+        },
+        "role": {
+          "enum": [
+            "CLAUSE",
+            "DEFINITION",
+            "EXCEPTION",
+            "ANNEX",
+            "CROSS_REFERENCE",
+            "OTHER"
+          ]
+        }
+      },
+      "required": [
+        "node_kind",
+        "title",
+        "version_id",
+        "reading_id",
+        "target",
+        "role"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "node_kind": {
+          "const": "USER_STATEMENT"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "record_id": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "required": [
+        "node_kind",
+        "title",
+        "record_id"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "node_kind": {
+          "const": "CANDIDATE"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "record_id": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "required": [
+        "node_kind",
+        "title",
+        "record_id"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "node_kind": {
+          "const": "CONTROL"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "record_id": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "required": [
+        "node_kind",
+        "title",
+        "record_id"
+      ]
+    }
+  ]
+}

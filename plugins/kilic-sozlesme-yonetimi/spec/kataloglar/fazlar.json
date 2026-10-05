@@ -1,0 +1,141 @@
+[
+  {
+    "id": "P0",
+    "title": "Hedef ortam ve bağımlılık kanıtı",
+    "depends_on": [],
+    "requirement_ids": [
+      "R04",
+      "R14",
+      "R31",
+      "R33",
+      "R34"
+    ],
+    "work": "Windows Work/Codex sürümleri, dosya/Python/DuckDB/Word/render/ağ/kimlik/hook kabiliyetini belirle. Kaynak ve çıktı izinlerini sentetik canary dosyalarla sına. Manifest biçimini güncel resmi belge ve kurulu hosta göre seç. Lisans/bağımlılık/dağıtım kararını kaydet.",
+    "exit_criteria": "capability-matrix, dependency-review, manifest ADR, sandbox-canary sonucu. Kullanıcı kurulumu veya cloud/key ihtiyacı varsa onaysız kurma. Geçemeyen yetenek için yalnız ilgili özelliği kapat.",
+    "status": "NOT_STARTED"
+  },
+  {
+    "id": "P1",
+    "title": "Yerel çekirdek ve kayıt bütünlüğü",
+    "depends_on": [
+      "P0"
+    ],
+    "requirement_ids": [
+      "R08",
+      "R11",
+      "R13",
+      "R29",
+      "R32"
+    ],
+    "work": "Case/document/version, hash, şema, tek erişim yöneticisi, migration, kaynak snapshot, append-only iş kaydı, geçici çıktı uzlaştırma ve yedek/restore geliştir.",
+    "exit_criteria": "Gerçek çalışan DDL + repository testleri; çoklu oturum, case FK, yarım commit ve recovery testleri. Üretim verisi kullanma.",
+    "status": "NOT_STARTED"
+  },
+  {
+    "id": "P2",
+    "title": "Belge okuma ve doğrulama",
+    "depends_on": [
+      "P1"
+    ],
+    "requirement_ids": [
+      "R09",
+      "R12",
+      "R14",
+      "R16",
+      "R17"
+    ],
+    "work": "DOCX, PDF, tarama, XLSX ve e-posta okuyucu profilleri; kaynak konumları, revizyon görünümleri, kritik alan doğrulaması ve bounded fallback uygula.",
+    "exit_criteria": "T04-T12 ve belge destek matrisi; okunamayan ekle kısmi sonuç. Her formatın başarısı ayrı raporlanır.",
+    "status": "NOT_STARTED"
+  },
+  {
+    "id": "P3",
+    "title": "Sohbet hafızası ve bağlam bütçesi",
+    "depends_on": [
+      "P2"
+    ],
+    "requirement_ids": [
+      "R05",
+      "R07",
+      "R08",
+      "R15",
+      "R27"
+    ],
+    "work": "K00/K01/K03/K04 ilk uçtan uca akış; kanıt bağımlılıkları, sorular, çelişki, önbellek geçersizleştirme ve bağlam budget uygulaması.",
+    "exit_criteria": "İş sorusu sohbet cevabı verir; belge üretmez; tanım/istisna kaybı yok; kullanıcı bilgisini tekrar sormaz.",
+    "status": "NOT_STARTED"
+  },
+  {
+    "id": "P4",
+    "title": "Muhafız, onay ve gerçek Word revizyonu",
+    "depends_on": [
+      "P3"
+    ],
+    "requirement_ids": [
+      "R06",
+      "R10",
+      "R11",
+      "R17",
+      "R25",
+      "R26",
+      "R30",
+      "R31"
+    ],
+    "work": "Tipli eylem planı, güvenilir izin kaydı, canonical fingerprint, replay/iptal kontrolü, kaynak sürüm guard ve K28 Track Changes hattı.",
+    "exit_criteria": "Microsoft Word kabul/reddet, kaynak korunması, eski yorum/revizyon ve çakışma testleri. Sadece renkli diff başarı sayılmaz.",
+    "status": "NOT_STARTED"
+  },
+  {
+    "id": "P5",
+    "title": "Bütün satınalma iş skill kapsamı",
+    "depends_on": [
+      "P4"
+    ],
+    "requirement_ids": [
+      "R01",
+      "R02",
+      "R03",
+      "R19",
+      "R20",
+      "R22",
+      "R23",
+      "R36"
+    ],
+    "work": "K02 ve K05-K27 ailelerini ortak çekirdeğe bağla. Sigorta, teminat, ceza, kabul, müzakere, hukuk ve uygulamayı iş senaryolarıyla tamamla.",
+    "exit_criteria": "S-01-S-40 izlenebilirlik; S-20 açık kapsam tercihi olduğu kaybolmaz. Eksik şirket kuralı ve yabancı hukukta güvenli sınırlar.",
+    "status": "NOT_STARTED"
+  },
+  {
+    "id": "P6",
+    "title": "İzinli dış bağlantılar ve SharePoint hazırlığı",
+    "depends_on": [
+      "P5"
+    ],
+    "requirement_ids": [
+      "R18",
+      "R21",
+      "R24",
+      "R25",
+      "R26"
+    ],
+    "work": "K29 önce mock/test posta kutusu; uygun connector varsa onu kullan. Dış gönderim izni, sonucu belirsiz işlem ve adaptör kontrat testleri. SharePoint canlı merkezi geçişini yapma.",
+    "exit_criteria": "Yetkili hesap/tenant, alıcı ve ek değişikliği, duplicate send ve ACL testleri. Canlı gönderim ayrı izin ister.",
+    "status": "NOT_STARTED"
+  },
+  {
+    "id": "P7",
+    "title": "Regresyon, paketleme ve kontrollü pilot",
+    "depends_on": [
+      "P6"
+    ],
+    "requirement_ids": [
+      "R28",
+      "R33",
+      "R34",
+      "R35"
+    ],
+    "work": "64 regresyon + 40 senaryo tanımını fixture ve doğrulayıcılarla çalıştır; seçili canlı model testlerini izinle ölç. Destek matrisi, maliyet/süre ve release checklist hazırla.",
+    "exit_criteria": "Kritik başarısız test yok; NOT_RUN ayrı; çalışan dağıtım, lisans/SBOM, rollback ve pilot eğitim kaydı. Kurum çapında yayın ayrı kabulü gerektirir.",
+    "status": "NOT_STARTED"
+  }
+]

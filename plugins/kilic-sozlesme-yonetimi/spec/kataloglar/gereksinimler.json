@@ -1,0 +1,218 @@
+[
+  {
+    "id": "R01",
+    "origin": "Kullanıcı kararı",
+    "title": "Önce Satınalma, ileride şirket geneli",
+    "acceptance_statement": "Bütün satınalma sözleşmesi türleri hedef kapsamdadır; alanlar arası test olgunluğu ayrı gösterilir."
+  },
+  {
+    "id": "R02",
+    "origin": "Kullanıcı kararı",
+    "title": "Mevcut iş bölümü",
+    "acceptance_statement": "Hukuk taslağı hazırlar; Satınalma ticari/teknik paketi iletir, tedarikçiyle müzakere eder ve gerektiğinde görüş alır. LLM bu rolleri devralmaz."
+  },
+  {
+    "id": "R03",
+    "origin": "Kullanıcı kararı",
+    "title": "Türkiye mevzuatı",
+    "acceptance_statement": "Hukuki araştırma ilk etapta Türkiye kapsamındadır. Yabancı hukuk sonucuna gidilmez; ticari ve operasyonel inceleme ayrı sürdürülebilir."
+  },
+  {
+    "id": "R04",
+    "origin": "Kullanıcı kararı",
+    "title": "Work/Codex ve Windows",
+    "acceptance_statement": "Son kullanıcı doğal dil ve klasörlerle çalışır; terminal, SQL veya Python komutu bilmesi gerekmez. Yüzeyler ayrı test edilir."
+  },
+  {
+    "id": "R05",
+    "origin": "Kullanıcı kararı",
+    "title": "Sohbet öncelikli çıktı",
+    "acceptance_statement": "Bilgi, analiz, tablo ve taslak metin varsayılan olarak sohbet içinde verilir."
+  },
+  {
+    "id": "R06",
+    "origin": "Kullanıcı kararı",
+    "title": "Belge üretme izni",
+    "acceptance_statement": "Açık dosya üretme/düzenleme talebi yoksa önce sorulur. Açık talep aynı kapsam için tekrar onay gerektirmez; kapsam genişletilemez."
+  },
+  {
+    "id": "R07",
+    "origin": "Kullanıcı kararı",
+    "title": "Hedefli sorular",
+    "acceptance_statement": "İş anlaşılır; belge/kalıcı bağlamda bulunmayan, kararı etkileyen eksikler sorulur. Bilinen cevaplar tekrarlanmaz."
+  },
+  {
+    "id": "R08",
+    "origin": "Kullanıcı kararı",
+    "title": "Kalıcı sözleşme hafızası",
+    "acceptance_statement": "Beyan, kanıt, açık konu, görüş ve kararlar dosya bazında saklanır. Bütün sohbet geçmişine sürekli erişim varsayılmaz."
+  },
+  {
+    "id": "R09",
+    "origin": "Kullanıcı kararı",
+    "title": "Geniş belge girdisi",
+    "acceptance_statement": "DOCX, PDF, tarama, XLSX/CSV, e-posta ve ekleri; teklif, şartname, teminat, poliçe, zeyil, tutanak ve hakediş destek hedefidir. Eski/şifreli/karmaşık biçimde sınır açıklanır."
+  },
+  {
+    "id": "R10",
+    "origin": "Kullanıcı kararı",
+    "title": "Gerçek Track Changes",
+    "acceptance_statement": "Word revizyonları kabul/reddet davranışıyla gerçek olmalı; renkli metin yeterli değildir. Mevcut yorumlar ve revizyonlar korunur."
+  },
+  {
+    "id": "R11",
+    "origin": "Tasarım güvenlik kararı",
+    "title": "Kaynak koruma",
+    "acceptance_statement": "Kaynaklar salt okunur korunur; izinli değişiklik yeni sürüme uygulanır. İmzalı kaynak değiştirilmez."
+  },
+  {
+    "id": "R12",
+    "origin": "Kullanıcı kararı",
+    "title": "Python araç katmanı",
+    "acceptance_statement": "Tekrar edilebilir işler test edilmiş Python araçlarıyla yapılır. Her oturumda yeni kod üretme varsayılan yol değildir."
+  },
+  {
+    "id": "R13",
+    "origin": "Kullanıcı kararı",
+    "title": "DuckDB",
+    "acceptance_statement": "Yapılandırılmış yerel kayıt ve sorgu motoru DuckDB olur; kaynak belge ve kimlik/yetki sistemi yerine geçmez."
+  },
+  {
+    "id": "R14",
+    "origin": "Kullanıcı kararı",
+    "title": "PDF yeteneği ve eklenti",
+    "acceptance_statement": "PDF okuma/render yeteneği ile DuckDB PDF eklentisi ayrı değerlendirilir. Eklenti kullanım hedefi lisans, Windows, sürüm ve Türkçe testleriyle etkinleştirilir."
+  },
+  {
+    "id": "R15",
+    "origin": "Kullanıcı kararı",
+    "title": "Deterministiklik ve düşük token",
+    "acceptance_statement": "Önce sorgu/araç; sonra gerekli anlamsal yorum. Düşük token için kritik kanıt atılmaz; tasarruf ölçülmeden vaat edilmez."
+  },
+  {
+    "id": "R16",
+    "origin": "Kullanıcı kararı",
+    "title": "Zorunlu okuma doğrulaması",
+    "acceptance_statement": "Her kaynak için yapı/kapsam kontrolü, kritik ve şüpheli alanlar için kaynak sadakati/görsel kontrol kaydedilir. Okundu demek doğru okundu demek değildir."
+  },
+  {
+    "id": "R17",
+    "origin": "Tasarım kalite kararı",
+    "title": "Çıktı doğrulaması",
+    "acceptance_statement": "Sohbetin önemli iddiaları kaynaklanır; dosya içerik, yapı ve görünüm açısından teslimden önce kontrol edilir."
+  },
+  {
+    "id": "R18",
+    "origin": "Kullanıcı kararı",
+    "title": "Yerel depo ve SharePoint hedefi",
+    "acceptance_statement": "Bugün her kullanıcının yerel klasörü; yarın SharePoint belge deposu. Sabit kimlikler, sürümler ve yetkiler geçişte korunur."
+  },
+  {
+    "id": "R19",
+    "origin": "Kullanıcı kararı",
+    "title": "Kurumsal kaynaklar daha sonra",
+    "acceptance_statement": "Standart sözleşme, yetki matrisi, prosedür ve Hukuk görüşleri ileride eklenebilir; yokken şirket standardı üretilmez."
+  },
+  {
+    "id": "R20",
+    "origin": "Kullanıcı kararı",
+    "title": "Hukuk onayı yapılandırılabilir",
+    "acceptance_statement": "Hukuk onayı desteklenir; her dosya için zorunlu olduğu veya kullanıcının her kararı verebildiği varsayılmaz."
+  },
+  {
+    "id": "R21",
+    "origin": "Kullanıcı kararı",
+    "title": "Satınalma erişimi",
+    "acceptance_statement": "Satınalma kullanabilir; başka kullanıcının yerel dosyalarına erişim kendiliğinden sağlanmış sayılmaz."
+  },
+  {
+    "id": "R22",
+    "origin": "Kullanıcı kararı",
+    "title": "Sigorta kapsamı",
+    "acceptance_statement": "Tedarikçi sigorta gerekliliği, poliçe, limit, muafiyet, zeyil, süreklilik ve hasar dosyası kapsamdadır. Şirketin kendi poliçe satınalması S-20 için açık iş tercihi olarak tutulur."
+  },
+  {
+    "id": "R23",
+    "origin": "Kullanıcı kararı",
+    "title": "Bütünleşik risk",
+    "acceptance_statement": "Ödeme, teminat, sigorta, kabul, garanti, ceza ve sorumluluk birlikte değerlendirilir."
+  },
+  {
+    "id": "R24",
+    "origin": "Kullanıcı kararı",
+    "title": "E-posta yeteneği",
+    "acceptance_statement": "Taslak ve gönderim ayrı; iç/dış bilgi ayrımı yapılır; gönderim nihai içerik, alıcı ve eklerle sınırlı açık izin ister."
+  },
+  {
+    "id": "R25",
+    "origin": "Kullanıcı tarafından 4 Ekim onaylandı",
+    "title": "Sözleşme Eylem Muhafızı",
+    "acceptance_statement": "Teknik izin, kullanıcı isteği, kurumsal yetki ve işlem kapsamı tek ortak politika yolundan değerlendirilir."
+  },
+  {
+    "id": "R26",
+    "origin": "Kullanıcı tarafından 4 Ekim onaylandı",
+    "title": "Onay Parmakizi",
+    "acceptance_statement": "Onay tam işlem içeriği/sürümüne bağlanır. Hash kimlik doğrulama veya elektronik imza yerine geçmez."
+  },
+  {
+    "id": "R27",
+    "origin": "Kullanıcı tarafından 4 Ekim onaylandı",
+    "title": "Bağlam Bütçe Yöneticisi",
+    "acceptance_statement": "Gerekli ve yeterli bağlam, bağlı tanımlar/istisnalar dahil seçilir; çıkarılan kısım ve yetersizlik görünür olur."
+  },
+  {
+    "id": "R28",
+    "origin": "Kullanıcı tarafından 4 Ekim onaylandı",
+    "title": "Regresyon Test Düzeneği",
+    "acceptance_statement": "İzole sentetik/anonim veri, önce/sonra dosya karşılaştırma, nesnel doğrulayıcılar ve uygun izinle canlı model ölçümü kullanılır."
+  },
+  {
+    "id": "R29",
+    "origin": "Tasarım kontrol kararı",
+    "title": "Tipli arayüz ve şema",
+    "acceptance_statement": "LLM çıktısı şema doğrulamasına girer; veri biçimi, gerçeklik ve yetki doğrulaması ayrıdır. Bilinmeyen alanlar sessiz kabul edilmez."
+  },
+  {
+    "id": "R30",
+    "origin": "Tasarım kontrol kararı",
+    "title": "Güven sınırları",
+    "acceptance_statement": "Tedarikçi metni, eklenti açıklaması veya araç çıktısı yetki üretemez. Okuyucu/doğrulayıcı/yazıcı rolleri mantıksal ve teknik olarak ayrılır."
+  },
+  {
+    "id": "R31",
+    "origin": "Son kontrol düzeltmesi",
+    "title": "Kritik hatada güvenli duruş",
+    "acceptance_statement": "Politika, kilit, kayıt veya onay kontrolü başarısızsa kritik yazma/gönderme durur. Sınırı belli salt-okunur yardım sürebilir."
+  },
+  {
+    "id": "R32",
+    "origin": "Son kontrol düzeltmesi",
+    "title": "Tek yazıcı ve kurtarma",
+    "acceptance_statement": "Yerel DuckDB erişimi tek yönetici üzerinden; çoklu oturum çakışması, yarım dosya/kayıt işlemi, yedek ve geri yükleme test edilir."
+  },
+  {
+    "id": "R33",
+    "origin": "Son kontrol düzeltmesi",
+    "title": "Depo ve lisans kontrolü",
+    "acceptance_statement": "Aday GitHub fikirleri kurulmuş veya güvenilir kod sayılmaz; tam sürüm/lisans/bağımlılık incelemesi olmadan üretime eklenmez."
+  },
+  {
+    "id": "R34",
+    "origin": "Son kontrol düzeltmesi",
+    "title": "Yüzey ve paketleme testi",
+    "acceptance_statement": "Güncel resmi paketleme ile hedef Work/Codex sürümünde keşif, hook güveni, kod yürütme ve dosya erişimi kanıtlanır; eksikler gizlenmez."
+  },
+  {
+    "id": "R35",
+    "origin": "Son kontrol düzeltmesi",
+    "title": "Üç hazırlık düzeyi",
+    "acceptance_statement": "Tasarım devir hazırlığı, çalışan yazılım ve kurum çapında yayın hazırlığı ayrıdır; çalıştırılmayan test NOT_RUN kalır."
+  },
+  {
+    "id": "R36",
+    "origin": "Tasarım kapsam kararı",
+    "title": "Türkçe adlar ve 30 skill bazı",
+    "acceptance_statement": "K00-K29 iş skill haritası korunur; dört ortak kontrol bileşeni yeni skill sayılmaz. Değişiklik gerekirse gerekçesi ADR ile kaydedilir."
+  }
+]

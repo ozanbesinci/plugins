@@ -1,0 +1,238 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Tipli işlem planı - izin kaynağı değildir",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "operation_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "case_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "action_type": {
+      "enum": [
+        "BUILD_DOCUMENT",
+        "APPLY_TRACK_CHANGES",
+        "CREATE_CLEAN_COPY",
+        "SEND_EMAIL"
+      ]
+    },
+    "purpose": {
+      "enum": [
+        "INTERNAL_DRAFT",
+        "EXTERNAL_DRAFT",
+        "APPROVED_OUTPUT"
+      ]
+    },
+    "source_versions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "version_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "required": [
+          "version_id",
+          "sha256"
+        ]
+      }
+    },
+    "parameters": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "schema_version",
+    "operation_id",
+    "case_id",
+    "action_type",
+    "purpose",
+    "source_versions",
+    "parameters"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "action_type": {
+            "const": "SEND_EMAIL"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "parameters": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "account_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "from_address": {
+                "type": "string",
+                "format": "email"
+              },
+              "to": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string",
+                  "format": "email"
+                }
+              },
+              "cc": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "email"
+                }
+              },
+              "bcc": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "email"
+                }
+              },
+              "subject": {
+                "type": "string",
+                "minLength": 1
+              },
+              "body_media_type": {
+                "enum": [
+                  "text/plain",
+                  "text/html"
+                ]
+              },
+              "body_sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "attachments": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "version_id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "sha256": {
+                      "type": "string",
+                      "pattern": "^[0-9a-f]{64}$"
+                    },
+                    "filename": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "version_id",
+                    "sha256",
+                    "filename"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "account_id",
+              "from_address",
+              "to",
+              "cc",
+              "bcc",
+              "subject",
+              "body_media_type",
+              "body_sha256",
+              "attachments"
+            ]
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "parameters": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "output_format": {
+                "enum": [
+                  "DOCX",
+                  "PDF",
+                  "XLSX"
+                ]
+              },
+              "target_relative_path": {
+                "type": "string",
+                "pattern": "^ciktilar/"
+              },
+              "content_plan_sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "change_plan_sha256": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "output_format",
+              "target_relative_path",
+              "content_plan_sha256",
+              "change_plan_sha256"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "action_type": {
+            "const": "APPLY_TRACK_CHANGES"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "source_versions": {
+            "minItems": 1
+          },
+          "parameters": {
+            "properties": {
+              "output_format": {
+                "const": "DOCX"
+              },
+              "change_plan_sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

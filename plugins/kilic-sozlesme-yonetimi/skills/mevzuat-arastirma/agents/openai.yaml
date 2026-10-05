@@ -1,0 +1,4 @@
+interface:
+  display_name: "Mevzuat Araştırma"
+  short_description: "Mevzuat Araştırma için kaynaklı karar desteği"
+  default_prompt: "$mevzuat-arastirma ile türkiye hukuku açısından araştır."

@@ -1,0 +1,18 @@
+{
+  "name": "kilic-sozlesme",
+  "owner": {
+    "name": "Ozan Beşinci"
+  },
+  "plugins": [
+    {
+      "name": "kilic-sozlesme-yonetimi",
+      "source": "./plugins/kilic-sozlesme-yonetimi",
+      "description": "Kaynaklı sözleşme desteği; e-posta gönderimi yok. Geliştirme adayı.",
+      "version": "0.1.0-dev.3",
+      "author": {
+        "name": "Ozan Beşinci"
+      }
+    }
+  ],
+  "description": "Kılıç Sözleşme Yönetimi geliştirme adayları; kaynaklı sözleşme desteği ve Güncelleyici. E-posta gönderimi yok."
+}

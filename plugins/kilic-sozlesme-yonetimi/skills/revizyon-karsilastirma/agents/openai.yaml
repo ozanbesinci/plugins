@@ -1,0 +1,4 @@
+interface:
+  display_name: "Revizyon Karşılaştırma"
+  short_description: "Revizyon Karşılaştırma için kaynaklı karar desteği"
+  default_prompt: "$revizyon-karsilastirma ile ne değişmiş; etkisi ne."

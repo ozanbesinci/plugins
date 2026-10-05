@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ödeme ve Hakediş Değerlendirme"
+  short_description: "Ödeme ve Hakediş Değerlendirme için kaynaklı karar desteği"
+  default_prompt: "$odeme-hakedis-degerlendirme ile ödeme planı/hakediş uygun mu."

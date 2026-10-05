@@ -1,0 +1,501 @@
+{
+  "schema": "guncelleyici-release-tests/v1",
+  "release_version": "2.3.0",
+  "tested_on": "2026-10-04",
+  "platform": "Windows amd64 / Windows PowerShell 5.1",
+  "python": {
+    "version": "3.14.8",
+    "status": "PASS",
+    "tests_run": 80,
+    "passed": 78,
+    "not_run": 2,
+    "failures": 0,
+    "errors": 0,
+    "report": "tests-python.json"
+  },
+  "windows": {
+    "general": {
+      "suite": "Windows PowerShell 5.1 offline syntax/orchestration",
+      "status": "PASS",
+      "assertions": 47,
+      "results": [
+        {
+          "name": "syntax:core.ps1",
+          "status": "PASS"
+        },
+        {
+          "name": "syntax:node-kur.ps1",
+          "status": "PASS"
+        },
+        {
+          "name": "syntax:on-kontrol.ps1",
+          "status": "PASS"
+        },
+        {
+          "name": "syntax:panel.ps1",
+          "status": "PASS"
+        },
+        {
+          "name": "syntax:pnpm-kur.ps1",
+          "status": "PASS"
+        },
+        {
+          "name": "syntax:powerbi-mcp-kur.ps1",
+          "status": "PASS"
+        },
+        {
+          "name": "syntax:program-ortak.ps1",
+          "status": "PASS"
+        },
+        {
+          "name": "syntax:python-kur.ps1",
+          "status": "PASS"
+        },
+        {
+          "name": "syntax:sohbet.ps1",
+          "status": "PASS"
+        },
+        {
+          "name": "syntax:test_pnpm.ps1",
+          "status": "PASS"
+        },
+        {
+          "name": "syntax:test_pnpm_native.ps1",
+          "status": "PASS"
+        },
+        {
+          "name": "syntax:test_scan.ps1",
+          "status": "PASS"
+        },
+        {
+          "name": "syntax:test_windows.ps1",
+          "status": "PASS"
+        },
+        {
+          "name": "Dispatcher uses native Windows PowerShell 5.1 x64",
+          "status": "PASS"
+        },
+        {
+          "name": "Dispatcher preserves spaced arguments",
+          "status": "PASS"
+        },
+        {
+          "name": "Dispatcher child inherits all execution policy scopes",
+          "status": "PASS"
+        },
+        {
+          "name": "Dispatcher propagates policy rejection without bypass retry",
+          "status": "PASS"
+        },
+        {
+          "name": "RemoteSigned blocks unsigned remote probe before execution",
+          "status": "PASS"
+        },
+        {
+          "name": "Parent execution policy scopes unchanged",
+          "status": "PASS"
+        },
+        {
+          "name": "Atomic JSON first creation",
+          "status": "PASS"
+        },
+        {
+          "name": "Atomic JSON existing file replacement",
+          "status": "PASS"
+        },
+        {
+          "name": "Atomic JSON locked destination rejects replacement",
+          "status": "PASS"
+        },
+        {
+          "name": "Atomic JSON failed replacement preserves original",
+          "status": "PASS"
+        },
+        {
+          "name": "Atomic JSON temporary files cleared after failure",
+          "status": "PASS"
+        },
+        {
+          "name": "Seven rows including optional PDF",
+          "status": "PASS"
+        },
+        {
+          "name": "Removed offer component absent from scan",
+          "status": "PASS"
+        },
+        {
+          "name": "Former offer selection rejected before installation",
+          "status": "PASS"
+        },
+        {
+          "name": "Former offer verification rejected",
+          "status": "PASS"
+        },
+        {
+          "name": "Update candidates returned",
+          "status": "PASS"
+        },
+        {
+          "name": "Scan never invokes install",
+          "status": "PASS"
+        },
+        {
+          "name": "Scan does not persist installation state",
+          "status": "PASS"
+        },
+        {
+          "name": "PDF is opt-in",
+          "status": "PASS"
+        },
+        {
+          "name": "Changed plan rejected",
+          "status": "PASS"
+        },
+        {
+          "name": "Changed plan has no install calls",
+          "status": "PASS"
+        },
+        {
+          "name": "Unknown selection rejected",
+          "status": "PASS"
+        },
+        {
+          "name": "Apply without explicit confirmation rejected",
+          "status": "PASS"
+        },
+        {
+          "name": "Unconfirmed apply has no install calls",
+          "status": "PASS"
+        },
+        {
+          "name": "Empty selection cancels",
+          "status": "PASS"
+        },
+        {
+          "name": "Local change detected under lock",
+          "status": "PASS"
+        },
+        {
+          "name": "Stale local state not installed",
+          "status": "PASS"
+        },
+        {
+          "name": "Approved fixture installation completes",
+          "status": "PASS"
+        },
+        {
+          "name": "Only selected component invoked",
+          "status": "PASS"
+        },
+        {
+          "name": "Maintenance result retained",
+          "status": "PASS"
+        },
+        {
+          "name": "Audit result contains final rows",
+          "status": "PASS"
+        },
+        {
+          "name": "Completed transaction journal cleared",
+          "status": "PASS"
+        },
+        {
+          "name": "Shared update guard rejects second writer",
+          "status": "PASS"
+        },
+        {
+          "name": "Single-item arrays preserved by field reader",
+          "status": "PASS"
+        }
+      ],
+      "live_installations": "NOT_RUN",
+      "excel_com": "NOT_RUN",
+      "authenticode_chain": "NOT_RUN",
+      "pdf_native_extension": "NOT_RUN"
+    },
+    "pnpm": {
+      "suite": "Windows PowerShell 5.1 offline pnpm regressions",
+      "status": "PASS",
+      "assertions": 29,
+      "results": [
+        {
+          "name": "pnpm 12 native install (2.2.1 evidence layout) detected with version, not unmanaged",
+          "status": "PASS"
+        },
+        {
+          "name": "pnpm native binary is never passed to node as a script",
+          "status": "PASS"
+        },
+        {
+          "name": "pnpm native probe does not require Node.js",
+          "status": "PASS"
+        },
+        {
+          "name": "pnpm JS-entry install still probed through explicit Node",
+          "status": "PASS"
+        },
+        {
+          "name": "pnpm ignore-scripts placeholder launcher is never executed and cannot pass staging",
+          "status": "PASS"
+        },
+        {
+          "name": "pnpm staging passes after verified native binary placement",
+          "status": "PASS"
+        },
+        {
+          "name": "pnpm npm launcher shims are replaced by direct native shims for all four published bins",
+          "status": "PASS"
+        },
+        {
+          "name": "pnpm native shim generation rejects unsafe bin names",
+          "status": "PASS"
+        },
+        {
+          "name": "pnpm native binary extracted byte-exact from verified tgz",
+          "status": "PASS"
+        },
+        {
+          "name": "pnpm tgz rejects link entry",
+          "status": "PASS"
+        },
+        {
+          "name": "pnpm tgz rejects duplicate entry",
+          "status": "PASS"
+        },
+        {
+          "name": "pnpm tgz rejects PAX path override",
+          "status": "PASS"
+        },
+        {
+          "name": "pnpm tgz rejects missing binary",
+          "status": "PASS"
+        },
+        {
+          "name": "pnpm tgz rejects truncated binary",
+          "status": "PASS"
+        },
+        {
+          "name": "pnpm unverifiable install stays unmanaged but keeps PATH visibility and claimed version",
+          "status": "PASS"
+        },
+        {
+          "name": "Found but unverifiable pnpm is not reported as not installed",
+          "status": "PASS"
+        },
+        {
+          "name": "Absent pnpm is still reported as not installed",
+          "status": "PASS"
+        },
+        {
+          "name": "pnpm unknown fixture shim remains unmanaged",
+          "status": "PASS"
+        },
+        {
+          "name": "SHA512 fixture includes Turkish case-sensitive ASCII I",
+          "status": "PASS"
+        },
+        {
+          "name": "pnpm valid SHA512 accepted in tr-TR while unmanaged guard remains blocked",
+          "status": "PASS"
+        },
+        {
+          "name": "pnpm unmanaged block always carries a visible reason",
+          "status": "PASS"
+        },
+        {
+          "name": "pnpm invalid integrity rejected: sha512-!",
+          "status": "PASS"
+        },
+        {
+          "name": "pnpm invalid integrity rejected: SHA512-AAAA",
+          "status": "PASS"
+        },
+        {
+          "name": "pnpm invalid integrity rejected: sha512-ıAAA",
+          "status": "PASS"
+        },
+        {
+          "name": "pnpm invalid integrity rejected: sha512-İAAA",
+          "status": "PASS"
+        },
+        {
+          "name": "pnpm 12 plan pins native binary package URL and SHA-512",
+          "status": "PASS"
+        },
+        {
+          "name": "pnpm native tarball URL mismatch rejected with reason",
+          "status": "PASS"
+        },
+        {
+          "name": "pnpm native optional dependency version mismatch rejected",
+          "status": "PASS"
+        },
+        {
+          "name": "pnpm regressions restore process culture",
+          "status": "PASS"
+        }
+      ],
+      "installations": "NOT_RUN",
+      "binary_execution": "NOT_RUN",
+      "network": "NOT_RUN"
+    },
+    "scan": {
+      "suite": "Windows PowerShell 5.1 offline scan regressions",
+      "status": "PASS",
+      "assertions": 21,
+      "results": [
+        {
+          "name": "Python single release and file arrays select scalar target",
+          "status": "PASS"
+        },
+        {
+          "name": "Python multiple releases/files retain supported amd64 selection",
+          "status": "PASS"
+        },
+        {
+          "name": "Python empty file array rejected",
+          "status": "PASS"
+        },
+        {
+          "name": "Python invalid checksum rejected",
+          "status": "PASS"
+        },
+        {
+          "name": "Python empty release array rejected",
+          "status": "PASS"
+        },
+        {
+          "name": "Node single release array selects scalar LTS target",
+          "status": "PASS"
+        },
+        {
+          "name": "Node multiple releases select newest compatible LTS",
+          "status": "PASS"
+        },
+        {
+          "name": "Node missing checksum rejected",
+          "status": "PASS"
+        },
+        {
+          "name": "Node empty release array rejected",
+          "status": "PASS"
+        },
+        {
+          "name": "Twelve matching libraries produce no changes",
+          "status": "PASS"
+        },
+        {
+          "name": "Repair produces twelve separate equal-version reinstall effects",
+          "status": "PASS"
+        },
+        {
+          "name": "Only changed or missing libraries produce effects",
+          "status": "PASS"
+        },
+        {
+          "name": "Library upgrade preserves individual name",
+          "status": "PASS"
+        },
+        {
+          "name": "Library downgrade preserves individual name",
+          "status": "PASS"
+        },
+        {
+          "name": "Missing library produces install effect",
+          "status": "PASS"
+        },
+        {
+          "name": "Empty library list produces no effects",
+          "status": "PASS"
+        },
+        {
+          "name": "Single library array retains package identity",
+          "status": "PASS"
+        },
+        {
+          "name": "Power BI absent fixture succeeds without HOME collision",
+          "status": "PASS"
+        },
+        {
+          "name": "Power BI fixture metadata and binary discovered without server launch",
+          "status": "PASS"
+        },
+        {
+          "name": "Power BI default config discovery preserves config and HOME",
+          "status": "PASS"
+        },
+        {
+          "name": "Power BI honors explicit CODEX_HOME in fixture",
+          "status": "PASS"
+        }
+      ],
+      "installations": "NOT_RUN",
+      "server_launch": "NOT_RUN"
+    }
+  },
+  "native_pnpm": {
+    "version": "12.9.1",
+    "network_installation": false,
+    "live_installation": "NOT_RUN",
+    "assertions": 6,
+    "staging": "real temporary prefix",
+    "status": "PASS",
+    "integrity": "both npm tarballs SHA-512 verified",
+    "checks": [
+      "Real npm offline/ignore-scripts/omit-optional installation",
+      "Placeholder rejected without executing the launcher",
+      "Real verified native executable version",
+      "All four native command shims present",
+      "Real pnpm.cmd --version",
+      "Real pnpm.ps1 --version with inherited execution policy"
+    ]
+  },
+  "native_pdf": {
+    "status": "PASS",
+    "scope": "signed LOAD + synthetic one-page golden text and API presence only",
+    "duckdb": "1.5.6",
+    "platform": "windows_amd64",
+    "extension_version": "6535c81",
+    "sha256": "8646744422315da42bd4651dfdbe5b0fccc6295c0a464ad0b021d1b540ee8871",
+    "signature_verification": true,
+    "install_update": "NOT_RUN",
+    "turkish_ocr_and_real_table_accuracy": "NOT_RUN"
+  },
+  "tested_code_file_sha256": {
+    "config/paket-seti.json": "707f7473ae1ffd820957af72eaefe5feca243e44e48f6fd6bab51ccf905788d4",
+    "scripts/claude_bagla.py": "0cebe04f2d37b88822bab2e9061c3e74a158b5447a08fd4ed741d25a5b8b2777",
+    "scripts/core.ps1": "a09a694f4acf186e4c1c9e8552b7f46b5745ce348368e21ce318040b38fe37cf",
+    "scripts/duckdb_pdf.py": "d854dd4c5084e642342815f7aa1558a5df42bc8d498e368a6d93df4c247cd192",
+    "scripts/islem_guvencesi.py": "aa76b66c15f289d8e57ca3d91689e96091d146a243dbfc7c8b26be0a3d5bf0d8",
+    "scripts/islev-testi.py": "b81f7d976b5b4ec2c43bd5a61c12e3338bfc2c2dcf0023dfc331be2ed0b50fa4",
+    "scripts/kurulum-testi.py": "258478747d6ed6eba144922c770400ed3d752acd4657050ca8cc32cc79fa536c",
+    "scripts/mcp_ayar.py": "db0895ab0f43eb05af59699b3647dcc8be6e13478c9f9354d9b4ff7adfd19a5b",
+    "scripts/node-kur.ps1": "0a3899e1d28176aa322cca25d5ee09605efe7e7d5668ed1062089e3c887ed30a",
+    "scripts/on-kontrol.ps1": "9df2d3387cf730217bf2c99956e8cbd8e659a17e9e647f6f5a90d4de487e523d",
+    "scripts/panel.ps1": "d1304417fd952a6cb809839ec6f06fa399493cf148fb73de469149c5ee2b83af",
+    "scripts/pnpm-kur.ps1": "71167b77c71ed9ecca7854181a4cebb44b8dea5e6ab166475af3d4b2f32c22aa",
+    "scripts/powerbi-mcp-kur.ps1": "55130e86d5e2209ecf41f93a18f5b3a2d9283742718ceabcaca7d001a423be21",
+    "scripts/program-ortak.ps1": "b58e4a643d8c856747a34a6307a1cc9142b34c59fd4bf041188c802ecb91cc4d",
+    "scripts/python-kur.ps1": "73fca511987cbf3e2197976f36ea6d1d0e4a4347885c88a5e421019f01bce3bc",
+    "scripts/python-paket-kur.py": "f7d9156021085121890408e982460eae98e5f5d919cff6ca910421edc4ecf42d",
+    "scripts/sohbet.ps1": "5d6f562ecea578cff55820c9a8073a55e5fbde15eec361ebb0c383299ea757dc",
+    "tests/run_tests.py": "889174e5613fbc2bdb6c51772e65effe252df6e0beb081bb838a74a772c3fcb3",
+    "tests/test_bilesenler.py": "c5b3f78622ea6baa7fefbed241a4f4a5a5818901776fd940a97a843b7b652361",
+    "tests/test_chat_surface.py": "9e3a0785b2e1e975a2411e99b820ac353254e7b92f02adbc8702d93fd2c1668c",
+    "tests/test_cli_and_edges.py": "e02d64b9c22a0a7644107e1896b23fe2f136df177fb6e8ef269eeb358b10cd4c",
+    "tests/test_guvence.py": "571f06f822ef54a0fc247dfd1feeb12edc96c9d9f4a6a5f6333232a3d82a435a",
+    "tests/test_pnpm.ps1": "7636f41cc2baa4d445bd44dc950ccfa68a18623b8dc71d133f65e66127bc53d2",
+    "tests/test_pnpm_native.ps1": "53a9eee5150bc91f220c7d7231b7d8e95d596888fcec87fa207ed5d5bc767891",
+    "tests/test_powershell_compat.py": "34d27ff2b672ff81a35f3f11caa28863465e56b87390f3061014aa108a4daf91",
+    "tests/test_pro_audit.py": "934c38fcf74ea5159b8cba6ea867c12198c566be3b943a1a9740ce48e64e73fd",
+    "tests/test_scan.ps1": "d82914b9a102efba9b1b8db777a4d750c20f2c8b9b16bab946811917d329c0d1",
+    "tests/test_windows.ps1": "e8fc70e5782df7ed672041cee32e86a59fe1804e99f323d414870536bbecc17d"
+  },
+  "production_approved": false,
+  "not_run": [
+    "Full native installation/recovery fault matrix",
+    "Excel COM for this release",
+    "Actual Codex/Claude client integration for this release",
+    "Personnel pilot"
+  ]
+}

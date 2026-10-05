@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ceza ve Sorumluluk Değerlendirme"
+  short_description: "Ceza ve Sorumluluk Değerlendirme için kaynaklı karar desteği"
+  default_prompt: "$ceza-sorumluluk-degerlendirme ile ceza ve sorumluluk sınırı ne anlama gelir."

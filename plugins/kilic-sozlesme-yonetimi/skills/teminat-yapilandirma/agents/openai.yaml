@@ -1,0 +1,4 @@
+interface:
+  display_name: "Teminat Yapılandırma"
+  short_description: "Teminat Yapılandırma için kaynaklı karar desteği"
+  default_prompt: "$teminat-yapilandirma ile avans/kesin teminat nasıl olmalı."

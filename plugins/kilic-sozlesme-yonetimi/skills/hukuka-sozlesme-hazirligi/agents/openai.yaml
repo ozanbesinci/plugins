@@ -1,0 +1,4 @@
+interface:
+  display_name: "Hukuka Sözleşme Hazırlığı"
+  short_description: "Hukuka Sözleşme Hazırlığı için kaynaklı karar desteği"
+  default_prompt: "$hukuka-sozlesme-hazirligi ile hukuka talep bilgilerini hazırla."

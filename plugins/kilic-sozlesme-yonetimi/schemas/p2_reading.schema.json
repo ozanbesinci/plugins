@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "sha256", "size_bytes", "format", "trust", "reader", "units", "inventory", "parts", "relationships", "revisions", "issues", "verification", "fallback"],
+  "properties": {
+    "schema_version": {"const": "2.0"},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "size_bytes": {"type": "integer", "minimum": 0},
+    "format": {"enum": ["DOCX", "PDF", "XLSX", "EML"]},
+    "trust": {"const": "UNTRUSTED_DATA"},
+    "reader": {
+      "type": "object", "additionalProperties": false, "required": ["name", "version", "dependencies"],
+      "properties": {
+        "name": {"type": "string"}, "version": {"const": "1.0"},
+        "dependencies": {"type": "array", "items": {
+          "type": "object", "additionalProperties": false, "required": ["name", "version"],
+          "properties": {"name": {"type": "string"}, "version": {"type": "string"}}
+        }}
+      }
+    },
+    "units": {"type": "array", "maxItems": 20000, "items": {
+      "type": "object", "additionalProperties": false,
+      "required": ["unit_id", "kind", "locator", "views", "attributes"],
+      "properties": {
+        "unit_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "kind": {"enum": ["PARAGRAPH", "HEADER", "FOOTER", "COMMENT", "FOOTNOTE", "ENDNOTE", "TEXTBOX", "CELL", "PDF_PAGE", "EMAIL_HEADER", "EMAIL_BODY", "EMAIL_ATTACHMENT"]},
+        "locator": {"$ref": "#/$defs/locator"},
+        "views": {
+          "type": "object", "additionalProperties": false, "required": ["RAW", "BEFORE", "AFTER", "DISPLAY"],
+          "properties": {
+            "RAW": {"type": "string"}, "BEFORE": {"type": ["string", "null"]},
+            "AFTER": {"type": ["string", "null"]}, "DISPLAY": {"type": ["string", "null"]}
+          }
+        },
+        "attributes": {"type": "array", "items": {
+          "type": "object", "additionalProperties": false, "required": ["key", "value"],
+          "properties": {"key": {"type": "string"}, "value": {"type": "string"}}
+        }}
+      }
+    }},
+    "inventory": {"type": "array", "items": {
+      "type": "object", "additionalProperties": false, "required": ["feature", "count", "status", "note"],
+      "properties": {"feature": {"type": "string"}, "count": {"type": "integer", "minimum": 0},
+        "status": {"enum": ["TESTED", "PARTIAL", "NOT_RUN", "UNSUPPORTED"]}, "note": {"type": "string"}}
+    }},
+    "parts": {"type": "array", "items": {
+      "type": "object", "additionalProperties": false, "required": ["name", "sha256", "size_bytes"],
+      "properties": {"name": {"type": "string"}, "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "size_bytes": {"type": "integer", "minimum": 0}}
+    }},
+    "relationships": {"type": "array", "items": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source", "id", "type", "target", "external", "resolved_part"],
+      "properties": {"source": {"type": "string"}, "id": {"type": "string"}, "type": {"type": "string"},
+        "target": {"type": "string"}, "external": {"type": "boolean"}, "resolved_part": {"type": ["string", "null"]}}
+    }},
+    "revisions": {"type": "array", "items": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "id", "author", "date", "locator", "nested", "raw", "before", "after"],
+      "properties": {"kind": {"enum": ["ins", "del", "moveFrom", "moveTo"]},
+        "id": {"type": ["string", "null"]}, "author": {"type": ["string", "null"]},
+        "date": {"type": ["string", "null"]}, "locator": {"$ref": "#/$defs/locator"},
+        "nested": {"type": "boolean"}, "raw": {"type": "string"}, "before": {"type": "string"}, "after": {"type": "string"}}
+    }},
+    "issues": {"type": "array", "items": {
+      "type": "object", "additionalProperties": false, "required": ["code", "message", "locator", "severity"],
+      "properties": {"code": {"type": "string"}, "message": {"type": "string"},
+        "locator": {"anyOf": [{"$ref": "#/$defs/locator"}, {"type": "null"}]},
+        "severity": {"enum": ["INFO", "WARNING", "BLOCKING"]}}
+    }},
+    "verification": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "integrity", "coverage", "source_fidelity", "semantic", "visual", "critical_analysis_allowed", "revision_acceptance", "methods", "stop_reason"],
+      "properties": {
+        "status": {"enum": ["PARTIAL", "UNVERIFIED"]}, "integrity": {"const": "PASS"},
+        "coverage": {"const": "PARTIAL"}, "source_fidelity": {"const": "PARTIAL"},
+        "semantic": {"const": "NOT_RUN"}, "visual": {"const": "NOT_RUN"},
+        "critical_analysis_allowed": {"const": false}, "revision_acceptance": {"const": false},
+        "methods": {"type": "array", "items": {"type": "string"}}, "stop_reason": {"type": "string"}
+      }
+    },
+    "fallback": {
+      "type": "object", "additionalProperties": false, "required": ["performed", "next", "ocr_calls"],
+      "properties": {"performed": {"type": "array", "maxItems": 4, "items": {"type": "string"}},
+        "next": {"type": "array", "maxItems": 4, "items": {"type": "string"}}, "ocr_calls": {"const": 0}}
+    }
+  },
+  "$defs": {
+    "locator": {
+      "type": "object", "additionalProperties": false, "required": ["part", "path", "page", "sheet", "cell"],
+      "properties": {"part": {"type": "string"}, "path": {"type": "string"},
+        "page": {"type": ["integer", "null"], "minimum": 1},
+        "sheet": {"type": ["string", "null"]}, "cell": {"type": ["string", "null"]}}
+    }
+  }
+}

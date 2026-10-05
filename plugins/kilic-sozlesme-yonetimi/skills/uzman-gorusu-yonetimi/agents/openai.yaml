@@ -1,0 +1,4 @@
+interface:
+  display_name: "Uzman Görüşü Yönetimi"
+  short_description: "Uzman Görüşü Yönetimi için kaynaklı karar desteği"
+  default_prompt: "$uzman-gorusu-yonetimi ile hukuka/finansa/tekniğe soralım."
