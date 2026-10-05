@@ -17,6 +17,7 @@
         "shortDescription": "Kaynaklı sözleşme desteği",
         "longDescription": "Türkçe kaynaklı sözleşme desteği, EML belge okuma, iş bilgisi ve kesin para/tarih hesabı. E-posta gönderimi yok; yazışma taslakları sohbet içinde hazırlanır. Geliştirme sürümü; üretim Word yetki/QA ve tam kabulü sürüyor.",
         "developerName": "Ozan Beşinci",
+        "websiteURL": "https://github.com/ozanbesinci/kilic-sozlesme-yonetimi-plugin",
         "category": "Productivity",
         "capabilities": [
           "Interactive",
