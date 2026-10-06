@@ -22,6 +22,8 @@ import venv
 from urllib.parse import urlsplit
 
 ROOT=Path(__file__).resolve().parents[1]
+sys.path.insert(0,str(ROOT/'src'))
+from kilic_error_log import write_error
 UPDATER=ROOT/'vendor/guncelleyici'
 sys.path.insert(0,str(UPDATER/'scripts'))
 from islem_guvencesi import SafetyError, atomic_json, exclusive_lock, reject_links, redact
@@ -237,6 +239,7 @@ def main():
             result=install_missing(args.state_root)
         print('@@SONUC '+json.dumps(redact(result),ensure_ascii=False)); return 0
     except Exception as exc:
+        write_error("runtime-"+args.action, "RUNTIME_ERROR", exc)
         print('@@SONUC '+json.dumps({'status':'ERROR','message':redact(str(exc)),
               'resume_allowed':False,'recovery_required':args.action in {'install','pdf-child'}},ensure_ascii=False)); return 2
 

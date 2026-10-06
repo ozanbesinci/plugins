@@ -11,7 +11,11 @@ param(
 )
 $contractRoot=Split-Path $PSScriptRoot -Parent
 $engineRoot=Join-Path $contractRoot 'vendor\guncelleyici'
-. (Join-Path $engineRoot 'scripts\core.ps1')
+. (Join-Path $PSScriptRoot 'hata-kaydi.ps1')
+try{. (Join-Path $engineRoot 'scripts\core.ps1')}catch{
+    Write-KilicErrorLog -Stage 'bootstrap' -Code 'BOOTSTRAP_ERROR' -ErrorRecord $_ -SkillId $SkillId
+    throw
+}
 [Console]::OutputEncoding=New-Object Text.UTF8Encoding $false
 $OutputEncoding=New-Object Text.UTF8Encoding $false
 
@@ -130,6 +134,7 @@ try{
     if($python){$probe=Invoke-ContractProbe $python}
     $needed=-not $probe -or $probe.status -ne 'READY'
     if($needed -and -not $AutoInstallMissing){
+        Write-KilicErrorLog -Stage 'prepare' -Code 'DEPENDENCIES_REQUIRED' -SkillId $SkillId -Category 'EXPECTED_BLOCK'
         '@@SONUC '+(@{status='DEPENDENCIES_REQUIRED';resume_allowed=$false;runtime=$probe;startup_message=$meta.startup_message}|ConvertTo-Json -Depth 25 -Compress)
         exit 2
     }
@@ -171,6 +176,7 @@ try{
     }finally{$lock.Dispose()}
     exit 0
 }catch{
+    Write-KilicErrorLog -Stage $Action -Code 'ENTRY_BLOCKED' -ErrorRecord $_ -SkillId $SkillId -Category 'ENTRY_FAILURE'
     '@@SONUC '+(@{status='BLOCKED';message=(Hide-Secrets $_.Exception.Message);resume_allowed=$false;retry_safety='NO_BLIND_RETRY'}|ConvertTo-Json -Compress)
     exit 2
 }

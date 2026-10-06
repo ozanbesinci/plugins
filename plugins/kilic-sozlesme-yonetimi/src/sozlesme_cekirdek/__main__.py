@@ -4,6 +4,7 @@ import hashlib
 import json
 import sys
 from uuid import uuid4
+from kilic_error_log import write_error
 from .store import Store
 from .errors import CoreError
 from .safety import confined, native_path
@@ -167,10 +168,16 @@ def main():
                           "error_code":None,"retry_safety":"READ_ONLY" if args.command=="context" else "NO_BLIND_RETRY",
                           "tool_version":"0.1.0-dev.3","case_id":getattr(args,"case_id",None),"analysis_status":"NOT_RUN","authority":"NOT_VERIFIED"}, ensure_ascii=False))
     except CoreError as exc:
+        write_error(args.command, exc.code, exc, operation_id,
+                    (locals().get("request") or {}).get("skill_id") if isinstance(locals().get("request"), dict) else None,
+                    category="EXPECTED_BLOCK", core_version="0.1.0-dev.3")
         print(json.dumps({"schema_version":"1.0","operation_id":operation_id,"status":"BLOCKED","error_code":exc.code,"message":str(exc),
                           "result_refs":[],"evidence_refs":[],"warnings":[],"limitations":[],"retry_safety":"NO_BLIND_RETRY","tool_version":"0.1.0-dev.3"}, ensure_ascii=False))
         raise SystemExit(2)
     except Exception as exc:
+        write_error(args.command, "TEKNIK_HATA", exc, operation_id,
+                    (locals().get("request") or {}).get("skill_id") if isinstance(locals().get("request"), dict) else None,
+                    core_version="0.1.0-dev.3")
         print(json.dumps({"schema_version":"1.0","operation_id":operation_id,"status":"BLOCKED","error_code":"TEKNIK_HATA",
                           "result_refs":[],"evidence_refs":[],"warnings":[],"limitations":[],"retry_safety":"NO_BLIND_RETRY","tool_version":"0.1.0-dev.3"}, ensure_ascii=False))
         print(type(exc).__name__,file=sys.stderr)
