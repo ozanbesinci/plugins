@@ -10,7 +10,7 @@ def skill_metadata(skill_id):
     entry=registry.get(skill_id)
     if not entry: raise CoreError('BECERI_METADATA','Beceri kimliği kayıtlı değil')
     version=(ROOT/'skills'/entry['slug']/'VERSION').read_text(encoding='utf-8').strip()
-    expected=f"{entry['name']} skilli Ozan Beşinci tarafından geliştirilmiştir. Sürüm: {version}"
-    if entry['version']!=version or entry['developer']!='Ozan Beşinci' or entry['startup_message']!=expected:
+    expected=f"{entry['name']} skilli Kılıç Satınalma Departmanı tarafından geliştirilmiştir. Sürüm: {version}"
+    if entry['version']!=version or entry['developer']!='Kılıç Satınalma Departmanı' or entry['startup_message']!=expected:
         raise CoreError('BECERI_METADATA','Beceri sürüm/geliştirici kaydı farklı')
     return dict(entry)

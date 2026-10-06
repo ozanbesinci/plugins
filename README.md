@@ -1,8 +1,8 @@
 # Kılıç Sözleşme Yönetimi
 
-**Geliştirici: Ozan Beşinci · Sürüm: 0.1.0-dev.4**
+**Geliştirici: Ozan Beşinci · Sürüm: 0.1.0-dev.5**
 
-Dev.4 yalnız web sitesi metadatasını tamamlar.30 sözleşme becerisinin sürümü0.1.0-dev.3 ve Güncelleyici2.3.0 korunur; işleyiş dosyaları değişmez.
+Dev.5 ile31 becerinin başlangıç satırında Kılıç Satınalma Departmanı geliştirici bildirimi görünür.30 sözleşme becerisi0.1.0-dev.5, Güncelleyici2.3.0 sürümündedir. Güncelleyici motoru değişmedi.
 
 Türkçe kaynaklı sözleşme desteği için30 iş becerisi ve Güncelleyici2.3.0 içerir. Her beceri başlarken gerçek adı, sürümü ve geliştirici bildirimi görünür. K29 **Yazışma Hazırlama** yalnız sohbet taslağı hazırlar; e-posta gönderimi ve mailbox taslağı oluşturma yoktur.
 
@@ -39,7 +39,7 @@ Bu bir **geliştirme sürümüdür**. Üretim Word/kimlik/QA adaptörleri, genel
 GitHub prerelease ZIP'i219 dosya içerir. SHA-256:
 
 ```text
-f68621acc0492386331c797a2a2b1ad6323af79545b8ef72ee7c44058b727fcf
+2ea99e29a6d3bdc6e3ff8c8c29f671c2a1088aef3bd1a887dac1a52eb684d55f
 ```
 
 Depo ve ZIP gerçek şirket belgeleri, özel araştırma çıktısı veya erişim anahtarı içermez.

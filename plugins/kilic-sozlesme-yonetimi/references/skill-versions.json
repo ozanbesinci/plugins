@@ -3,248 +3,248 @@
     "id": "K00",
     "slug": "sozlesme-yonlendirici",
     "name": "Sözleşme Yönlendirici",
-    "version": "0.1.0-dev.3",
-    "developer": "Ozan Beşinci",
-    "startup_message": "Sözleşme Yönlendirici skilli Ozan Beşinci tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.3"
+    "version": "0.1.0-dev.5",
+    "developer": "Kılıç Satınalma Departmanı",
+    "startup_message": "Sözleşme Yönlendirici skilli Kılıç Satınalma Departmanı tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.5"
   },
   "K01": {
     "id": "K01",
     "slug": "sozlesme-baglami",
     "name": "Sözleşme Bağlamı",
-    "version": "0.1.0-dev.3",
-    "developer": "Ozan Beşinci",
-    "startup_message": "Sözleşme Bağlamı skilli Ozan Beşinci tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.3"
+    "version": "0.1.0-dev.5",
+    "developer": "Kılıç Satınalma Departmanı",
+    "startup_message": "Sözleşme Bağlamı skilli Kılıç Satınalma Departmanı tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.5"
   },
   "K02": {
     "id": "K02",
     "slug": "hukuka-sozlesme-hazirligi",
     "name": "Hukuka Sözleşme Hazırlığı",
-    "version": "0.1.0-dev.3",
-    "developer": "Ozan Beşinci",
-    "startup_message": "Hukuka Sözleşme Hazırlığı skilli Ozan Beşinci tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.3"
+    "version": "0.1.0-dev.5",
+    "developer": "Kılıç Satınalma Departmanı",
+    "startup_message": "Hukuka Sözleşme Hazırlığı skilli Kılıç Satınalma Departmanı tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.5"
   },
   "K03": {
     "id": "K03",
     "slug": "sozlesme-inceleme",
     "name": "Sözleşme İnceleme",
-    "version": "0.1.0-dev.3",
-    "developer": "Ozan Beşinci",
-    "startup_message": "Sözleşme İnceleme skilli Ozan Beşinci tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.3"
+    "version": "0.1.0-dev.5",
+    "developer": "Kılıç Satınalma Departmanı",
+    "startup_message": "Sözleşme İnceleme skilli Kılıç Satınalma Departmanı tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.5"
   },
   "K04": {
     "id": "K04",
     "slug": "revizyon-karsilastirma",
     "name": "Revizyon Karşılaştırma",
-    "version": "0.1.0-dev.3",
-    "developer": "Ozan Beşinci",
-    "startup_message": "Revizyon Karşılaştırma skilli Ozan Beşinci tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.3"
+    "version": "0.1.0-dev.5",
+    "developer": "Kılıç Satınalma Departmanı",
+    "startup_message": "Revizyon Karşılaştırma skilli Kılıç Satınalma Departmanı tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.5"
   },
   "K05": {
     "id": "K05",
     "slug": "odeme-hakedis-degerlendirme",
     "name": "Ödeme ve Hakediş Değerlendirme",
-    "version": "0.1.0-dev.3",
-    "developer": "Ozan Beşinci",
-    "startup_message": "Ödeme ve Hakediş Değerlendirme skilli Ozan Beşinci tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.3"
+    "version": "0.1.0-dev.5",
+    "developer": "Kılıç Satınalma Departmanı",
+    "startup_message": "Ödeme ve Hakediş Değerlendirme skilli Kılıç Satınalma Departmanı tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.5"
   },
   "K06": {
     "id": "K06",
     "slug": "teminat-yapilandirma",
     "name": "Teminat Yapılandırma",
-    "version": "0.1.0-dev.3",
-    "developer": "Ozan Beşinci",
-    "startup_message": "Teminat Yapılandırma skilli Ozan Beşinci tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.3"
+    "version": "0.1.0-dev.5",
+    "developer": "Kılıç Satınalma Departmanı",
+    "startup_message": "Teminat Yapılandırma skilli Kılıç Satınalma Departmanı tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.5"
   },
   "K07": {
     "id": "K07",
     "slug": "teminat-belgesi-kontrolu",
     "name": "Teminat Belgesi Kontrolü",
-    "version": "0.1.0-dev.3",
-    "developer": "Ozan Beşinci",
-    "startup_message": "Teminat Belgesi Kontrolü skilli Ozan Beşinci tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.3"
+    "version": "0.1.0-dev.5",
+    "developer": "Kılıç Satınalma Departmanı",
+    "startup_message": "Teminat Belgesi Kontrolü skilli Kılıç Satınalma Departmanı tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.5"
   },
   "K08": {
     "id": "K08",
     "slug": "teminat-takibi",
     "name": "Teminat Takibi",
-    "version": "0.1.0-dev.3",
-    "developer": "Ozan Beşinci",
-    "startup_message": "Teminat Takibi skilli Ozan Beşinci tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.3"
+    "version": "0.1.0-dev.5",
+    "developer": "Kılıç Satınalma Departmanı",
+    "startup_message": "Teminat Takibi skilli Kılıç Satınalma Departmanı tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.5"
   },
   "K09": {
     "id": "K09",
     "slug": "teslim-kabul-garanti",
     "name": "Teslim, Kabul ve Garanti",
-    "version": "0.1.0-dev.3",
-    "developer": "Ozan Beşinci",
-    "startup_message": "Teslim, Kabul ve Garanti skilli Ozan Beşinci tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.3"
+    "version": "0.1.0-dev.5",
+    "developer": "Kılıç Satınalma Departmanı",
+    "startup_message": "Teslim, Kabul ve Garanti skilli Kılıç Satınalma Departmanı tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.5"
   },
   "K10": {
     "id": "K10",
     "slug": "ceza-sorumluluk-degerlendirme",
     "name": "Ceza ve Sorumluluk Değerlendirme",
-    "version": "0.1.0-dev.3",
-    "developer": "Ozan Beşinci",
-    "startup_message": "Ceza ve Sorumluluk Değerlendirme skilli Ozan Beşinci tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.3"
+    "version": "0.1.0-dev.5",
+    "developer": "Kılıç Satınalma Departmanı",
+    "startup_message": "Ceza ve Sorumluluk Değerlendirme skilli Kılıç Satınalma Departmanı tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.5"
   },
   "K11": {
     "id": "K11",
     "slug": "sigorta-gereklilikleri",
     "name": "Sigorta Gereklilikleri",
-    "version": "0.1.0-dev.3",
-    "developer": "Ozan Beşinci",
-    "startup_message": "Sigorta Gereklilikleri skilli Ozan Beşinci tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.3"
+    "version": "0.1.0-dev.5",
+    "developer": "Kılıç Satınalma Departmanı",
+    "startup_message": "Sigorta Gereklilikleri skilli Kılıç Satınalma Departmanı tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.5"
   },
   "K12": {
     "id": "K12",
     "slug": "sigorta-teklif-karsilastirma",
     "name": "Sigorta Teklif Karşılaştırma",
-    "version": "0.1.0-dev.3",
-    "developer": "Ozan Beşinci",
-    "startup_message": "Sigorta Teklif Karşılaştırma skilli Ozan Beşinci tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.3"
+    "version": "0.1.0-dev.5",
+    "developer": "Kılıç Satınalma Departmanı",
+    "startup_message": "Sigorta Teklif Karşılaştırma skilli Kılıç Satınalma Departmanı tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.5"
   },
   "K13": {
     "id": "K13",
     "slug": "police-uygunluk-kontrolu",
     "name": "Poliçe Uygunluk Kontrolü",
-    "version": "0.1.0-dev.3",
-    "developer": "Ozan Beşinci",
-    "startup_message": "Poliçe Uygunluk Kontrolü skilli Ozan Beşinci tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.3"
+    "version": "0.1.0-dev.5",
+    "developer": "Kılıç Satınalma Departmanı",
+    "startup_message": "Poliçe Uygunluk Kontrolü skilli Kılıç Satınalma Departmanı tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.5"
   },
   "K14": {
     "id": "K14",
     "slug": "sigorta-surekliligi",
     "name": "Sigorta Sürekliliği",
-    "version": "0.1.0-dev.3",
-    "developer": "Ozan Beşinci",
-    "startup_message": "Sigorta Sürekliliği skilli Ozan Beşinci tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.3"
+    "version": "0.1.0-dev.5",
+    "developer": "Kılıç Satınalma Departmanı",
+    "startup_message": "Sigorta Sürekliliği skilli Kılıç Satınalma Departmanı tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.5"
   },
   "K15": {
     "id": "K15",
     "slug": "sigorta-hasar-dosyasi",
     "name": "Sigorta Hasar Dosyası",
-    "version": "0.1.0-dev.3",
-    "developer": "Ozan Beşinci",
-    "startup_message": "Sigorta Hasar Dosyası skilli Ozan Beşinci tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.3"
+    "version": "0.1.0-dev.5",
+    "developer": "Kılıç Satınalma Departmanı",
+    "startup_message": "Sigorta Hasar Dosyası skilli Kılıç Satınalma Departmanı tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.5"
   },
   "K16": {
     "id": "K16",
     "slug": "butunlesik-risk-degerlendirme",
     "name": "Bütünleşik Risk Değerlendirme",
-    "version": "0.1.0-dev.3",
-    "developer": "Ozan Beşinci",
-    "startup_message": "Bütünleşik Risk Değerlendirme skilli Ozan Beşinci tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.3"
+    "version": "0.1.0-dev.5",
+    "developer": "Kılıç Satınalma Departmanı",
+    "startup_message": "Bütünleşik Risk Değerlendirme skilli Kılıç Satınalma Departmanı tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.5"
   },
   "K17": {
     "id": "K17",
     "slug": "muzakere-yonetimi",
     "name": "Müzakere Yönetimi",
-    "version": "0.1.0-dev.3",
-    "developer": "Ozan Beşinci",
-    "startup_message": "Müzakere Yönetimi skilli Ozan Beşinci tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.3"
+    "version": "0.1.0-dev.5",
+    "developer": "Kılıç Satınalma Departmanı",
+    "startup_message": "Müzakere Yönetimi skilli Kılıç Satınalma Departmanı tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.5"
   },
   "K18": {
     "id": "K18",
     "slug": "uzman-gorusu-yonetimi",
     "name": "Uzman Görüşü Yönetimi",
-    "version": "0.1.0-dev.3",
-    "developer": "Ozan Beşinci",
-    "startup_message": "Uzman Görüşü Yönetimi skilli Ozan Beşinci tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.3"
+    "version": "0.1.0-dev.5",
+    "developer": "Kılıç Satınalma Departmanı",
+    "startup_message": "Uzman Görüşü Yönetimi skilli Kılıç Satınalma Departmanı tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.5"
   },
   "K19": {
     "id": "K19",
     "slug": "mevzuat-arastirma",
     "name": "Mevzuat Araştırma",
-    "version": "0.1.0-dev.3",
-    "developer": "Ozan Beşinci",
-    "startup_message": "Mevzuat Araştırma skilli Ozan Beşinci tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.3"
+    "version": "0.1.0-dev.5",
+    "developer": "Kılıç Satınalma Departmanı",
+    "startup_message": "Mevzuat Araştırma skilli Kılıç Satınalma Departmanı tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.5"
   },
   "K20": {
     "id": "K20",
     "slug": "kurumsal-emsal-arastirma",
     "name": "Kurumsal Emsal Araştırma",
-    "version": "0.1.0-dev.3",
-    "developer": "Ozan Beşinci",
-    "startup_message": "Kurumsal Emsal Araştırma skilli Ozan Beşinci tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.3"
+    "version": "0.1.0-dev.5",
+    "developer": "Kılıç Satınalma Departmanı",
+    "startup_message": "Kurumsal Emsal Araştırma skilli Kılıç Satınalma Departmanı tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.5"
   },
   "K21": {
     "id": "K21",
     "slug": "onay-imza-kontrolu",
     "name": "Onay ve İmza Kontrolü",
-    "version": "0.1.0-dev.3",
-    "developer": "Ozan Beşinci",
-    "startup_message": "Onay ve İmza Kontrolü skilli Ozan Beşinci tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.3"
+    "version": "0.1.0-dev.5",
+    "developer": "Kılıç Satınalma Departmanı",
+    "startup_message": "Onay ve İmza Kontrolü skilli Kılıç Satınalma Departmanı tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.5"
   },
   "K22": {
     "id": "K22",
     "slug": "ise-baslama-kontrolu",
     "name": "İşe Başlama Kontrolü",
-    "version": "0.1.0-dev.3",
-    "developer": "Ozan Beşinci",
-    "startup_message": "İşe Başlama Kontrolü skilli Ozan Beşinci tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.3"
+    "version": "0.1.0-dev.5",
+    "developer": "Kılıç Satınalma Departmanı",
+    "startup_message": "İşe Başlama Kontrolü skilli Kılıç Satınalma Departmanı tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.5"
   },
   "K23": {
     "id": "K23",
     "slug": "yukumluluk-yonetimi",
     "name": "Yükümlülük Yönetimi",
-    "version": "0.1.0-dev.3",
-    "developer": "Ozan Beşinci",
-    "startup_message": "Yükümlülük Yönetimi skilli Ozan Beşinci tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.3"
+    "version": "0.1.0-dev.5",
+    "developer": "Kılıç Satınalma Departmanı",
+    "startup_message": "Yükümlülük Yönetimi skilli Kılıç Satınalma Departmanı tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.5"
   },
   "K24": {
     "id": "K24",
     "slug": "sozlesme-degisiklik-yonetimi",
     "name": "Sözleşme Değişiklik Yönetimi",
-    "version": "0.1.0-dev.3",
-    "developer": "Ozan Beşinci",
-    "startup_message": "Sözleşme Değişiklik Yönetimi skilli Ozan Beşinci tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.3"
+    "version": "0.1.0-dev.5",
+    "developer": "Kılıç Satınalma Departmanı",
+    "startup_message": "Sözleşme Değişiklik Yönetimi skilli Kılıç Satınalma Departmanı tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.5"
   },
   "K25": {
     "id": "K25",
     "slug": "ihlal-uyusmazlik-dosyasi",
     "name": "İhlal ve Uyuşmazlık Dosyası",
-    "version": "0.1.0-dev.3",
-    "developer": "Ozan Beşinci",
-    "startup_message": "İhlal ve Uyuşmazlık Dosyası skilli Ozan Beşinci tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.3"
+    "version": "0.1.0-dev.5",
+    "developer": "Kılıç Satınalma Departmanı",
+    "startup_message": "İhlal ve Uyuşmazlık Dosyası skilli Kılıç Satınalma Departmanı tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.5"
   },
   "K26": {
     "id": "K26",
     "slug": "yenileme-kapanis",
     "name": "Yenileme ve Kapanış",
-    "version": "0.1.0-dev.3",
-    "developer": "Ozan Beşinci",
-    "startup_message": "Yenileme ve Kapanış skilli Ozan Beşinci tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.3"
+    "version": "0.1.0-dev.5",
+    "developer": "Kılıç Satınalma Departmanı",
+    "startup_message": "Yenileme ve Kapanış skilli Kılıç Satınalma Departmanı tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.5"
   },
   "K27": {
     "id": "K27",
     "slug": "portfoy-degerlendirme",
     "name": "Portföy Değerlendirme",
-    "version": "0.1.0-dev.3",
-    "developer": "Ozan Beşinci",
-    "startup_message": "Portföy Değerlendirme skilli Ozan Beşinci tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.3"
+    "version": "0.1.0-dev.5",
+    "developer": "Kılıç Satınalma Departmanı",
+    "startup_message": "Portföy Değerlendirme skilli Kılıç Satınalma Departmanı tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.5"
   },
   "K28": {
     "id": "K28",
     "slug": "belge-hazirlama-duzenleme",
     "name": "Belge Hazırlama ve Düzenleme",
-    "version": "0.1.0-dev.3",
-    "developer": "Ozan Beşinci",
-    "startup_message": "Belge Hazırlama ve Düzenleme skilli Ozan Beşinci tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.3"
+    "version": "0.1.0-dev.5",
+    "developer": "Kılıç Satınalma Departmanı",
+    "startup_message": "Belge Hazırlama ve Düzenleme skilli Kılıç Satınalma Departmanı tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.5"
   },
   "K29": {
     "id": "K29",
     "slug": "yazisma-hazirlama",
     "name": "Yazışma Hazırlama",
-    "version": "0.1.0-dev.3",
-    "developer": "Ozan Beşinci",
-    "startup_message": "Yazışma Hazırlama skilli Ozan Beşinci tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.3"
+    "version": "0.1.0-dev.5",
+    "developer": "Kılıç Satınalma Departmanı",
+    "startup_message": "Yazışma Hazırlama skilli Kılıç Satınalma Departmanı tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.5"
   },
   "guncelleyici": {
     "id": "guncelleyici",
     "slug": "guncelleyici",
     "name": "Güncelleyici",
     "version": "2.3.0",
-    "developer": "Ozan Beşinci",
-    "startup_message": "Güncelleyici skilli Ozan Beşinci tarafından geliştirilmiştir. Sürüm: 2.3.0"
+    "developer": "Kılıç Satınalma Departmanı",
+    "startup_message": "Güncelleyici skilli Kılıç Satınalma Departmanı tarafından geliştirilmiştir. Sürüm: 2.3.0"
   }
 }

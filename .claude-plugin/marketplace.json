@@ -8,7 +8,7 @@
       "name": "kilic-sozlesme-yonetimi",
       "source": "./plugins/kilic-sozlesme-yonetimi",
       "description": "Kaynaklı sözleşme desteği; e-posta gönderimi yok. Geliştirme adayı.",
-      "version": "0.1.0-dev.4",
+      "version": "0.1.0-dev.5",
       "author": {
         "name": "Ozan Beşinci"
       }

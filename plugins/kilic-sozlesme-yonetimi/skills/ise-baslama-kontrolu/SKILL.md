@@ -11,7 +11,7 @@ metadata:
 <!-- startup-message:start -->
 Her çağrının başında, araçları çalıştırmadan önce, kullanıcı sohbetinde şu satırı aynen göster:
 
-**İşe Başlama Kontrolü skilli Ozan Beşinci tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.3**
+**İşe Başlama Kontrolü skilli Kılıç Satınalma Departmanı tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.5**
 
 Bu satır gerçek beceri adı ve sürümünü gösterir. Kurulum sırasında başka beceri çalışırsa onun başlangıç satırını da göster.
 <!-- startup-message:end -->

@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "kilic-sozlesme-yonetimi",
-  "version": "0.1.0-dev.4",
+  "version": "0.1.0-dev.5",
   "description": "Satınalma sözleşmeleri için kaynak koruma ve yerel kayıt çekirdeği; geliştirme sürümü.",
   "homepage": "https://github.com/ozanbesinci/kilic-sozlesme-yonetimi-plugin",
   "author": {
