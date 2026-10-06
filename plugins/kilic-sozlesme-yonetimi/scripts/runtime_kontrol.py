@@ -23,7 +23,7 @@ from urllib.parse import urlsplit
 
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'src'))
-from kilic_error_log import write_error
+from kilic_error_log import write_error, write_result_error
 UPDATER=ROOT/'vendor/guncelleyici'
 sys.path.insert(0,str(UPDATER/'scripts'))
 from islem_guvencesi import SafetyError, atomic_json, exclusive_lock, reject_links, redact
@@ -92,6 +92,7 @@ def pdf_probe():
         return {'status':'PASS','installed':True,'sha256':hashlib.sha256(path.read_bytes()).hexdigest(),
                 'engine':duckdb.__version__,'scope':'SIGNED_LOAD_AND_API_PRESENCE'}
     except Exception as exc:
+        write_error('runtime-pdf-probe', 'PDF_BROKEN', exc)
         return {'status':'BROKEN','installed':True,'reason':redact(str(exc))[-600:]}
     finally: con.close()
 
@@ -104,7 +105,9 @@ def probe():
         status='MISSING' if current is None else ('VERSION_MISMATCH' if current!=version else 'PASS')
         if status=='PASS':
             try: importlib.import_module(MODULES[name])
-            except Exception: status='BROKEN'
+            except Exception as exc:
+                status='BROKEN'
+                write_error('runtime-package-probe', 'PACKAGE_IMPORT_BROKEN', exc)
         packages.append({'name':name,'installed':current,'required':version,'status':status})
     deps_ok=all(row['status']=='PASS' for row in packages)
     pdf=pdf_probe() if deps_ok and runtime_ok else {'status':'DEFERRED','installed':None}
@@ -237,6 +240,7 @@ def main():
         else:
             if not args.auto_install_missing or not args.state_root: raise SafetyError('Eksik bileşen kurulum yetkisi/kökü gerekli')
             result=install_missing(args.state_root)
+        write_result_error('runtime-'+args.action, result)
         print('@@SONUC '+json.dumps(redact(result),ensure_ascii=False)); return 0
     except Exception as exc:
         write_error("runtime-"+args.action, "RUNTIME_ERROR", exc)

@@ -4,7 +4,7 @@ import hashlib
 import json
 import sys
 from uuid import uuid4
-from kilic_error_log import write_error
+from kilic_error_log import write_error, write_result_error
 from .store import Store
 from .errors import CoreError
 from .safety import confined, native_path
@@ -163,6 +163,9 @@ def main():
             result=evaluate(store,request)
         else:
             result = store.reconcile()
+        write_result_error(args.command, result, operation_id,
+                           (locals().get("request") or {}).get("skill_id") if isinstance(locals().get("request"), dict) else None,
+                           core_version="0.1.0-dev.3")
         print(json.dumps({"schema_version":"1.0","operation_id":operation_id,"status":"SUCCEEDED","result":result,
                           "result_refs":[],"evidence_refs":[],"warnings":[],"limitations":["P1/P2/P3/P4/P5 teknik kayıt; kritik sadakat PARTIAL, üretim eylemleri kapalı, hukuki doğrulama NOT_RUN."],
                           "error_code":None,"retry_safety":"READ_ONLY" if args.command=="context" else "NO_BLIND_RETRY",

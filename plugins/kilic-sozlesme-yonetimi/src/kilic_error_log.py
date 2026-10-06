@@ -3,12 +3,14 @@ import json
 import os
 import re
 import sys
+import threading
 from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
 
 _session = uuid4().hex
 _count = 0
+_write_lock = threading.Lock()
 MAX_EVENTS = 100
 MAX_BYTES = 1024 * 1024
 
@@ -20,6 +22,17 @@ def token(value, fallback="UNKNOWN"):
 
 def write_error(stage, code, exc=None, operation_id=None, skill_id=None,
                 category="TECHNICAL_ERROR", core_version=None):
+    # Never wait for another logging thread; the caller can observe a False result.
+    if not _write_lock.acquire(blocking=False):
+        return False
+    try:
+        return _write_error(stage, code, exc, operation_id, skill_id, category, core_version)
+    finally:
+        _write_lock.release()
+
+
+def _write_error(stage, code, exc=None, operation_id=None, skill_id=None,
+                 category="TECHNICAL_ERROR", core_version=None):
     """Return delivery status without changing the caller's exception/result.
 
     Separate process/session files avoid interprocess locks and torn shared
@@ -43,7 +56,10 @@ def write_error(stage, code, exc=None, operation_id=None, skill_id=None,
                            "line": tb.tb_lineno})
             tb = tb.tb_next
         plugin = Path(__file__).resolve().parents[1]
-        version = json.loads((plugin / "plugin.json").read_text(encoding="utf-8-sig"))["version"]
+        try:
+            version = json.loads((plugin / "plugin.json").read_text(encoding="utf-8-sig"))["version"]
+        except Exception:
+            version = "UNKNOWN"
         event = {"schema_version": "1.0", "event_id": uuid4().hex,
                  "timestamp_utc": now.isoformat(), "session_id": _session,
                  "operation_id": token(operation_id) if operation_id else None,
@@ -62,3 +78,17 @@ def write_error(stage, code, exc=None, operation_id=None, skill_id=None,
         return True
     except Exception:
         return False
+
+
+def write_result_error(stage, result, operation_id=None, skill_id=None, core_version=None):
+    """Record explicit returned failures, without logging normal partial results."""
+    if not isinstance(result, dict):
+        return False
+    status = result.get("status")
+    if status in ("TEKNIK_ENGEL", "BLOCKED", "FAILED", "ERROR", "DEPENDENCIES_REQUIRED"):
+        return write_error(stage, status, operation_id=operation_id, skill_id=skill_id,
+                           category="RETURNED_FAILURE", core_version=core_version)
+    if result.get("decision") == "BLOCK":
+        return write_error(stage, "ACTION_BLOCKED", operation_id=operation_id,
+                           skill_id=skill_id, category="EXPECTED_BLOCK", core_version=core_version)
+    return False
