@@ -1,134 +1,55 @@
-# Kurulum ve dağıtım — ana skill v4.0.5 / birleşik güncelleyici
+# Kurulum ve calisma ortami - v5.0.17
 
-**4.0.5 kararlı dağıtım sürümüdür.** Kullanıcının 2026-09-30 tarihli açık
-yayın kararıyla 4.0.3 sonrasındaki model/efor ve başlangıç düzeltmelerini içerir.
-Excel/PDF doğrulaması ile uçtan uca canlı analiz kabulü ayrı kayıtlardır;
-kararlı yayın, bütün canlı analiz senaryolarının kabul edildiği anlamına gelmez.
-Resmî dağıtım deposu:
-[ozanbesinci/teklif-degerlendirme](https://github.com/ozanbesinci/teklif-degerlendirme).
+This skill is designed for a local Windows procurement workflow, but deterministic tests also run cross-platform.
 
-## Paket
+## Required runtime
 
-Yeni teklif paketi yalnız ana skill'i içerir; birleşik `guncelleyici` ayrı
-kalır. Paket manifesti şema 3'tür. Eski şema 1/2 paketleri güncelleyici
-tarafından okunur, içlerindeki eski güncelleyici klasörü kurulmaz.
+- Python 3.11+; tested development code is compatible with Python 3.13.
+- Packages in `requirements.txt`, including `jsonschema` for strict model-result gates.
+- DuckDB is the production state/evidence database.
+- The DuckDB `pdf` community extension is a required startup dependency in v5.0.17. `scripts/environment_check.py` verifies actual functions rather than assuming compatibility from a version string.
+- The skill never installs or repairs dependencies and does not hand repair off to another skill. It checks, lists what is missing, and stops. Installation is done by an authorised person outside the skill; afterwards the preflight is re-run and the same request can resume.
+- Microsoft Excel + pywin32 is required on Windows for real Excel recalculation and PDF export when those verification steps are required. No silent LibreOffice substitution is used.
 
-```text
-skills/
-  teklif-degerlendirme/
-    SKILL.md
-    VERSION
-    requirements.txt
-    config/
-    references/
-    scripts/
-```
+## Preflight
 
-Paketin çalışma modülleri ve requirements.txt eksik/boşsa v4 kurulumu reddedilir;
-`ajan_yonetimi.py` girişine ek olarak `ajan_v4.py` ve `kayit_temeli.py` de
-zorunlu modül listesine dahildir.
-Yalnız metadata/sürüm dosyası içeren bir arşiv çalışan eski ağacın yerine geçemez.
-Kaynak depo ZIP'i, doğrulanmış dağıtım ZIP'iyle aynı kurulum biçimi sayılmaz.
-
-## Gereksinimler
-
-- Windows, yerel Codex masaüstü / ChatGPT Work, model/efor seçebilen yerleşik alt ajanlar.
-- Çalıştırılarak doğrulanmış Python **3.14**; Store kısayolu yeterli değildir.
-- `requirements.txt` içindeki tam sürümler: openpyxl, pypdf, pdfplumber,
-  pypdfium2 ve pywin32. Sürüm kaynağı `guncelleyici` paket listesidir.
-- Masaüstü Microsoft Excel; Python + pywin32 ile görünmez bağımsız örnekte gerçek
-  yeniden hesaplama ve temiz kapanış.
-- Gerçek güncel araç kataloğunda erişilebilir GPT-6.1 (`gpt-6.1-sol`) ve High eforu.
-  Ana koordinatör ve bütün alt roller bu model/eforu kullanır; başka sürüme geçilmez.
-- Gerçek oturum JSONL kayıtlarına, model/efora ve token sayaçlarına erişim.
-
-Python/kütüphane eksikliği `guncelleyici` program akışının işidir. Python kurucusu veya wheel
-dosyaları teklif paketine gömülmez; bu skill ikinci pip/winget kurulum yolu açmaz.
-Katalog, efor, Excel veya telemetri yoksa “tam doğrulanmış v4” denmez.
-
-## İlk kurulum ve güncelleme
-
-Komutların güncel kaynağı `../guncelleyici/references/teklif-paketi.md` ve
-`../guncelleyici/scripts/teklif-guncelle.py --help` çıktısıdır.
+Run:
 
 ```text
-python "<teklif-guncelle.py>" check --root "<fiziksel-skills>"
-python "<teklif-guncelle.py>" update --root "<fiziksel-skills>"
-python "<teklif-guncelle.py>" verify --root "<fiziksel-skills>"
+python scripts/environment_check.py --output environment.json
+python scripts/run_tests.py
 ```
 
-“Sürümü kontrol et” yalnız okuma; “güncelle” yalnız ana skill ağacını yenileme
-yetkisidir. Normal çevrimiçi güncelleme resmî kararlı Release'i kullanır.
-Henüz yayımlanmamış yerel adayı GitHub'dan indirmeye çalışma.
+Any missing/out-of-range required Python package, missing DuckDB package, or unavailable DuckDB `pdf` extension returns `BLOCKED_ENVIRONMENT` (`--strict` exit code 3) with a concrete `missing_components` list (component, required, installed, reason) and a Turkish `user_message`. No package, extension or security setting is changed. Analysis continues only after `READY`. Test-only SQLite compatibility is enabled only by the test suite through `TEKLIF_TEST_SQLITE=1` and is not a production fallback.
 
-Paket doğrulanmadan mevcut kurulum değiştirilmez. Ana skill ağacı dosyalar üst üste
-eklenmeden tamamen değiştirilir; işlem hatasında önceki ağaç geri konur.
-Windows geçici kilitleri sınırlı yeniden denemeye tabidir; kalıcı hata gizlenmez.
-İşlem günlüğü, kurtarma ve kilit kontrolleri atlanmaz.
+## Analysis entrypoint
 
-Yönetimsiz/değiştirilmiş eski kurulum otomatik silinmez. Yayımlanmış sürüm içeriği
-değiştirilmez. Eski eşleştirilmiş paket kaydı yalnız ana skill'in dosya özetleri
-eşleşiyorsa yeni tek skill kaydına alınır.
-Doğrulanmış yerel aday `teklif-guncelle.py register --archive ... --sha256 ...`
-ile kaydedilebilir; komut yalnız manifestle birebir eşleşen mevcut dosyaları
-envantere alır, paket kurmaz.
+```text
+python scripts/workflow.py prepare --source "<source-folder>" --run "<run-folder>" --profile standart
+python scripts/workflow.py next --run "<run-folder>"
+python scripts/workflow.py status --run "<run-folder>"
+```
 
-Ortak fiziksel skill kökü ve mevcut junction düzeni korunur. Başka skill'ler, global
-model/ajan ayarları ve kullanıcı dosyaları değiştirilmez. Yeni skill sonraki turda
-keşfedilir; kullanıcıya görünmesi başarılı analiz koşusunun kanıtı değildir.
+When `next` returns `NEEDS_LLM`, execute only the returned bounded task packets with an approved runtime model matching `config/policy.json`. Record strict JSON results together with the **actual** model and effort receipt:
 
-## Analizi başlatma
+```text
+python scripts/record_results.py --run "<run-folder>" --task-id "<task-id>" --input "<result.json>" --model "<actual-model>" --effort "<actual-effort>" --response-id "<optional-response-id>" --input-tokens <required> --cached-input-tokens <optional> --output-tokens <required>
+```
 
-1. Personel ana sohbet için **GPT-6.1 / High** seçer; bütün alt görevler aynı model/eforu kullanır.
-2. `$teklif-degerlendirme` ile kaynak dosyaları/klasörü verir.
-3. Skill otomatik `guncelleyici` çağrısını atlar; ilk olarak aktif oturumun gerçek
-   model/efor kaydını `oturum_kontrol.py` ile kontrol eder. GPT-6.1/High değilse
-   kullanıcıdan ikisini de değiştirmesini ister. Her yeni yanıtta kontrol ve
-   gerekiyorsa uyarı tekrarlanır; yalnız `READY` sonucuyla analize geçilir.
-4. Skill envanter ve öneriyi gösterir; personel hızlı, standart veya yüksek güvence seçer.
-5. Gerçek katalog ve ana oturum sayacıyla `prepare` değişmez koşu kopyasını oluşturur.
-6. Sonraki işlemler manifestin `runner` yoluyla yürür. `task` yalnız görev kaydıdır;
-   model yerleşik alt ajan aracıyla açık model/efor kullanılarak çağrılır.
-7. Gerçek model/efor makbuzları, kod QA, bağımsız kaynak okuma, hakem, karar özeti
-   ve Excel kontrolü tamamlandığında `verify` / `close` çalışır.
+Each model result is schema-validated before it can enter the canonical store. `input_tokens` and `output_tokens` are mandatory for a successful model receipt; unknown usage is not treated as zero. Continue `workflow.py next` until VERIFIED/PRELIMINARY/BLOCKED. Final validation also requires source/data-quality controls, cross-output reconciliation and the revision-aware coverage record. Profile token caps are computed from recorded input-token receipts. At the hard cap no new model task is dispatched unless the user explicitly authorizes a run-level override with `workflow.py budget-override --run "<run-folder>" --allow true`.
 
-Komut yaşam döngüsü: `references/ajan-calistirma.md`.
-Model talimatını yazmak aktif sohbet modelini değiştirmez. CLI model yürütme veya
-oturum devamıyla düzeltme kullanılmaz. Tam sohbet her alt ajana aktarılmaz.
+## CLI durum kodlari
 
-Hazırlanmış analiz sabit kopyasından yürür; sonraki ortak kurulum değişikliği bu
-kopyayı değiştirmez. Güncelleme kilidinde yeni snapshot alınmaz. Eski global analiz
-kilidi veya yarım işlem kilidi otomatik silinmez. Kaynak değişirse yeni revizyon koşusu gerekir.
+`workflow.py` ve `validate_run.py` JSON durumunu stdout'a yazar; otomasyon ayrıca exit code'u kontrol etmelidir. `VERIFIED/OK` başarıdır. `PRELIMINARY` (2) kontrollü eksik sonuçtur; `BLOCKED_ENVIRONMENT` (3) eksik bileşen listesiyle analizin hiç başlamadığını bildirir; `BLOCKED`, `MANUAL_REVIEW_REQUIRED` ve `BUDGET_EXHAUSTED` (4) başarılı teslim değildir. Bileşenler elle kurulduktan sonra devam parametreleri komut satırına dağılmaz; `resume_request.json` içinde source/run/profile/analysis-date/financial/scoring payload'ları birlikte korunur.
 
-## Yerel kontrol ve canlı kabul
+## v5.0.17 kabul kapilari
 
-- Paketlenen ana skill'in VERSION, SKILL metadata ve CHANGELOG'u eşleşmelidir.
-- Hesap örnekleri, merkezi veri, model çözümü, oturum kanıtı, bütçe, Excel ve
-  güncelleme testleri çalıştırılır. Sadece başlık/metin eşleşmesi yeterli değildir.
-- Gerçek Excel yeniden hesaplama, bağımsız motor mutabakatı ve parametreyi geri alma
-  testi, formül XML'ine cache yazmaktan farklıdır; fiilen çalıştırılmalıdır.
-- Gerçek kullanıcı verili canlı kabul ayrı kayıttır. Hızlı: 8M/25 dk; standart:
-  25M/60 dk; yüksek güvence: 50M/120 dk. Bunlar tavan, süre tahmini değildir.
-- Kabulte kaynak bulguları, açık konular, doğru son birikimli sayaçlar ve süre kaydedilir.
-  Sentetik birim testleri gerçek model davranışı veya tasarruf oranı kanıtlamaz.
-- 4.0.2 kullanıcının açık kararıyla kararlı sürüm olarak yayımlanır. Uçtan uca
-  canlı analiz kabulünün durumu ayrıca izlenir; yapılmamış kontrol geçti sayılmaz.
+- Hesaplanmamış Excel formülleri, çözümlenmemiş veya çelişkili toplamlar, başka teklife ait ya da dayanağı bulunmayan kanıtlar ve geçersiz kaynak konumları `verified` olarak işaretlenemez.
+- Ürün/kapsam ve miktar birimi doğrulanmadan ranking açılmaz; açık satır-toplam mutabakatsızlığı kritik bulgudur.
+- Ödeme oranı/tutarı anaparaya mutabık değilse maliyet hesabı incomplete kalır ve karar kapısı `SUFFICIENT` olamaz.
+- Final XLSX formula-free üretilir; yüksek güvence PDF'sinde kritik snapshot değerleri gerçek PDF metninde ayrıca doğrulanır.
+- Gerçek DuckDB + DuckDB PDF extension ve Windows COM canlı kabulü ilgili üretim ortamında ayrıca yapılmalıdır; SQLite test modu bunların yerine geçmez.
 
-## Paket hazırlama ve yayın
+## Release note
 
-`scripts/paket_olustur.py` yalnız ana skill'in izinli kaynak dosyalarını alır.
-Paket doğrulayıcısı için aynı fiziksel `skills/` kökünde `guncelleyici` bulunmalıdır.
-Çıktı skill ağacının dışında olmalıdır. requirements.txt pakete girer; şirket
-teklifleri, fiyatlar, raporlar, sohbet/oturum/hafıza, kimlik bilgileri ve gerçek test
-verileri girmez. Paket hash'i bütünlüğü doğrular; bağımsız yayıncı imzası değildir.
-
-Release etiketi ve paket version alanı aynı olmalıdır.
-Yerel kurulum, commit/push/tag/Release/yükleme yetkisi değildir. Kullanıcı yayın
-talep etmeden yayın yapılmaz; yerel durum ile yayımlanmış durum ayrı raporlanır.
-
-Eski ortak 3.0.1 güncelleyici yeni paketi okuyamaz. Böyle bir kurulumdan ilk geçiş
-birleşik güncelleyicinin doğrulanmış kaynak kopyasıyla yapılır.
-
-v4 bu ortam için tasarlanır; Claude Teams ve diğer web istemcileri doğrulanmış
-çalışma kapsamı dışındadır. İş kılavuzlarını okuyabilmeleri aynı model/araç/Excel
-doğrulama yeteneğine sahip olduklarını göstermez.
+Do not replace an installed organizational version until controlled live acceptance has been completed on representative procurement files. Synthetic tests validate code paths, not real supplier-document accuracy or token consumption.

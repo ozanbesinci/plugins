@@ -1,0 +1,40 @@
+{
+  "skills": {
+    "teklif-bagimsiz-kontrol": {
+      "display_name": "Bağımsız Kontrol",
+      "skill_file": "skills/teklif-bagimsiz-kontrol/SKILL.md",
+      "version_file": "skills/teklif-bagimsiz-kontrol/VERSION"
+    },
+    "teklif-belge-kaynak": {
+      "display_name": "Belge ve Kaynak",
+      "skill_file": "skills/teklif-belge-kaynak/SKILL.md",
+      "version_file": "skills/teklif-belge-kaynak/VERSION"
+    },
+    "teklif-degerlendirme": {
+      "display_name": "Teklif Değerlendirme",
+      "skill_file": "skills/teklif-degerlendirme/SKILL.md",
+      "version_file": "skills/teklif-degerlendirme/VERSION"
+    },
+    "teklif-kapsam-ticari": {
+      "display_name": "Kapsam ve Ticari Koşullar",
+      "skill_file": "skills/teklif-kapsam-ticari/SKILL.md",
+      "version_file": "skills/teklif-kapsam-ticari/VERSION"
+    },
+    "teklif-karar-rapor": {
+      "display_name": "Karar ve Rapor",
+      "skill_file": "skills/teklif-karar-rapor/SKILL.md",
+      "version_file": "skills/teklif-karar-rapor/VERSION"
+    },
+    "teklif-maliyet": {
+      "display_name": "Maliyet Hesabı",
+      "skill_file": "skills/teklif-maliyet/SKILL.md",
+      "version_file": "skills/teklif-maliyet/VERSION"
+    },
+    "guncelleyici": {
+      "display_name": "Güncelleyici",
+      "skill_file": "skills/guncelleyici/SKILL.md",
+      "version_file": "vendor/guncelleyici/VERSION",
+      "matching_version_file": "skills/guncelleyici/VERSION"
+    }
+  }
+}

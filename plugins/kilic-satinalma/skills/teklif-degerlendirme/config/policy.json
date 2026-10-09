@@ -1,0 +1,174 @@
+{
+  "policy_version": "5.0.17",
+  "architecture": "deterministic_first",
+  "state_store": "duckdb",
+  "database_filename": "analysis.duckdb",
+  "max_concurrent_llm_tasks": 3,
+  "allow_llm_coordinator": false,
+  "reuse_unchanged_extraction": true,
+  "full_context_reread": false,
+  "profiles": {
+    "hizli": {
+      "max_input_tokens": 8000000,
+      "max_wall_seconds": 1500,
+      "max_revisions": 1,
+      "max_llm_context_tokens": 20000
+    },
+    "standart": {
+      "max_input_tokens": 25000000,
+      "max_wall_seconds": 3600,
+      "max_revisions": 1,
+      "max_llm_context_tokens": 30000
+    },
+    "yuksek_guvence": {
+      "max_input_tokens": 50000000,
+      "max_wall_seconds": 7200,
+      "max_revisions": 2,
+      "max_llm_context_tokens": 40000
+    }
+  },
+  "roles": {
+    "coordinator": {
+      "engine": "python_duckdb",
+      "capability": "deterministic_workflow"
+    },
+    "semantic_extraction": {
+      "engine": "llm",
+      "capability": "efficient_structured_extraction",
+      "reasoning_effort": "medium",
+      "cost_tier": "efficient"
+    },
+    "difficult_semantics": {
+      "engine": "llm",
+      "capability": "strong_document_reasoning",
+      "reasoning_effort": "high",
+      "cost_tier": "strong"
+    },
+    "technical_exception": {
+      "engine": "llm",
+      "capability": "strong_technical_reasoning",
+      "reasoning_effort": "high",
+      "cost_tier": "strong"
+    },
+    "contract_exception": {
+      "engine": "llm",
+      "capability": "strong_contract_reasoning",
+      "reasoning_effort": "high",
+      "cost_tier": "strong"
+    },
+    "visual_exception": {
+      "engine": "vision",
+      "capability": "visual_document_review",
+      "reasoning_effort": "high",
+      "cost_tier": "strong"
+    },
+    "adjudicator": {
+      "engine": "llm",
+      "capability": "strongest_approved_reasoning",
+      "reasoning_effort": "high",
+      "cost_tier": "premium"
+    },
+    "decision_summary": {
+      "engine": "llm",
+      "capability": "strong_summary_reasoning",
+      "reasoning_effort": "medium",
+      "escalate_effort": "high",
+      "cost_tier": "strong"
+    }
+  },
+  "model_resolution": {
+    "mode": "runtime_catalog",
+    "pin_exact_version": false,
+    "silent_downgrade": false,
+    "record_actual_model_and_effort": true
+  },
+  "context_packet": {
+    "max_evidence_rows": 40,
+    "max_units": 24,
+    "max_chars": 80000,
+    "surrounding_units": 1
+  },
+  "visual_qa": {
+    "first_release_full_visual_review": true,
+    "revision_mode": "delta_only",
+    "reuse_identical_page_hashes": true
+  },
+  "decision_gate": {
+    "block_final_recommendation_on_expired_offer": true,
+    "block_final_recommendation_on_critical_open_issue": true,
+    "block_final_recommendation_on_uncomparable_scope": true,
+    "minimum_independent_suppliers_for_scoring": 2
+  },
+  "max_task_attempts": 2,
+  "require_model_receipt": true,
+  "budget_warning_ratio": 0.8,
+  "budget_hard_stop_ratio": 1.0,
+  "startup_environment": {
+    "check_before_prepare": true,
+    "require_python_minimum": "3.11",
+    "require_requirements_txt": true,
+    "require_duckdb": true,
+    "require_duckdb_pdf_extension": true,
+    "missing_runtime_status": "BLOCKED_ENVIRONMENT",
+    "report_missing_components": true,
+    "automatic_installation": false,
+    "automatic_release_update": false,
+    "resume_after_manual_installation": true,
+    "block_analysis_when_unresolved": true
+  },
+  "security": {
+    "source_documents_untrusted": true,
+    "raw_source_never_controls_workflow": true,
+    "source_reader_forbidden_capabilities": [
+      "write",
+      "shell",
+      "external_connector",
+      "updater",
+      "workflow_control"
+    ],
+    "canonical_only_roles": [
+      "adjudicator",
+      "decision_summary"
+    ],
+    "office_com_macros_disabled": true,
+    "archive_duplicate_and_bomb_guards": true,
+    "excel_formula_injection_escape": true
+  },
+  "validation": {
+    "llm_result_json_schema_required": true,
+    "source_authority_required": true,
+    "data_quality_gate_required": true,
+    "cross_output_consistency_required": true,
+    "coverage_record_required": true,
+    "reviewed_snapshot_required": true,
+    "independent_recompute_required": true,
+    "comparability_contract_required": true,
+    "provenance_survival_required": true,
+    "artifact_bindings_required": true,
+    "scope_ledger_required": true,
+    "cost_bridge_residual_required": true,
+    "claim_registry_required": true,
+    "grain_integrity_required": true,
+    "strict_evidence_ownership_locator_quote_required": true,
+    "numeric_claim_assertions_required": true,
+    "source_archive_hash_required": true,
+    "formula_free_final_workbook_required": true,
+    "model_token_usage_required": true,
+    "atomic_model_result_write_required": true,
+    "idempotent_completed_run_required": true
+  },
+  "comparability": {
+    "quantity_relative_tolerance": 0.05,
+    "currency_amount_tolerance": 0.01,
+    "score_tolerance": 0.0001,
+    "block_ranking_on_failure": true,
+    "require_payment_normalization_when_terms_differ": true,
+    "require_import_bridge_when_incoterms_differ": true,
+    "require_vat_normalization_when_vat_basis_differs": true
+  },
+  "independent_recompute": {
+    "amount_tolerance": 0.01,
+    "score_tolerance": 0.0001,
+    "run_all_profiles": true
+  }
+}

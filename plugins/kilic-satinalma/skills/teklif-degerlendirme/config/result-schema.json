@@ -1,9 +1,120 @@
 {
-  "type": "object",
-  "properties": {
-    "artifact_path": {"type": "string"},
-    "artifact_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
-  },
-  "required": ["artifact_path", "artifact_sha256"],
-  "additionalProperties": false
+  "schema_version": "5.0",
+  "evidence_status": [
+    "verified",
+    "missing",
+    "excluded",
+    "unreadable",
+    "conflicting",
+    "assumption",
+    "requires_confirmation"
+  ],
+  "requirement_status": [
+    "compliant",
+    "noncompliant",
+    "partial",
+    "not_stated",
+    "not_applicable",
+    "conflict",
+    "requires_rfi"
+  ],
+  "document_roles": [
+    "offer",
+    "specification",
+    "boq",
+    "correspondence",
+    "support",
+    "unrelated",
+    "unknown"
+  ],
+  "task_results": {
+    "document_classification": {
+      "required": [
+        "document_role"
+      ],
+      "optional": [
+        "confidence"
+      ]
+    },
+    "requirements_extraction": {
+      "required": [
+        "requirements",
+        "evidence"
+      ]
+    },
+    "offer_semantic_fields": {
+      "required": [
+        "facts",
+        "evidence"
+      ],
+      "optional": [
+        "scope_items",
+        "open_issues",
+        "exclusions"
+      ]
+    },
+    "requirement_assessment": {
+      "required": [
+        "facts",
+        "evidence"
+      ],
+      "optional": [
+        "open_issues",
+        "exclusions"
+      ]
+    },
+    "visual_source_review": {
+      "required": [
+        "facts",
+        "evidence"
+      ],
+      "optional": [
+        "scope_items",
+        "open_issues"
+      ]
+    },
+    "independent_fact_review": {
+      "required": [
+        "facts"
+      ]
+    },
+    "adjudicate_differences": {
+      "required": [
+        "decisions"
+      ]
+    },
+    "artifact_visual_review": {
+      "required": [
+        "pages"
+      ]
+    },
+    "decision_summary": {
+      "required": [
+        "summary"
+      ],
+      "optional": [
+        "recommendation"
+      ]
+    },
+    "technical_exception": {
+      "required": [
+        "facts",
+        "evidence"
+      ],
+      "optional": [
+        "open_issues",
+        "exclusions"
+      ]
+    },
+    "contract_exception": {
+      "required": [
+        "facts",
+        "evidence"
+      ],
+      "optional": [
+        "open_issues",
+        "exclusions"
+      ]
+    }
+  }
 }

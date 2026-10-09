@@ -1,7 +1,7 @@
 {
   "name": "kilic-satinalma",
-  "version": "1.1.5",
-  "description": "Satınalma teklif değerlendirme ve açık onaylı Windows güncelleyici skill'leri.",
+  "version": "1.2.0",
+  "description": "Kaynak kanıtlı satınalma teklif değerlendirme ve açık onaylı Windows güncelleyici becerileri.",
   "author": {
     "name": "Ozan Beşinci"
   },
@@ -9,7 +9,7 @@
   "interface": {
     "displayName": "Kılıç Satınalma",
     "shortDescription": "Teklif değerlendirme ve güncelleyici",
-    "longDescription": "Satınalma tekliflerini karşılaştırır. Windows program sürümlerini kontrol eder, açık seçim ve onayla günceller. DuckDB PDF desteği isteğe bağlıdır.",
+    "longDescription": "Teklifleri kaynak kanıtı, kapsam, maliyet, ticari koşul ve risk açısından değerlendirir; gerekçeli öneri ve Excel/PDF üretir. Windows program sürümlerini açık seçim ve onayla kontrol eder ve günceller.",
     "developerName": "Ozan Beşinci",
     "category": "Productivity",
     "capabilities": [

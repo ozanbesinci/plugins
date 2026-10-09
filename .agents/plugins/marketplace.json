@@ -1,7 +1,7 @@
 {
   "name": "kilic-satinalma-workspace",
   "interface": {
-    "displayName": "Kılıç Satınalma"
+    "displayName": "Kılıç Satınalma 1.2.0"
   },
   "plugins": [
     {
