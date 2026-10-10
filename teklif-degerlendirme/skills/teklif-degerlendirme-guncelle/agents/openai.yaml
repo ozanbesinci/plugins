@@ -1,0 +1,4 @@
+interface:
+  display_name: "Teklif Değerlendirme Güncelle"
+  short_description: "Teklif skill paketini kontrol et ve güncelle"
+  default_prompt: "$teklif-degerlendirme-guncelle ile yeni sürümü kontrol et ve varsa güncelle."

@@ -1,0 +1,8 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.teklif-install.json
+.teklif-analysis.lock
+.teklif-update.lock
+.teklif-transaction.json
+dist/

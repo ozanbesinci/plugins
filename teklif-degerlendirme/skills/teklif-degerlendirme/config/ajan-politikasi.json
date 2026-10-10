@@ -1,0 +1,129 @@
+{
+  "policy_version": "4.0.5",
+  "startup": {
+    "first_step": "verify_active_session_model_and_effort",
+    "automatic_updater": false,
+    "continue_only_when": "READY",
+    "recheck_on_each_user_reply": true,
+    "repeat_warning_until_verified": true
+  },
+  "execution": "native_subagents",
+  "model_selection": "fixed_model_and_effort",
+  "required_model": "gpt-6.1-sol",
+  "required_reasoning_effort": "high",
+  "allowed_families": [
+    "sol"
+  ],
+  "forbidden_families": [
+    "luna",
+    "terra",
+    "astra",
+    "jev"
+  ],
+  "max_coordinator_workers": 3,
+  "allow_resume": false,
+  "allow_worker_dispatch": false,
+  "fast_profile_amount_limit": null,
+  "profiles": {
+    "hizli": {
+      "max_input_tokens": 8000000,
+      "max_wall_seconds": 1500,
+      "max_revisions": 1
+    },
+    "standart": {
+      "max_input_tokens": 25000000,
+      "max_wall_seconds": 3600,
+      "max_revisions": 1
+    },
+    "yuksek_guvence": {
+      "max_input_tokens": 50000000,
+      "max_wall_seconds": 7200,
+      "max_revisions": 2
+    }
+  },
+  "main_session": {
+    "allowed_families": [
+      "sol"
+    ],
+    "selection": "fixed_model_and_effort",
+    "model": "gpt-6.1-sol",
+    "reasoning_effort": "high"
+  },
+  "roles": {
+    "extraction": {
+      "family": "sol",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "high"
+    },
+    "extraction_difficult": {
+      "family": "sol",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "high"
+    },
+    "requirements": {
+      "family": "sol",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "high"
+    },
+    "targeted_review": {
+      "family": "sol",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "high",
+      "profiles": [
+        "hizli"
+      ]
+    },
+    "blind_review": {
+      "family": "sol",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "high",
+      "profiles": [
+        "standart",
+        "yuksek_guvence"
+      ]
+    },
+    "adjudicator": {
+      "family": "sol",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "high"
+    },
+    "technical": {
+      "family": "sol",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "high",
+      "profiles": [
+        "yuksek_guvence"
+      ]
+    },
+    "financial": {
+      "family": "sol",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "high",
+      "profiles": [
+        "yuksek_guvence"
+      ]
+    },
+    "contracts": {
+      "family": "sol",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "high",
+      "profiles": [
+        "yuksek_guvence"
+      ]
+    },
+    "decision_summary": {
+      "family": "sol",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "high"
+    }
+  },
+  "budget_counting": "last_cumulative_once_per_unique_session_plus_main_delta",
+  "budget_warning_ratio": 0.8,
+  "transfer_scope": "User-requested analysis within the configured OpenAI account; no repeated consent per allowed role. New providers, recipients and publication require separate authorization.",
+  "notes": [
+    "Require the real offered gpt-6.1-sol model and high effort for the main session and every role; do not substitute older, newer or other-family models.",
+    "Record actual session model and reasoning effort, not only requested values.",
+    "Business rules remain source-backed; incomplete critical evidence prevents a final recommendation."
+  ],
+  "catalog_max_age_seconds": 300
+}
