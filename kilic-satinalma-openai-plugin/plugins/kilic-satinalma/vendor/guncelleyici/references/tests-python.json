@@ -1,0 +1,361 @@
+{
+  "created_at": "2026-10-04T17:53:42.828585+00:00",
+  "platform": "Windows-11-10.0.26300-SP0",
+  "python": "3.14.8",
+  "status": "PASS",
+  "tests_run": 80,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 2,
+  "categories": {
+    "source_contract_assertions": 12,
+    "pro_audit_contracts": 14,
+    "python_fixture_tests": 54
+  },
+  "python_syntax_checked": [
+    "scripts\\claude_bagla.py",
+    "scripts\\duckdb_pdf.py",
+    "scripts\\islem_guvencesi.py",
+    "scripts\\islev-testi.py",
+    "scripts\\kurulum-testi.py",
+    "scripts\\mcp_ayar.py",
+    "scripts\\python-paket-kur.py",
+    "tests\\run_tests.py",
+    "tests\\test_bilesenler.py",
+    "tests\\test_chat_surface.py",
+    "tests\\test_cli_and_edges.py",
+    "tests\\test_guvence.py",
+    "tests\\test_powershell_compat.py",
+    "tests\\test_pro_audit.py"
+  ],
+  "results": [
+    {
+      "test": "test_bilesenler.ClaudeCliTests.test_add_failure_restores_old_via_cli",
+      "status": "PASS"
+    },
+    {
+      "test": "test_bilesenler.ClaudeCliTests.test_cmd_cli_rejected",
+      "status": "PASS"
+    },
+    {
+      "test": "test_bilesenler.ClaudeCliTests.test_custom_entry_deferred_unchanged",
+      "status": "PASS"
+    },
+    {
+      "test": "test_bilesenler.ClaudeCliTests.test_new_cli_binding",
+      "status": "PASS"
+    },
+    {
+      "test": "test_bilesenler.ClaudeCliTests.test_other_server_preserved_and_backup_created",
+      "status": "PASS"
+    },
+    {
+      "test": "test_bilesenler.PackageTests.test_duck_test_rejects_nonzero_even_with_pass_json",
+      "status": "PASS"
+    },
+    {
+      "test": "test_bilesenler.PackageTests.test_failed_package_install_records_recovery",
+      "status": "PASS"
+    },
+    {
+      "test": "test_bilesenler.PackageTests.test_invalid_lock_rejected",
+      "status": "PASS"
+    },
+    {
+      "test": "test_bilesenler.PackageTests.test_linux_installer_rejected_before_pip",
+      "status": "NOT_RUN",
+      "reason": "Linux guard case"
+    },
+    {
+      "test": "test_bilesenler.PackageTests.test_lock_hash_and_python_in_target",
+      "status": "PASS"
+    },
+    {
+      "test": "test_bilesenler.PackageTests.test_pdf_fixture_is_readable",
+      "status": "PASS"
+    },
+    {
+      "test": "test_bilesenler.PackageTests.test_pip_environment_source_override_removed",
+      "status": "PASS"
+    },
+    {
+      "test": "test_bilesenler.PackageTests.test_target_run_token_and_hash",
+      "status": "PASS"
+    },
+    {
+      "test": "test_bilesenler.PackageTests.test_twelve_valid_locked_packages",
+      "status": "PASS"
+    },
+    {
+      "test": "test_bilesenler.PackageTests.test_wheel_plan_sources_and_hashes",
+      "status": "PASS"
+    },
+    {
+      "test": "test_bilesenler.PdfTests.test_download_decompresses_and_bounds",
+      "status": "PASS"
+    },
+    {
+      "test": "test_bilesenler.PdfTests.test_download_rejects_untrusted_before_network",
+      "status": "PASS"
+    },
+    {
+      "test": "test_bilesenler.PdfTests.test_platform_version_url",
+      "status": "PASS"
+    },
+    {
+      "test": "test_bilesenler.PdfTests.test_scan_never_loads_extension",
+      "status": "PASS"
+    },
+    {
+      "test": "test_bilesenler.PdfTests.test_worker_failure_is_not_success",
+      "status": "PASS"
+    },
+    {
+      "test": "test_bilesenler.SourceContractTests.test_all_installers_require_explicit_target",
+      "status": "PASS"
+    },
+    {
+      "test": "test_bilesenler.SourceContractTests.test_apply_requires_confirmation_and_plan_exposes_effects",
+      "status": "PASS"
+    },
+    {
+      "test": "test_bilesenler.SourceContractTests.test_blocked_rows_never_lose_reason_or_claim_absent",
+      "status": "PASS"
+    },
+    {
+      "test": "test_bilesenler.SourceContractTests.test_core_and_wrapper_verify_defined",
+      "status": "PASS"
+    },
+    {
+      "test": "test_bilesenler.SourceContractTests.test_core_post_lock_revalidation_and_no_rolling_resolve_in_apply",
+      "status": "PASS"
+    },
+    {
+      "test": "test_bilesenler.SourceContractTests.test_no_automatic_global_upgrade_or_eula",
+      "status": "PASS"
+    },
+    {
+      "test": "test_bilesenler.SourceContractTests.test_old_panel_no_mutations",
+      "status": "PASS"
+    },
+    {
+      "test": "test_bilesenler.SourceContractTests.test_operational_reference_files_are_bound_to_code_fingerprint",
+      "status": "PASS"
+    },
+    {
+      "test": "test_bilesenler.SourceContractTests.test_pdf_unsigned_disabled_and_no_bulk_update",
+      "status": "PASS"
+    },
+    {
+      "test": "test_bilesenler.SourceContractTests.test_pnpm_native_binary_is_plan_pinned_and_never_run_through_node",
+      "status": "PASS"
+    },
+    {
+      "test": "test_bilesenler.SourceContractTests.test_pnpm_pinned_hash_and_no_install_scripts",
+      "status": "PASS"
+    },
+    {
+      "test": "test_bilesenler.SourceContractTests.test_windows_amd64_guard_is_enforced_at_entrypoints",
+      "status": "PASS"
+    },
+    {
+      "test": "test_chat_surface.ChatOnlySurfaceTests.test_powerbi_deferred_binding_returns_to_chat_not_terminal",
+      "status": "PASS"
+    },
+    {
+      "test": "test_chat_surface.ChatOnlySurfaceTests.test_reference_marks_terminal_commands_as_internal_or_it_only",
+      "status": "PASS"
+    },
+    {
+      "test": "test_chat_surface.ChatOnlySurfaceTests.test_skill_forbids_end_user_terminal_handoff",
+      "status": "PASS"
+    },
+    {
+      "test": "test_cli_and_edges.CliTests.test_config_cli_requires_closed_clients",
+      "status": "PASS"
+    },
+    {
+      "test": "test_cli_and_edges.CliTests.test_duckdb_local_scan_has_no_state_writes",
+      "status": "PASS"
+    },
+    {
+      "test": "test_cli_and_edges.CliTests.test_package_local_scan_has_no_state_writes",
+      "status": "PASS"
+    },
+    {
+      "test": "test_cli_and_edges.ConfigEdgeTests.test_codex_command_comment_preserved",
+      "status": "PASS"
+    },
+    {
+      "test": "test_cli_and_edges.ConfigEdgeTests.test_concurrent_config_change_preserved",
+      "status": "PASS"
+    },
+    {
+      "test": "test_cli_and_edges.ConfigEdgeTests.test_duplicate_json_keys_rejected",
+      "status": "PASS"
+    },
+    {
+      "test": "test_cli_and_edges.ConfigEdgeTests.test_readback_validation_failure_restores_old",
+      "status": "PASS"
+    },
+    {
+      "test": "test_cli_and_edges.ConfigEdgeTests.test_toml_date_type_preserved",
+      "status": "PASS"
+    },
+    {
+      "test": "test_guvence.ConfigTests.test_atomic_replace_failure_keeps_original",
+      "status": "PASS"
+    },
+    {
+      "test": "test_guvence.ConfigTests.test_backup_and_idempotence",
+      "status": "PASS"
+    },
+    {
+      "test": "test_guvence.ConfigTests.test_codex_bom_crlf",
+      "status": "PASS"
+    },
+    {
+      "test": "test_guvence.ConfigTests.test_codex_custom_args_rejected",
+      "status": "PASS"
+    },
+    {
+      "test": "test_guvence.ConfigTests.test_codex_multiline_rejected",
+      "status": "PASS"
+    },
+    {
+      "test": "test_guvence.ConfigTests.test_codex_new_entry",
+      "status": "PASS"
+    },
+    {
+      "test": "test_guvence.ConfigTests.test_codex_preserves_environment_and_unknown_fields",
+      "status": "PASS"
+    },
+    {
+      "test": "test_guvence.ConfigTests.test_desktop_preserves_fields",
+      "status": "PASS"
+    },
+    {
+      "test": "test_guvence.ConfigTests.test_invalid_json_does_not_write",
+      "status": "PASS"
+    },
+    {
+      "test": "test_guvence.SafetyTests.test_atomic_write_refuses_concurrent_change",
+      "status": "PASS"
+    },
+    {
+      "test": "test_guvence.SafetyTests.test_existing_lock_not_removed",
+      "status": "PASS"
+    },
+    {
+      "test": "test_guvence.SafetyTests.test_expired_plan",
+      "status": "PASS"
+    },
+    {
+      "test": "test_guvence.SafetyTests.test_lock_excludes_and_releases",
+      "status": "PASS"
+    },
+    {
+      "test": "test_guvence.SafetyTests.test_mcp_invalid_responses",
+      "status": "PASS"
+    },
+    {
+      "test": "test_guvence.SafetyTests.test_mcp_valid_response",
+      "status": "PASS"
+    },
+    {
+      "test": "test_guvence.SafetyTests.test_no_checks_is_not_pass",
+      "status": "PASS"
+    },
+    {
+      "test": "test_guvence.SafetyTests.test_plan_binds_target_hash",
+      "status": "PASS"
+    },
+    {
+      "test": "test_guvence.SafetyTests.test_plan_rejects_unknown_and_empty_selection",
+      "status": "PASS"
+    },
+    {
+      "test": "test_guvence.SafetyTests.test_proxy_redaction",
+      "status": "PASS"
+    },
+    {
+      "test": "test_guvence.SafetyTests.test_symlink_rejected",
+      "status": "NOT_RUN",
+      "reason": "symlink privilege unavailable"
+    },
+    {
+      "test": "test_guvence.SafetyTests.test_wrong_identity",
+      "status": "PASS"
+    },
+    {
+      "test": "test_powershell_compat.PowerShellSourceCompatibilityTests.test_no_typographic_quotes_in_powershell_source",
+      "status": "PASS"
+    },
+    {
+      "test": "test_powershell_compat.PowerShellSourceCompatibilityTests.test_ps1_files_have_utf8_bom_for_windows_powershell_51",
+      "status": "PASS"
+    },
+    {
+      "test": "test_pro_audit.ProHighPriorityContracts.test_Y1_mcp_preserves_unknown_fields_and_uses_transaction",
+      "status": "PASS"
+    },
+    {
+      "test": "test_pro_audit.ProHighPriorityContracts.test_Y2_plan_binds_targets_code_identity_and_revalidates_under_lock",
+      "status": "PASS"
+    },
+    {
+      "test": "test_pro_audit.ProHighPriorityContracts.test_Y3_version_health_and_verify_are_separate",
+      "status": "PASS"
+    },
+    {
+      "test": "test_pro_audit.ProHighPriorityContracts.test_Y4_failure_recovery_is_explicit_for_mutating_components",
+      "status": "PASS"
+    },
+    {
+      "test": "test_pro_audit.ProHighPriorityContracts.test_Y5_shared_python_is_guarded_and_nontransactional_risk_is_disclosed",
+      "status": "PASS"
+    },
+    {
+      "test": "test_pro_audit.ProHighPriorityContracts.test_Y6_selection_is_not_apply_and_cli_requires_confirmation",
+      "status": "PASS"
+    },
+    {
+      "test": "test_pro_audit.ProHighPriorityContracts.test_Y7_not_run_is_not_pass_and_mcp_schema_is_validated",
+      "status": "PASS"
+    },
+    {
+      "test": "test_pro_audit.ProMediumPriorityContracts.test_O1_scan_uses_local_or_readonly_modes",
+      "status": "PASS"
+    },
+    {
+      "test": "test_pro_audit.ProMediumPriorityContracts.test_O2_cross_session_file_guard_and_run_token_exist",
+      "status": "PASS"
+    },
+    {
+      "test": "test_pro_audit.ProMediumPriorityContracts.test_O3_supply_chain_checks_are_component_specific",
+      "status": "PASS"
+    },
+    {
+      "test": "test_pro_audit.ProMediumPriorityContracts.test_O4_removed_offer_component_has_no_dispatch_or_installer",
+      "status": "PASS"
+    },
+    {
+      "test": "test_pro_audit.ProMediumPriorityContracts.test_O5_json_and_process_exit_contract_are_coupled",
+      "status": "PASS"
+    },
+    {
+      "test": "test_pro_audit.ProMediumPriorityContracts.test_O6_timeout_kills_only_spawned_process_tree",
+      "status": "PASS"
+    },
+    {
+      "test": "test_pro_audit.ProMediumPriorityContracts.test_O7_upstream_stable_is_not_mislabeled_corporate_approved",
+      "status": "PASS"
+    }
+  ],
+  "windows_powershell_parser": "NOT_RUN",
+  "windows_orchestration_harness": "NOT_RUN",
+  "live_installers": "NOT_RUN",
+  "native_pdf_extension": "NOT_RUN",
+  "excel_com": "NOT_RUN",
+  "production_approved": false
+}

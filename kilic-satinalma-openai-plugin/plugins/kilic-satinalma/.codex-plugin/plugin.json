@@ -1,0 +1,27 @@
+{
+  "name": "kilic-satinalma",
+  "version": "1.2.0",
+  "description": "Kaynak kanıtlı satınalma teklif değerlendirme ve açık onaylı Windows güncelleyici becerileri.",
+  "author": {
+    "name": "Ozan Beşinci"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Kılıç Satınalma",
+    "shortDescription": "Teklif değerlendirme ve güncelleyici",
+    "longDescription": "Teklifleri kaynak kanıtı, kapsam, maliyet, ticari koşul ve risk açısından değerlendirir; gerekçeli öneri ve Excel/PDF üretir. Windows program sürümlerini açık seçim ve onayla kontrol eder ve günceller.",
+    "developerName": "Ozan Beşinci",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
+    "defaultPrompt": "Satınalma tekliflerini değerlendir.",
+    "websiteURL": "https://github.com/ozanbesinci/kilic-satinalma-openai-plugin",
+    "brandColor": "#163E70",
+    "composerIcon": "./assets/kilic-logo.svg",
+    "logo": "./assets/kilic-logo.svg"
+  },
+  "repository": "https://github.com/ozanbesinci/kilic-satinalma-openai-plugin",
+  "homepage": "https://github.com/ozanbesinci/kilic-satinalma-openai-plugin"
+}

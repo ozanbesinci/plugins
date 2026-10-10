@@ -1,0 +1,4 @@
+interface:
+  display_name: "Teklif Değerlendirme"
+  short_description: "Çok formatlı, deterministik-first teklif ve şartname analizi"
+  default_prompt: "$teklif-degerlendirme ile bu teklifleri incele; dosya envanterini, profil önerisini ve karar yeterliliğini göster."

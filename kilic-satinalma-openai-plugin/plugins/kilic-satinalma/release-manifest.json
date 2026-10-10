@@ -1,0 +1,57 @@
+{
+  "schema": "kilic-satinalma-stable-release/v1",
+  "package_channel": "stable",
+  "plugin_version": "1.2.0",
+  "skill_versions": {
+    "teklif-bagimsiz-kontrol": "5.0.29",
+    "teklif-belge-kaynak": "5.0.29",
+    "teklif-degerlendirme": "5.0.29",
+    "teklif-kapsam-ticari": "5.0.29",
+    "teklif-karar-rapor": "5.0.29",
+    "teklif-maliyet": "5.0.29",
+    "guncelleyici": "2.3.0"
+  },
+  "accepted_candidate": {
+    "plugin_version": "1.2.0-rc.51",
+    "offer_skill_version": "5.0.29-dev.10",
+    "frozen_files": 236,
+    "freeze_manifest_sha256": "2b32303dbfe6e2c757893af28f823d68370ddd71981cc46b84c55f9f76d3a43f",
+    "source_tree_sha256": "445ffc82eeb547cd43dcefde8bc72d0d984031ccd055f3c246a0b3c3b28236c1"
+  },
+  "implementation_and_configuration_unchanged": true,
+  "published_updater_unchanged_files": 40,
+  "updater_layout": {
+    "source": "skills/guncelleyici",
+    "release": "vendor/guncelleyici",
+    "execution_tests_configuration_bytes_equal": true,
+    "entry": "skills/guncelleyici",
+    "documentation_changes": [
+      "CHANGELOG.md",
+      "SKILL.md"
+    ],
+    "accepted_candidate_entry_vendor_equal_files": 44,
+    "publication_hash_metadata_refresh": {
+      "file": "MANIFEST.sha256.json",
+      "updated_documentation_entries": [
+        "CHANGELOG.md",
+        "SKILL.md"
+      ],
+      "other_entries_unchanged": true
+    }
+  },
+  "acceptance": {
+    "analysis_date": "2026-10-09",
+    "real_documents": 3,
+    "source_rows": 33,
+    "actual_profile": "yuksek_guvence",
+    "actual_validate_run": "VERIFIED",
+    "pdf_visual_pages": 95,
+    "visual_rechecks": 6,
+    "small_question_roundtrip": "VERIFIED",
+    "small_profile": "hizli",
+    "candidate_suite_sqlite": 399,
+    "candidate_suite_native_duckdb": 399
+  },
+  "change_scope": "Stable version identifiers and publication documentation only",
+  "acceptance_report": "skills/teklif-degerlendirme/references/RELEASE_ACCEPTANCE_5.0.29.md"
+}

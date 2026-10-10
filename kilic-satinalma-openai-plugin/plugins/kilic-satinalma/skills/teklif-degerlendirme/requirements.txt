@@ -1,0 +1,11 @@
+# Kurulum/güncelleme skill dışında yönetilir. Sürümler kurumsal ortamda kilitlenmelidir.
+duckdb>=1.4,<2
+openpyxl>=3.1,<4
+pypdf>=5,<7
+pdfplumber>=0.11,<1
+pypdfium2>=5,<6
+python-docx>=1.2,<2
+Pillow>=11,<13
+jsonschema>=4.23,<5
+# Windows/Excel COM için:
+pywin32>=310; platform_system=="Windows"

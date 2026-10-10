@@ -1,0 +1,1228 @@
+{
+  "schema_version": "5.0.23",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "document_id",
+        "locator",
+        "evidence_status"
+      ],
+      "properties": {
+        "client_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 128
+        },
+        "evidence_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 128
+        },
+        "document_id": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "unit_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 128
+        },
+        "locator": {
+          "type": "object",
+          "maxProperties": 30
+        },
+        "quote": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 2000
+        },
+        "evidence_status": {
+          "enum": [
+            "verified",
+            "missing",
+            "excluded",
+            "unreadable",
+            "conflicting",
+            "assumption",
+            "requires_confirmation"
+          ]
+        },
+        "confidence": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "fact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "field_key",
+        "evidence_status"
+      ],
+      "properties": {
+        "fact_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 256
+        },
+        "offer_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 128
+        },
+        "supplier_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 128
+        },
+        "requirement_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 128
+        },
+        "field_key": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "value_text": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 4000
+        },
+        "value_number": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "value_date": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 64
+        },
+        "unit": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 64
+        },
+        "currency": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 16
+        },
+        "evidence_status": {
+          "enum": [
+            "verified",
+            "missing",
+            "excluded",
+            "unreadable",
+            "conflicting",
+            "assumption",
+            "requires_confirmation"
+          ]
+        },
+        "critical": {
+          "type": "boolean"
+        },
+        "evidence_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 128
+        },
+        "evidence_client_id": {
+          "description": "For a verified offer-wide aggregate quantity, cite its own aggregate source evidence. A single item quote does not verify the aggregate.",
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 128
+        },
+        "normalized": {
+          "type": "object",
+          "maxProperties": 50,
+          "properties": {
+            "items": {
+              "type": "array",
+              "maxItems": 1000,
+              "items": {
+                "$ref": "#/$defs/normalized_item"
+              }
+            },
+            "payment_schedule": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 100,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["days"],
+                "anyOf": [
+                  {"required": ["ratio"]},
+                  {"required": ["amount"]}
+                ],
+                "properties": {
+                  "days": {"type": "integer", "minimum": 0},
+                  "ratio": {"type": "number", "minimum": 0, "maximum": 1},
+                  "amount": {"type": "number", "minimum": 0}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "requirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "text"
+      ],
+      "properties": {
+        "requirement_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 128
+        },
+        "source_unit_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 128
+        },
+        "category": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 128
+        },
+        "section": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 256
+        },
+        "text": {
+          "type": "string",
+          "maxLength": 5000
+        },
+        "critical": {
+          "type": "boolean"
+        },
+        "evidence_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 128
+        },
+        "evidence_client_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 128
+        }
+      }
+    },
+    "scope_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "classification",
+        "description",
+        "status",
+        "cost_role"
+      ],
+      "properties": {
+        "scope_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 128
+        },
+        "offer_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 128
+        },
+        "classification": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 4000
+        },
+        "status": {
+          "enum": [
+            "verified",
+            "missing",
+            "excluded",
+            "unreadable",
+            "conflicting",
+            "assumption",
+            "requires_confirmation"
+          ]
+        },
+        "amount": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "currency": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 16
+        },
+        "payment_date": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 64
+        },
+        "evidence_ids": {
+          "type": "array",
+          "maxItems": 30,
+          "items": {
+            "type": "string",
+            "maxLength": 128
+          }
+        },
+        "critical": {
+          "type": "boolean"
+        },
+        "cost_role": {
+          "enum": [
+            "included_in_price",
+            "incremental_adjustment",
+            "unresolved_adjustment"
+          ]
+        }
+      }
+    },
+    "open_issue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "owner",
+        "question"
+      ],
+      "properties": {
+        "issue_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 128
+        },
+        "owner": {
+          "type": "string",
+          "maxLength": 160,
+          "pattern": "^(IDARE|TUM_FIRMALAR|FIRMA:.+)$"
+        },
+        "severity": {
+          "enum": [
+            "critical",
+            "high",
+            "medium",
+            "low"
+          ]
+        },
+        "issue_type": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "question": {
+          "type": "string",
+          "maxLength": 5000
+        },
+        "fact_ids": {
+          "description": "Field questions cite same-offer canonical <offer_id>/field/<field_key> IDs, including expected IDs for missing fields. An unresolved scope cost cites that offer's scope_signature fact.",
+          "type": "array",
+          "maxItems": 100,
+          "items": {
+            "type": "string",
+            "maxLength": 256
+          }
+        },
+        "evidence_ids": {
+          "description": "Cite exact evidence for the questioned field or scope item. An unresolved scope adjustment needs its own source evidence IDs; do not use an empty global reference when source evidence exists.",
+          "type": "array",
+          "maxItems": 100,
+          "items": {
+            "type": "string",
+            "maxLength": 128
+          }
+        }
+      }
+    },
+    "exclusion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reason"
+      ],
+      "properties": {
+        "exclusion_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 128
+        },
+        "offer_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 128
+        },
+        "requirement_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 128
+        },
+        "decision": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 128
+        },
+        "reason": {
+          "type": "string",
+          "maxLength": 4000
+        },
+        "evidence_ids": {
+          "type": "array",
+          "maxItems": 100,
+          "items": {
+            "type": "string",
+            "maxLength": 128
+          }
+        },
+        "status": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 64
+        }
+      }
+    },
+    "review_fact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fact_id",
+        "evidence_status"
+      ],
+      "properties": {
+        "fact_id": {
+          "type": "string",
+          "maxLength": 256
+        },
+        "value_text": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 4000
+        },
+        "value_number": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "value_date": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 64
+        },
+        "evidence_status": {
+          "enum": [
+            "verified",
+            "missing",
+            "excluded",
+            "unreadable",
+            "conflicting",
+            "assumption",
+            "requires_confirmation"
+          ]
+        },
+        "evidence_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 128
+        }
+      }
+    },
+    "adjudication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "difference_id",
+        "decision",
+        "reason"
+      ],
+      "properties": {
+        "difference_id": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "decision": {
+          "enum": [
+            "main",
+            "independent",
+            "corrected",
+            "open"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "maxLength": 4000
+        },
+        "replacement": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "evidence_ids": {
+          "type": "array",
+          "maxItems": 100,
+          "items": {
+            "type": "string",
+            "maxLength": 128
+          }
+        }
+      }
+    },
+    "visual_page": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "render_key",
+        "status"
+      ],
+      "properties": {
+        "render_key": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "status": {
+          "enum": [
+            "pass",
+            "fail",
+            "PASS",
+            "FAIL"
+          ]
+        },
+        "observations": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 3000
+        },
+        "note": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 3000
+        }
+      }
+    },
+    "claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "text"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "observation",
+            "calculated",
+            "assumption",
+            "hypothesis",
+            "recommendation"
+          ]
+        },
+        "text": {
+          "type": "string",
+          "maxLength": 5000
+        },
+        "fact_ids": {
+          "type": "array",
+          "maxItems": 100,
+          "items": {
+            "type": "string",
+            "maxLength": 256
+          }
+        },
+        "calculation_ids": {
+          "type": "array",
+          "maxItems": 100,
+          "items": {
+            "type": "string",
+            "maxLength": 128
+          }
+        },
+        "requirement_ids": {
+          "type": "array",
+          "maxItems": 100,
+          "items": {
+            "type": "string",
+            "maxLength": 128
+          }
+        },
+        "evidence_ids": {
+          "type": "array",
+          "maxItems": 100,
+          "items": {
+            "type": "string",
+            "maxLength": 128
+          }
+        },
+        "caveat": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 3000
+        },
+        "assertions": {
+          "type": "array",
+          "maxItems": 20,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "source_type",
+              "source_id",
+              "path",
+              "operator"
+            ],
+            "properties": {
+              "source_type": {
+                "enum": [
+                  "fact",
+                  "calculation"
+                ]
+              },
+              "source_id": {
+                "type": "string",
+                "maxLength": 256
+              },
+              "path": {
+                "description": "For a calculation, path starts inside that calculation's result object: comparable_total, not result.comparable_total.",
+                "type": "string",
+                "maxLength": 256
+              },
+              "operator": {
+                "enum": [
+                  "equals",
+                  "approx",
+                  "contains",
+                  "exists"
+                ]
+              },
+              "value_number": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "value_text": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "maxLength": 2000
+              },
+              "tolerance": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0
+              }
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "calculated"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "assertions"
+            ],
+            "properties": {
+              "assertions": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "normalized_item": {
+      "type": "object",
+      "required": [
+        "item_id",
+        "evidence_refs",
+        "evidence_status"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "item_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "evidence_refs": {
+          "description": "Use actual source evidence for this item. Where available, cover unit, quantity, unit price and line amount cells or their source range; do not fabricate missing cells.",
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "amount": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "quantity": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "amount_basis": {
+          "enum": [
+            "unit_price",
+            "line_total",
+            "stated_grand_total"
+          ]
+        },
+        "unit": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "currency": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "description": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 4000
+        },
+        "delivery_text": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 4000
+        },
+        "notes": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 4000
+        },
+        "original_text": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 4000
+        },
+        "evidence_status": {
+          "enum": [
+            "verified",
+            "missing",
+            "excluded",
+            "unreadable",
+            "conflicting",
+            "assumption",
+            "requires_confirmation"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "amount"
+            ],
+            "properties": {
+              "amount": {
+                "type": "number"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "amount_basis"
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "tasks": {
+    "document_classification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "document_role"
+      ],
+      "properties": {
+        "document_role": {
+          "enum": [
+            "offer",
+            "specification",
+            "boq",
+            "correspondence",
+            "support",
+            "unrelated",
+            "unknown"
+          ]
+        },
+        "confidence": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "supplier_name": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 300
+        },
+        "supplier_confidence": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "requirements_extraction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requirements",
+        "evidence"
+      ],
+      "properties": {
+        "requirements": {
+          "type": "array",
+          "maxItems": 1000,
+          "items": {
+            "$ref": "#/$defs/requirement"
+          }
+        },
+        "evidence": {
+          "type": "array",
+          "maxItems": 1000,
+          "items": {
+            "$ref": "#/$defs/evidence"
+          }
+        }
+      }
+    },
+    "offer_semantic_fields": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "facts",
+        "evidence"
+      ],
+      "properties": {
+        "facts": {
+          "type": "array",
+          "maxItems": 500,
+          "items": {
+            "$ref": "#/$defs/fact"
+          }
+        },
+        "evidence": {
+          "type": "array",
+          "maxItems": 500,
+          "items": {
+            "$ref": "#/$defs/evidence"
+          }
+        },
+        "scope_items": {
+          "type": "array",
+          "maxItems": 300,
+          "items": {
+            "$ref": "#/$defs/scope_item"
+          }
+        },
+        "open_issues": {
+          "type": "array",
+          "maxItems": 300,
+          "items": {
+            "$ref": "#/$defs/open_issue"
+          }
+        },
+        "exclusions": {
+          "type": "array",
+          "maxItems": 300,
+          "items": {
+            "$ref": "#/$defs/exclusion"
+          }
+        }
+      }
+    },
+    "requirement_assessment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "facts",
+        "evidence"
+      ],
+      "properties": {
+        "facts": {
+          "type": "array",
+          "maxItems": 500,
+          "items": {
+            "$ref": "#/$defs/fact"
+          }
+        },
+        "evidence": {
+          "type": "array",
+          "maxItems": 500,
+          "items": {
+            "$ref": "#/$defs/evidence"
+          }
+        },
+        "scope_items": {
+          "type": "array",
+          "maxItems": 300,
+          "items": {
+            "$ref": "#/$defs/scope_item"
+          }
+        },
+        "open_issues": {
+          "type": "array",
+          "maxItems": 300,
+          "items": {
+            "$ref": "#/$defs/open_issue"
+          }
+        },
+        "exclusions": {
+          "type": "array",
+          "maxItems": 300,
+          "items": {
+            "$ref": "#/$defs/exclusion"
+          }
+        }
+      }
+    },
+    "visual_source_review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "facts",
+        "evidence"
+      ],
+      "properties": {
+        "facts": {
+          "type": "array",
+          "maxItems": 500,
+          "items": {
+            "$ref": "#/$defs/fact"
+          }
+        },
+        "evidence": {
+          "type": "array",
+          "maxItems": 500,
+          "items": {
+            "$ref": "#/$defs/evidence"
+          }
+        },
+        "scope_items": {
+          "type": "array",
+          "maxItems": 300,
+          "items": {
+            "$ref": "#/$defs/scope_item"
+          }
+        },
+        "open_issues": {
+          "type": "array",
+          "maxItems": 300,
+          "items": {
+            "$ref": "#/$defs/open_issue"
+          }
+        },
+        "exclusions": {
+          "type": "array",
+          "maxItems": 300,
+          "items": {
+            "$ref": "#/$defs/exclusion"
+          }
+        }
+      }
+    },
+    "technical_exception": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "facts",
+        "evidence"
+      ],
+      "properties": {
+        "facts": {
+          "type": "array",
+          "maxItems": 500,
+          "items": {
+            "$ref": "#/$defs/fact"
+          }
+        },
+        "evidence": {
+          "type": "array",
+          "maxItems": 500,
+          "items": {
+            "$ref": "#/$defs/evidence"
+          }
+        },
+        "scope_items": {
+          "type": "array",
+          "maxItems": 300,
+          "items": {
+            "$ref": "#/$defs/scope_item"
+          }
+        },
+        "open_issues": {
+          "type": "array",
+          "maxItems": 300,
+          "items": {
+            "$ref": "#/$defs/open_issue"
+          }
+        },
+        "exclusions": {
+          "type": "array",
+          "maxItems": 300,
+          "items": {
+            "$ref": "#/$defs/exclusion"
+          }
+        }
+      }
+    },
+    "contract_exception": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "facts",
+        "evidence"
+      ],
+      "properties": {
+        "facts": {
+          "type": "array",
+          "maxItems": 500,
+          "items": {
+            "$ref": "#/$defs/fact"
+          }
+        },
+        "evidence": {
+          "type": "array",
+          "maxItems": 500,
+          "items": {
+            "$ref": "#/$defs/evidence"
+          }
+        },
+        "scope_items": {
+          "type": "array",
+          "maxItems": 300,
+          "items": {
+            "$ref": "#/$defs/scope_item"
+          }
+        },
+        "open_issues": {
+          "type": "array",
+          "maxItems": 300,
+          "items": {
+            "$ref": "#/$defs/open_issue"
+          }
+        },
+        "exclusions": {
+          "type": "array",
+          "maxItems": 300,
+          "items": {
+            "$ref": "#/$defs/exclusion"
+          }
+        }
+      }
+    },
+    "independent_fact_review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "facts"
+      ],
+      "properties": {
+        "review_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 128
+        },
+        "facts": {
+          "type": "array",
+          "maxItems": 500,
+          "items": {
+            "$ref": "#/$defs/review_fact"
+          }
+        }
+      }
+    },
+    "adjudicate_differences": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decisions"
+      ],
+      "properties": {
+        "decisions": {
+          "type": "array",
+          "maxItems": 500,
+          "items": {
+            "$ref": "#/$defs/adjudication"
+          }
+        }
+      }
+    },
+    "artifact_visual_review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pages"
+      ],
+      "properties": {
+        "pages": {
+          "type": "array",
+          "maxItems": 1000,
+          "items": {
+            "$ref": "#/$defs/visual_page"
+          }
+        }
+      }
+    },
+    "decision_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary",
+        "claims"
+      ],
+      "properties": {
+        "summary": {
+          "type": "string",
+          "maxLength": 12000
+        },
+        "recommendation": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "claims": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 50,
+          "items": {
+            "$ref": "#/$defs/claim"
+          }
+        }
+      }
+    }
+  }
+}
