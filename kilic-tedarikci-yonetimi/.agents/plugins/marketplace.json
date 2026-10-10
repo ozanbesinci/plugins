@@ -1,7 +1,7 @@
 {
-  "name": "kilic-satinalma-workspace",
+  "name": "kilic-tedarikci-yonetimi-workspace",
   "interface": {
-    "displayName": "Kılıç Satınalma 1.2.0"
+    "displayName": "Kılıç Tedarikçi Yönetimi"
   },
   "plugins": [
     {

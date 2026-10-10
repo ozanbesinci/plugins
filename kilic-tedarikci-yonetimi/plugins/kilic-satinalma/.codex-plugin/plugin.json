@@ -7,7 +7,7 @@
   },
   "skills": "./skills/",
   "interface": {
-    "displayName": "Kılıç Satınalma",
+    "displayName": "Kılıç Tedarikçi Yönetimi",
     "shortDescription": "Teklif değerlendirme ve güncelleyici",
     "longDescription": "Teklifleri kaynak kanıtı, kapsam, maliyet, ticari koşul ve risk açısından değerlendirir; gerekçeli öneri ve Excel/PDF üretir. Windows program sürümlerini açık seçim ve onayla kontrol eder ve günceller.",
     "developerName": "Ozan Beşinci",
@@ -17,11 +17,11 @@
       "Write"
     ],
     "defaultPrompt": "Satınalma tekliflerini değerlendir.",
-    "websiteURL": "https://github.com/ozanbesinci/kilic-satinalma-openai-plugin",
+    "websiteURL": "https://github.com/ozanbesinci/plugins/tree/main/kilic-tedarikci-yonetimi",
     "brandColor": "#163E70",
     "composerIcon": "./assets/kilic-logo.svg",
     "logo": "./assets/kilic-logo.svg"
   },
-  "repository": "https://github.com/ozanbesinci/kilic-satinalma-openai-plugin",
-  "homepage": "https://github.com/ozanbesinci/kilic-satinalma-openai-plugin"
+  "repository": "https://github.com/ozanbesinci/plugins/tree/main/kilic-tedarikci-yonetimi",
+  "homepage": "https://github.com/ozanbesinci/plugins/tree/main/kilic-tedarikci-yonetimi"
 }
