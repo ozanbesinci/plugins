@@ -1,0 +1,4 @@
+interface:
+  display_name: "Sigorta Gereklilikleri"
+  short_description: "Sigorta Gereklilikleri için kaynaklı karar desteği"
+  default_prompt: "$sigorta-gereklilikleri ile hangi sigorta, limit ve muafiyet."

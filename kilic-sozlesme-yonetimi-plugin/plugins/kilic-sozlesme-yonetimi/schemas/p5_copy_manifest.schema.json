@@ -1,0 +1,170 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "case_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "operation_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "artifact_version_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "source_version_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "source_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "artifact_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "request_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "author": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "allowed_modified_parts": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 6,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "maxLength": 1000
+      }
+    },
+    "protected_parts": {
+      "type": "object",
+      "maxProperties": 1024,
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      }
+    },
+    "word_qa": {
+      "const": "NOT_RUN"
+    },
+    "visual_qa": {
+      "const": "NOT_RUN"
+    },
+    "production_ready": {
+      "const": false
+    },
+    "schema_version": {
+      "const": "p5-copy-1.0"
+    },
+    "copy_plan": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "enum": [
+            "INTERNAL_RESOLVED_DRAFT",
+            "EXTERNAL_CLEAN_DRAFT"
+          ]
+        },
+        "comment_policy": {
+          "enum": [
+            "KEEP_ALL",
+            "DROP_ALL"
+          ]
+        },
+        "revision_decisions": {
+          "type": "array",
+          "maxItems": 128,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "revision_id": {
+                "type": "string",
+                "pattern": "^[0-9]{1,10}$"
+              },
+              "kind": {
+                "enum": [
+                  "INSERTION",
+                  "DELETION"
+                ]
+              },
+              "expected_author": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              "expected_date": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "decision": {
+                "enum": [
+                  "ACCEPT",
+                  "REJECT"
+                ]
+              }
+            },
+            "required": [
+              "revision_id",
+              "kind",
+              "expected_author",
+              "expected_date",
+              "decision"
+            ]
+          }
+        }
+      },
+      "required": [
+        "mode",
+        "comment_policy",
+        "revision_decisions"
+      ]
+    },
+    "removed_parts": {
+      "type": "array",
+      "maxItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "const": "word/comments.xml"
+      }
+    },
+    "business_approval": {
+      "const": "NOT_GRANTED"
+    }
+  },
+  "required": [
+    "case_id",
+    "operation_id",
+    "artifact_version_id",
+    "source_version_id",
+    "source_sha256",
+    "artifact_sha256",
+    "request_digest",
+    "author",
+    "created_at",
+    "allowed_modified_parts",
+    "protected_parts",
+    "word_qa",
+    "visual_qa",
+    "production_ready",
+    "schema_version",
+    "copy_plan",
+    "removed_parts",
+    "business_approval"
+  ]
+}

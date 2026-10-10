@@ -1,0 +1,4 @@
+interface:
+  display_name: "Belge Hazırlama ve Düzenleme"
+  short_description: "Belge Hazırlama ve Düzenleme için kaynaklı karar desteği"
+  default_prompt: "$belge-hazirlama-duzenleme ile word/pdf/excel oluştur; word'e işle."

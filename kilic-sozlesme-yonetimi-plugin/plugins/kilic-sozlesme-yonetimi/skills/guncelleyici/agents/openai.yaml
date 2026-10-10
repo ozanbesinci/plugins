@@ -1,0 +1,4 @@
+interface:
+  display_name: "Güncelleyici"
+  short_description: "Eksik sözleşme bağımlılıklarını hazırlar"
+  default_prompt: "Use $guncelleyici to check the requested Windows dependencies. Show the skill name, author and VERSION before tools."

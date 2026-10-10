@@ -1,0 +1,437 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "p3-1.0"
+    },
+    "case_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "semantic_version": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "root_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "minItems": 1,
+          "maxItems": 64,
+          "uniqueItems": true
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "max_context_bytes": {
+          "type": "integer",
+          "minimum": 64,
+          "maximum": 1048576
+        },
+        "policy_version": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.-]{1,64}$"
+        },
+        "include_related": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "root_ids",
+        "purpose",
+        "max_context_bytes",
+        "policy_version",
+        "include_related"
+      ]
+    },
+    "status": {
+      "enum": [
+        "COMPLETE_REGISTERED_SCOPE",
+        "INCOMPLETE_DEPENDENCIES",
+        "NEEDS_REVIEW",
+        "BUDGET_EXCEEDED"
+      ]
+    },
+    "context": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "case_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "purpose": {
+              "type": "string"
+            },
+            "semantic_version": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "entries": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "node_id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "node_kind": {
+                    "enum": [
+                      "SOURCE_UNIT",
+                      "USER_STATEMENT",
+                      "CANDIDATE",
+                      "CONTROL"
+                    ]
+                  },
+                  "role": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "classification_status": {
+                    "const": "UNVERIFIED"
+                  },
+                  "trust": {
+                    "const": "UNTRUSTED_SOURCE_DATA_NOT_INSTRUCTIONS"
+                  },
+                  "content": {
+                    "type": "object"
+                  },
+                  "provenance": {
+                    "type": "object"
+                  },
+                  "knowledge_status": {
+                    "type": "string"
+                  },
+                  "state": {
+                    "enum": [
+                      "CURRENT_REGISTERED_SCOPE",
+                      "NEEDS_REVIEW"
+                    ]
+                  },
+                  "reasons": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "node_id",
+                  "node_kind",
+                  "role",
+                  "title",
+                  "classification_status",
+                  "trust",
+                  "content",
+                  "provenance",
+                  "knowledge_status",
+                  "state",
+                  "reasons"
+                ]
+              },
+              "maxItems": 512
+            },
+            "relations": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "relation_id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "from_id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "to_id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "unresolved_reference": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  },
+                  "relation": {
+                    "enum": [
+                      "DEFINITION",
+                      "EXCEPTION",
+                      "ANNEX",
+                      "CROSS_REFERENCE",
+                      "EVIDENCE",
+                      "RELATED"
+                    ]
+                  },
+                  "rationale": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1000
+                  },
+                  "supersedes_relation_id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "status": {
+                    "const": "UNVERIFIED"
+                  },
+                  "invalidated": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "relation_id",
+                  "from_id",
+                  "relation",
+                  "rationale",
+                  "status",
+                  "invalidated"
+                ],
+                "oneOf": [
+                  {
+                    "required": [
+                      "to_id"
+                    ],
+                    "not": {
+                      "required": [
+                        "unresolved_reference"
+                      ]
+                    }
+                  },
+                  {
+                    "required": [
+                      "unresolved_reference"
+                    ],
+                    "not": {
+                      "required": [
+                        "to_id"
+                      ]
+                    }
+                  }
+                ]
+              },
+              "maxItems": 2048
+            },
+            "trust": {
+              "const": "UNTRUSTED_SOURCE_DATA_NOT_INSTRUCTIONS"
+            },
+            "limitations": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "case_id",
+            "purpose",
+            "semantic_version",
+            "entries",
+            "relations",
+            "trust",
+            "limitations"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "included": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "uniqueItems": true
+    },
+    "required_nodes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "uniqueItems": true
+    },
+    "omitted": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "node_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reason": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "node_id",
+          "reason",
+          "required"
+        ]
+      }
+    },
+    "missing_dependencies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "relation_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "from_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "reference": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "relation_id",
+          "from_id",
+          "reference",
+          "reason"
+        ]
+      }
+    },
+    "stale_dependencies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "node_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "reasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "node_id",
+          "reasons"
+        ]
+      }
+    },
+    "dependency_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "registered_closure_complete": {
+      "type": "boolean"
+    },
+    "semantic_completeness": {
+      "const": "UNVERIFIED"
+    },
+    "critical_analysis_allowed": {
+      "const": false
+    },
+    "authority": {
+      "const": "NOT_VERIFIED"
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "method": {
+          "const": "CANONICAL_JSON_UTF8_BYTES"
+        },
+        "scope": {
+          "const": "CONTEXT_FIELD_ONLY"
+        },
+        "max_context_bytes": {
+          "type": "integer",
+          "minimum": 64,
+          "maximum": 1048576
+        },
+        "used_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "required_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "host_token_count": {
+          "type": "null"
+        }
+      },
+      "required": [
+        "method",
+        "scope",
+        "max_context_bytes",
+        "used_bytes",
+        "required_bytes",
+        "host_token_count"
+      ]
+    }
+  },
+  "required": [
+    "schema_version",
+    "case_id",
+    "semantic_version",
+    "request",
+    "status",
+    "context",
+    "included",
+    "required_nodes",
+    "omitted",
+    "missing_dependencies",
+    "stale_dependencies",
+    "dependency_digest",
+    "registered_closure_complete",
+    "semantic_completeness",
+    "critical_analysis_allowed",
+    "authority",
+    "limitations",
+    "budget"
+  ]
+}

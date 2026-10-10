@@ -1,0 +1,4 @@
+interface:
+  display_name: "Yenileme ve Kapanış"
+  short_description: "Yenileme ve Kapanış için kaynaklı karar desteği"
+  default_prompt: "$yenileme-kapanis ile yenileyelim mi, kapanışta ne var."

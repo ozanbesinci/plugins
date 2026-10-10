@@ -1,0 +1,167 @@
+[
+  {
+    "id": "F01",
+    "risk": "Dört bileşen tekrar eden skill haline geliyordu",
+    "resolution": "Muhafız, parmakizi, budget ve regresyon ortak altyapıdır; 30 skill haritası korunur.",
+    "status": "DESIGN_RESOLVED",
+    "requirement_ids": [
+      "R25",
+      "R26",
+      "R27",
+      "R28",
+      "R36"
+    ]
+  },
+  {
+    "id": "F02",
+    "risk": "Sohbet-only ile hafıza yazımı karışabiliyordu",
+    "resolution": "Teslim belgesi izni ile .sistem kaydı ayrıldı; açık belge talebi gereksiz tekrar onay istemez.",
+    "status": "DESIGN_RESOLVED",
+    "requirement_ids": [
+      "R05",
+      "R06",
+      "R08"
+    ]
+  },
+  {
+    "id": "F03",
+    "risk": "Hash onay veya imza sayılabiliyordu",
+    "resolution": "Parmakizi sadece tam işlem kapsamı; kimlik, yetki, iptal, süre ve replay ayrı.",
+    "status": "DESIGN_RESOLVED",
+    "requirement_ids": [
+      "R26"
+    ]
+  },
+  {
+    "id": "F04",
+    "risk": "Örnek hook hata halinde devam ediyor",
+    "resolution": "Kritik kontrol hatasında fail-closed; salt-okunur yardımın sınırı ayrı.",
+    "status": "DESIGN_RESOLVED",
+    "requirement_ids": [
+      "R25",
+      "R31"
+    ]
+  },
+  {
+    "id": "F05",
+    "risk": "Prompt/wrapper güvenlik garantisi sanılıyordu",
+    "resolution": "Host/OS izin testi P0; kanıtlanmayan bariyer enforced denmez.",
+    "status": "IMPLEMENTATION_PROOF_REQUIRED",
+    "requirement_ids": [
+      "R30",
+      "R31",
+      "R34"
+    ]
+  },
+  {
+    "id": "F06",
+    "risk": "Okuma % puanı ve şema başarısı gerçeklik sayılıyordu",
+    "resolution": "Dosya/kapsam/sadakat/anlam/harici teyit ayrıldı; uydurma kapsama yüzdesi yok.",
+    "status": "DESIGN_RESOLVED",
+    "requirement_ids": [
+      "R16",
+      "R29"
+    ]
+  },
+  {
+    "id": "F07",
+    "risk": "Word okuma ve Track Changes aşırı basitleştirilmişti",
+    "resolution": "OOXML ve görünümler; mevcut revizyon koruma; Word kabul/reddet matrisi.",
+    "status": "IMPLEMENTATION_PROOF_REQUIRED",
+    "requirement_ids": [
+      "R10",
+      "R16",
+      "R17"
+    ]
+  },
+  {
+    "id": "F08",
+    "risk": "Sadece diff/özet yeterli sayılıyordu",
+    "resolution": "Bağlı tanım/istisna/ek ve çelişki kapanımı; budget yetmezse kısmi sonuç.",
+    "status": "DESIGN_RESOLVED",
+    "requirement_ids": [
+      "R23",
+      "R27"
+    ]
+  },
+  {
+    "id": "F09",
+    "risk": "Yerel DB eşzamanlılık ve case kapsamı eksikti",
+    "resolution": "Tek erişim yöneticisi; birleşik case FK; sürüm CAS; recovery ve yedek.",
+    "status": "DESIGN_RESOLVED",
+    "requirement_ids": [
+      "R13",
+      "R21",
+      "R32"
+    ]
+  },
+  {
+    "id": "F10",
+    "risk": "Yeni paketleme bilgisi eskiye sabitlenmişti",
+    "resolution": "Resmi root manifest/uyumluluk farkı kaydedildi; hedef host P0 kararı.",
+    "status": "IMPLEMENTATION_PROOF_REQUIRED",
+    "requirement_ids": [
+      "R34"
+    ]
+  },
+  {
+    "id": "F11",
+    "risk": "Repo adayları alınmış kod gibi görünebiliyordu",
+    "resolution": "Aday/benimsenen/test edilen ayrı; lisans ve commit kapısı; kod kopyalanmadı.",
+    "status": "DESIGN_RESOLVED",
+    "requirement_ids": [
+      "R33"
+    ]
+  },
+  {
+    "id": "F12",
+    "risk": "Benchmark izolasyonu auth/config kopyalayabiliyordu",
+    "resolution": "Gerçek kimlik dosyaları kopyalanmaz; sentetik fixture ve test hesapla sınırlı.",
+    "status": "DESIGN_RESOLVED",
+    "requirement_ids": [
+      "R28",
+      "R33"
+    ]
+  },
+  {
+    "id": "F13",
+    "risk": "QA e-postadan sonraya kalabiliyordu",
+    "resolution": "İçerik, alıcı ve ek QA gönderimden önce; sağlayıcı sonucu sonradan ayrı.",
+    "status": "DESIGN_RESOLVED",
+    "requirement_ids": [
+      "R17",
+      "R24"
+    ]
+  },
+  {
+    "id": "F14",
+    "risk": "Doğrulanmış iş başına tüketim yerine soyut tasarruf",
+    "resolution": "Tahmin/ölçüm ayrı; aynı fixture ve başarı ölçütü; oran vaadi yok.",
+    "status": "DESIGN_RESOLVED",
+    "requirement_ids": [
+      "R15",
+      "R27",
+      "R28"
+    ]
+  },
+  {
+    "id": "F15",
+    "risk": "S-20 ve yetki kaynakları kesinleşmiş sanılabilirdi",
+    "resolution": "Şirket poliçe alımı kapsamı açık; şirket kuralları/connector izinleri yokken üretilmez.",
+    "status": "BUSINESS_INPUT_PENDING",
+    "requirement_ids": [
+      "R19",
+      "R20",
+      "R22"
+    ]
+  },
+  {
+    "id": "F16",
+    "risk": "Tasarım hazırlığı ürün/yayın hazırlığına karışıyordu",
+    "resolution": "Tasarım devri hazır; uygulama NOT_IMPLEMENTED, runtime test NOT_RUN; yayın ayrı kapı.",
+    "status": "DESIGN_RESOLVED",
+    "requirement_ids": [
+      "R35"
+    ]
+  }
+]

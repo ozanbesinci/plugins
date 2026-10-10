@@ -1,0 +1,12 @@
+{
+ "$schema":"https://json-schema.org/draft/2020-12/schema",
+ "type":"object","additionalProperties":false,
+ "required":["render_control_id","artifact_sha256","observed_text","reviewer_label","note"],
+ "properties":{
+  "render_control_id":{"type":"string","format":"uuid"},
+  "artifact_sha256":{"type":"string","pattern":"^[0-9a-f]{64}$"},
+  "observed_text":{"type":"string","maxLength":20000},
+  "reviewer_label":{"type":"string","minLength":1,"maxLength":200},
+  "note":{"type":"string","minLength":1,"maxLength":2000}
+ }
+}

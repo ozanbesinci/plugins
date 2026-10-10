@@ -1,0 +1,4 @@
+interface:
+  display_name: "Portföy Değerlendirme"
+  short_description: "Portföy Değerlendirme için kaynaklı karar desteği"
+  default_prompt: "$portfoy-degerlendirme ile ortak sorunları ve iyileştirmeleri göster."

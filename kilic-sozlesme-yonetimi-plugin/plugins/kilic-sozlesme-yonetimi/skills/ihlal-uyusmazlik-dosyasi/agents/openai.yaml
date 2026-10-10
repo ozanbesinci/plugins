@@ -1,0 +1,4 @@
+interface:
+  display_name: "İhlal ve Uyuşmazlık Dosyası"
+  short_description: "İhlal ve Uyuşmazlık Dosyası için kaynaklı karar desteği"
+  default_prompt: "$ihlal-uyusmazlik-dosyasi ile yükümlülük yerine getirilmedi."

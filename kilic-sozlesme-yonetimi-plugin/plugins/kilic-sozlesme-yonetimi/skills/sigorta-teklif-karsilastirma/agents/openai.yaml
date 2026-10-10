@@ -1,0 +1,4 @@
+interface:
+  display_name: "Sigorta Teklif Karşılaştırma"
+  short_description: "Sigorta Teklif Karşılaştırma için kaynaklı karar desteği"
+  default_prompt: "$sigorta-teklif-karsilastirma ile sigorta tekliflerini karşılaştır."

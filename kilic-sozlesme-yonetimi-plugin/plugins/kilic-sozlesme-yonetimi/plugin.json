@@ -1,0 +1,34 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "kilic-sozlesme-yonetimi",
+  "version": "0.1.0-dev.4",
+  "description": "Satınalma sözleşmeleri için kaynak koruma ve yerel kayıt çekirdeği; geliştirme sürümü.",
+  "homepage": "https://github.com/ozanbesinci/kilic-sozlesme-yonetimi-plugin",
+  "author": {
+    "name": "Ozan Beşinci"
+  },
+  "keywords": [
+    "sozlesme",
+    "satinalma"
+  ],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Kılıç Sözleşme Yönetimi",
+        "shortDescription": "Kaynaklı sözleşme desteği",
+        "longDescription": "Türkçe kaynaklı sözleşme desteği, EML belge okuma, iş bilgisi ve kesin para/tarih hesabı. E-posta gönderimi yok; yazışma taslakları sohbet içinde hazırlanır. Geliştirme sürümü; üretim Word yetki/QA ve tam kabulü sürüyor.",
+        "developerName": "Ozan Beşinci",
+        "websiteURL": "https://github.com/ozanbesinci/kilic-sozlesme-yonetimi-plugin",
+        "category": "Productivity",
+        "capabilities": [
+          "Interactive",
+          "Read"
+        ],
+        "brandColor": "#163E70",
+        "composerIcon": "./assets/kilic-logo.svg",
+        "logo": "./assets/kilic-logo.svg",
+        "defaultPrompt": "Seçilmiş sözleşme ve ekleri kaynaklarıyla değerlendir."
+      }
+    }
+  }
+}

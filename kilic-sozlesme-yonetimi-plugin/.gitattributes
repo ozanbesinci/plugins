@@ -1,0 +1,2 @@
+# Preserve the tested bytes, including the upstream updater hash manifest.
+* -text

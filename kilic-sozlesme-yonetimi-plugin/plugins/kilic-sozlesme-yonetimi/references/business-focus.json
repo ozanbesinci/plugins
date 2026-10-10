@@ -1,0 +1,122 @@
+{
+  "K00": [
+    "Amaç, seçilmiş dosya ve host yeteneğini belirle; bütün skill ailesini çağırma.",
+    "Senaryo kimliğinden hedef skill seç; belirsiz doğal dilde mevcut bağlamı kontrol et, yalnız gerekli soruyu sor."
+  ],
+  "K01": [
+    "Planlanan ticari iş, sözleşmedeki hüküm ve gerçekleşen olayı ayrı göster.",
+    "Kaynak haritası, kullanıcı beyanı ve açık konularla kaldığımız noktayı çıkar."
+  ],
+  "K02": [
+    "Taraf, kapsam, bedel/para, vergi, teslim-kabul ve sigorta/teminat eksiklerini ayrı çıkar.",
+    "Mutabakat kaynağı ile öneriyi ayır; Hukuka talep taslağını sohbet içinde hazırla."
+  ],
+  "K03": [
+    "Ana sözleşme, ek ve atıf haritasını kur; tanım/istisna/olumsuzluğu gerekli kapanıma al.",
+    "Her bulguya hüküm/konum, ticari etkisi, alternatif ve belirsizlik ekle; kritik okuma eksikse kapsamı daralt."
+  ],
+  "K04": [
+    "Kullanıcının seçtiği eski/yeni sürümü ve kaynak hashlerini teyit et.",
+    "Kesin fark ile belirsiz eşleşmeyi ayrı göster; değişen tanımın diğer hükümler üzerindeki etkisini incele."
+  ],
+  "K05": [
+    "Matrah, para birimi, vergi, oran, vade başlangıcı ve kabul olayını açık seç.",
+    "Decimal hesabı ve ödeme karşılığı teminat/kabul bağını göster; eksik matrahı tahmin etme."
+  ],
+  "K06": [
+    "Avans, mahsup ve risk bitiş olayını kaynaklarıyla eşleştir.",
+    "Teminat tutarı/vadesi alternatiflerini gerekçelendir; sağlanmamış şirket oranını standarda dönüştürme."
+  ],
+  "K07": [
+    "Talep şartı ile mektubun lehtar, tutar, para, vade ve çağrı metnini karşılaştır.",
+    "Okuma sonucu ile banka gerçeklik/teyit durumunu ayrı tut; farkı kaynak konumuyla göster."
+  ],
+  "K08": [
+    "Vade, uzatma, mahsup ve gerçekleşen kabul kanıtını ilişkilendir.",
+    "Azaltma/iade için eksik kanıt ve risk süresini göster; serbest bırakma işlemi yapma."
+  ],
+  "K09": [
+    "Teslim, geçici/kesin kabul ve performans testini ayrı olaylar olarak ele al.",
+    "Garanti başlangıcı, koşul/istisna ve sorumlu atamasını kaynakla bağla."
+  ],
+  "K10": [
+    "Ceza matrahı, kesir oranı, dönem ve tavanı Decimal ile hesapla.",
+    "Sorumluluk istisnaları ile ekonomik senaryoyu birlikte göster; uygulanabilirlik Hukuk görüşü ister."
+  ],
+  "K11": [
+    "Faaliyet/saha/kişiler/varlık ve zarar senaryosu üzerinden sigorta gereksinimini kur.",
+    "Limit, muafiyet ve istisna boşluklarını ayır; All Risk adını istisnasız koruma kabul etme."
+  ],
+  "K12": [
+    "Prim, para, dönem, limit, kapsam ve muafiyetleri karşılaştırılabilir zemine getir.",
+    "En düşük primi tek seçim ölçütü yapma; şirket portföyü S-20 kapsam tercihi açıksa bunu koru."
+  ],
+  "K13": [
+    "Talep edilen kapsamı gerçek poliçe ve zeyillerle karşılaştır.",
+    "Saha/faaliyet, lehtar, limit, muafiyet, tarih ve istisnaları göster; teklif düzenlenmiş poliçe değildir."
+  ],
+  "K14": [
+    "İş süresi/bedeli/faaliyeti/saha değişikliğini poliçe dönem ve kapsamına bağla.",
+    "Gerekli zeyil/uzatma teyidini göster; gerçekleşmiş uzatma iddiası yalnız belgeyle."
+  ],
+  "K15": [
+    "Olay kronolojisi, poliçe, bildirim başlangıcı ve süre kuralını kaynağıyla ayır.",
+    "Kanıt/bildirim taslağı hazırla; kesin teminat/tazminat kararı veya otomatik gönderim yok."
+  ],
+  "K16": [
+    "Ödeme, teminat, sigorta, ceza ve kabul korumalarını tek risk senaryosuna bağla.",
+    "Bir güvencenin yerine diğerini otomatik koyma; paket taviz ve toplam kalan riski ayrı göster."
+  ],
+  "K17": [
+    "Taraf pozisyonu, kaynak hükmü ve koşullu uzman görüşünü ayrı tut.",
+    "Alternatif paket ve karar adaylarını açık maddelerle üret; pozisyon yetkili onay değildir."
+  ],
+  "K18": [
+    "Tartışmalı metin, ticari etki ve somut Hukuk/Finans/Teknik sorusunu sürüme bağla.",
+    "Cevabın koşul/kapsam/tarih ve görüş sahibini koru; koşullu görüşü genel kabul yapma."
+  ],
+  "K19": [
+    "Somut olay tarihi, taraf niteliği ve hukuki soruyu belirle.",
+    "Resmi kaynak, yürürlük/geçiş ve uygulanabilirliği teyit et; adaptör/kaynak yoksa güncel hüküm iddiası yok."
+  ],
+  "K20": [
+    "Yalnız izinli kurumsal kaynakları şirket/tarih/kapsam bağında getir.",
+    "Benzerlik ve farkı, geçerlilik ve onay kaynağını göster; tek emsal şirket standardı değildir."
+  ],
+  "K21": [
+    "Son metin, önceki kararla farkı, bütün ekler ve açık onayları kaynakla kontrol et.",
+    "Yetki/imza matrisi ve sürüme bağlı gerçek karar yoksa imzaya hazır sonucu verme."
+  ],
+  "K22": [
+    "Başlama koşullarını ödeme, saha, kabul, teminat ve poliçe kaynaklarıyla listele.",
+    "Gerçek belgelerde eksik ve teyitleri göster; ödeme/saha başlatma eylemi yok."
+  ],
+  "K23": [
+    "Hüküm, olay başlangıcı, açık süre kuralı ve gerçek sorumlu atamasını bağla.",
+    "Atanmayan sorumluyu veya süreyi uydurma; izleme adaptörü yoksa otomatik takip vaat etme."
+  ],
+  "K24": [
+    "Süre/fiyat/kapsam talebini mevcut kaynak sürüm ve ticari pozisyondan ayır.",
+    "Teminat/sigorta/ceza/kabul zincir etkisini incele; ek protokol içeriği taslaktır."
+  ],
+  "K25": [
+    "Kronoloji, ihlal iddiası, kaynak hüküm, gerçekleşme kanıtı ve hukuk kaynağını ayır.",
+    "Hukuka dosya ve seçenek üret; ihtar/fesih/yaptırım kendiliğinden yürütülmez."
+  ],
+  "K26": [
+    "Yalnız izinli ve güncel case kapsamını, erişilemeyen dosyaları ve eksikleri belirle.",
+    "Portföy ölçümünün pay/payda ve kapsama sınırını göster; keyfi SQL ya da bütün şirket erişimi yok."
+  ],
+  "K27": [
+    "İzinli örneklemde ortak riskleri ve veri kalitesini kaynaklarıyla çıkar.",
+    "Nicel hesap ile yorum/iyileştirme önerisini ayır; erişilemeyen dosyayı kapsama sayma."
+  ],
+  "K28": [
+    "Açık çıktı talebi, kesin hedef, kaynak hash ve değişiklik/iç-dış nüsha planını belirle.",
+    "P4 eylem muhafızı ve P5 yapısal/native/görsel QA olmadan final verme; orijinal korunur."
+  ],
+  "K29": [
+    "Yalnız sohbet içinde kaynaklı yazışma taslağı hazırla.",
+    "E-posta gönderme, mailbox taslağı oluşturma veya başka connector ile gönderim yapma; kullanıcı gönderim işlevini kaldırdı."
+  ]
+}

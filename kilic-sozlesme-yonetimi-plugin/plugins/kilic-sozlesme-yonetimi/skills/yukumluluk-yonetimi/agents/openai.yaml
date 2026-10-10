@@ -1,0 +1,4 @@
+interface:
+  display_name: "Yükümlülük Yönetimi"
+  short_description: "Yükümlülük Yönetimi için kaynaklı karar desteği"
+  default_prompt: "$yukumluluk-yonetimi ile görevleri ve tarihleri çıkar."

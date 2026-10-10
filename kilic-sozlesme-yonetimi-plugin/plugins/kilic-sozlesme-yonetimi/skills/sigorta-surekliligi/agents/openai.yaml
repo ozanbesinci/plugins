@@ -1,0 +1,4 @@
+interface:
+  display_name: "Sigorta Sürekliliği"
+  short_description: "Sigorta Sürekliliği için kaynaklı karar desteği"
+  default_prompt: "$sigorta-surekliligi ile i̇ş uzadı, sigorta yeterli mi."

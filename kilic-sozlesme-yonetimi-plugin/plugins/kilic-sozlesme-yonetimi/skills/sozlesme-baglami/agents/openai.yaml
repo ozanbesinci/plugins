@@ -1,0 +1,4 @@
+interface:
+  display_name: "Sözleşme Bağlamı"
+  short_description: "Sözleşme Bağlamı için kaynaklı karar desteği"
+  default_prompt: "$sozlesme-baglami ile i̇şi anla; kaldığımız yerden devam et."

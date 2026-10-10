@@ -1,0 +1,362 @@
+[
+  {
+    "id": "S-01",
+    "title": "Sözleşme dosyasını başlat / sürdür",
+    "primary_skills": [
+      "K01"
+    ],
+    "scope_status": "IN_SCOPE",
+    "runtime_test_status": "NOT_RUN"
+  },
+  {
+    "id": "S-02",
+    "title": "İşin sürecini ve risklerini anla",
+    "primary_skills": [
+      "K01"
+    ],
+    "scope_status": "IN_SCOPE",
+    "runtime_test_status": "NOT_RUN"
+  },
+  {
+    "id": "S-03",
+    "title": "Eksik ve çelişkili bilgileri bul",
+    "primary_skills": [
+      "K01"
+    ],
+    "scope_status": "IN_SCOPE",
+    "runtime_test_status": "NOT_RUN"
+  },
+  {
+    "id": "S-04",
+    "title": "Teklif öncesi kritik sözleşme koşulları",
+    "primary_skills": [
+      "K02"
+    ],
+    "scope_status": "IN_SCOPE",
+    "runtime_test_status": "NOT_RUN"
+  },
+  {
+    "id": "S-05",
+    "title": "Hukuka sözleşme hazırlama talebi",
+    "primary_skills": [
+      "K02"
+    ],
+    "scope_status": "IN_SCOPE",
+    "runtime_test_status": "NOT_RUN"
+  },
+  {
+    "id": "S-06",
+    "title": "İlk taslağı incele",
+    "primary_skills": [
+      "K03"
+    ],
+    "scope_status": "IN_SCOPE",
+    "runtime_test_status": "NOT_RUN"
+  },
+  {
+    "id": "S-07",
+    "title": "Gerekli koruma ve müzakere yükü",
+    "primary_skills": [
+      "K03"
+    ],
+    "scope_status": "IN_SCOPE",
+    "runtime_test_status": "NOT_RUN"
+  },
+  {
+    "id": "S-08",
+    "title": "Ana sözleşme ve ek uyumu",
+    "primary_skills": [
+      "K03"
+    ],
+    "scope_status": "IN_SCOPE",
+    "runtime_test_status": "NOT_RUN"
+  },
+  {
+    "id": "S-09",
+    "title": "Tedarikçi revizyonunu karşılaştır",
+    "primary_skills": [
+      "K04"
+    ],
+    "scope_status": "IN_SCOPE",
+    "runtime_test_status": "NOT_RUN"
+  },
+  {
+    "id": "S-10",
+    "title": "Değişiklik etkisi ve yönetici özeti",
+    "primary_skills": [
+      "K04"
+    ],
+    "scope_status": "IN_SCOPE",
+    "runtime_test_status": "NOT_RUN"
+  },
+  {
+    "id": "S-11",
+    "title": "Ödeme ve hakediş yapısı",
+    "primary_skills": [
+      "K05"
+    ],
+    "scope_status": "IN_SCOPE",
+    "runtime_test_status": "NOT_RUN"
+  },
+  {
+    "id": "S-12",
+    "title": "Teminat yapılandırma",
+    "primary_skills": [
+      "K06"
+    ],
+    "scope_status": "IN_SCOPE",
+    "runtime_test_status": "NOT_RUN"
+  },
+  {
+    "id": "S-13",
+    "title": "Gerçek teminat mektubunu kontrol",
+    "primary_skills": [
+      "K07"
+    ],
+    "scope_status": "IN_SCOPE",
+    "runtime_test_status": "NOT_RUN"
+  },
+  {
+    "id": "S-14",
+    "title": "Teminat uzatma, azaltma ve iade",
+    "primary_skills": [
+      "K08"
+    ],
+    "scope_status": "IN_SCOPE",
+    "runtime_test_status": "NOT_RUN"
+  },
+  {
+    "id": "S-15",
+    "title": "Teslim, kabul, performans ve garanti",
+    "primary_skills": [
+      "K09"
+    ],
+    "scope_status": "IN_SCOPE",
+    "runtime_test_status": "NOT_RUN"
+  },
+  {
+    "id": "S-16",
+    "title": "Ceza, tazminat ve sorumluluk",
+    "primary_skills": [
+      "K10"
+    ],
+    "scope_status": "IN_SCOPE",
+    "runtime_test_status": "NOT_RUN"
+  },
+  {
+    "id": "S-17",
+    "title": "Sigorta ihtiyacını belirle",
+    "primary_skills": [
+      "K11"
+    ],
+    "scope_status": "IN_SCOPE",
+    "runtime_test_status": "NOT_RUN"
+  },
+  {
+    "id": "S-18",
+    "title": "Sigorta gerekliliklerini yaz",
+    "primary_skills": [
+      "K11"
+    ],
+    "scope_status": "IN_SCOPE",
+    "runtime_test_status": "NOT_RUN"
+  },
+  {
+    "id": "S-19",
+    "title": "Limit ve muafiyet seçenekleri",
+    "primary_skills": [
+      "K11"
+    ],
+    "scope_status": "IN_SCOPE",
+    "runtime_test_status": "NOT_RUN"
+  },
+  {
+    "id": "S-20",
+    "title": "Sigortacı/broker teklifleri",
+    "primary_skills": [
+      "K12"
+    ],
+    "scope_status": "BUSINESS_CONFIRMATION_PENDING",
+    "runtime_test_status": "NOT_RUN"
+  },
+  {
+    "id": "S-21",
+    "title": "Poliçe ve zeyil uygunluğu",
+    "primary_skills": [
+      "K13"
+    ],
+    "scope_status": "IN_SCOPE",
+    "runtime_test_status": "NOT_RUN"
+  },
+  {
+    "id": "S-22",
+    "title": "Poliçeler arası boşluk ve çakışma",
+    "primary_skills": [
+      "K13"
+    ],
+    "scope_status": "IN_SCOPE",
+    "runtime_test_status": "NOT_RUN"
+  },
+  {
+    "id": "S-23",
+    "title": "Sigorta sürekliliği",
+    "primary_skills": [
+      "K14"
+    ],
+    "scope_status": "IN_SCOPE",
+    "runtime_test_status": "NOT_RUN"
+  },
+  {
+    "id": "S-24",
+    "title": "Hasar ve bildirim dosyası",
+    "primary_skills": [
+      "K15"
+    ],
+    "scope_status": "IN_SCOPE",
+    "runtime_test_status": "NOT_RUN"
+  },
+  {
+    "id": "S-25",
+    "title": "Bütünleşik risk değerlendirme",
+    "primary_skills": [
+      "K16"
+    ],
+    "scope_status": "IN_SCOPE",
+    "runtime_test_status": "NOT_RUN"
+  },
+  {
+    "id": "S-26",
+    "title": "Müzakere alternatifleri",
+    "primary_skills": [
+      "K17"
+    ],
+    "scope_status": "IN_SCOPE",
+    "runtime_test_status": "NOT_RUN"
+  },
+  {
+    "id": "S-27",
+    "title": "Tedarikçiye cevap taslağı",
+    "primary_skills": [
+      "K29"
+    ],
+    "scope_status": "IN_SCOPE",
+    "runtime_test_status": "NOT_RUN"
+  },
+  {
+    "id": "S-28",
+    "title": "Açık müzakere konuları",
+    "primary_skills": [
+      "K17"
+    ],
+    "scope_status": "IN_SCOPE",
+    "runtime_test_status": "NOT_RUN"
+  },
+  {
+    "id": "S-29",
+    "title": "Uzman görüş talebi ve kaydı",
+    "primary_skills": [
+      "K18"
+    ],
+    "scope_status": "IN_SCOPE",
+    "runtime_test_status": "NOT_RUN"
+  },
+  {
+    "id": "S-30",
+    "title": "Türkiye mevzuatı araştırması",
+    "primary_skills": [
+      "K19"
+    ],
+    "scope_status": "IN_SCOPE",
+    "runtime_test_status": "NOT_RUN"
+  },
+  {
+    "id": "S-31",
+    "title": "Kurumsal emsal ve standart",
+    "primary_skills": [
+      "K20"
+    ],
+    "scope_status": "IN_SCOPE",
+    "runtime_test_status": "NOT_RUN"
+  },
+  {
+    "id": "S-32",
+    "title": "Uzmanlık profili incelemesi",
+    "primary_skills": [
+      "K03"
+    ],
+    "scope_status": "IN_SCOPE",
+    "runtime_test_status": "NOT_RUN"
+  },
+  {
+    "id": "S-33",
+    "title": "Görüş, onay ve yetki ihtiyacı",
+    "primary_skills": [
+      "K21"
+    ],
+    "scope_status": "IN_SCOPE",
+    "runtime_test_status": "NOT_RUN"
+  },
+  {
+    "id": "S-34",
+    "title": "Son ve imzalı nüsha karşılaştırması",
+    "primary_skills": [
+      "K21"
+    ],
+    "scope_status": "IN_SCOPE",
+    "runtime_test_status": "NOT_RUN"
+  },
+  {
+    "id": "S-35",
+    "title": "İşe/sahaya/ödemeye başlama kontrolü",
+    "primary_skills": [
+      "K22"
+    ],
+    "scope_status": "IN_SCOPE",
+    "runtime_test_status": "NOT_RUN"
+  },
+  {
+    "id": "S-36",
+    "title": "Yükümlülük ve kritik tarihler",
+    "primary_skills": [
+      "K23"
+    ],
+    "scope_status": "IN_SCOPE",
+    "runtime_test_status": "NOT_RUN"
+  },
+  {
+    "id": "S-37",
+    "title": "Kapsam, fiyat ve süre değişikliği",
+    "primary_skills": [
+      "K24"
+    ],
+    "scope_status": "IN_SCOPE",
+    "runtime_test_status": "NOT_RUN"
+  },
+  {
+    "id": "S-38",
+    "title": "İhlal ve uyuşmazlık dosyası",
+    "primary_skills": [
+      "K25"
+    ],
+    "scope_status": "IN_SCOPE",
+    "runtime_test_status": "NOT_RUN"
+  },
+  {
+    "id": "S-39",
+    "title": "Yenileme ve kapanış",
+    "primary_skills": [
+      "K26"
+    ],
+    "scope_status": "IN_SCOPE",
+    "runtime_test_status": "NOT_RUN"
+  },
+  {
+    "id": "S-40",
+    "title": "Portföy ve süreç iyileştirme",
+    "primary_skills": [
+      "K27"
+    ],
+    "scope_status": "IN_SCOPE",
+    "runtime_test_status": "NOT_RUN"
+  }
+]
