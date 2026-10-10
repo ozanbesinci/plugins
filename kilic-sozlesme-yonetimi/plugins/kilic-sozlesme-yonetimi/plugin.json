@@ -3,7 +3,7 @@
   "name": "kilic-sozlesme-yonetimi",
   "version": "0.1.0-dev.5",
   "description": "Satınalma sözleşmeleri için kaynak koruma ve yerel kayıt çekirdeği; geliştirme sürümü.",
-  "homepage": "https://github.com/ozanbesinci/kilic-sozlesme-yonetimi-plugin",
+  "homepage": "https://github.com/ozanbesinci/plugins/tree/main/kilic-sozlesme-yonetimi",
   "author": {
     "name": "Ozan Beşinci"
   },
@@ -18,7 +18,7 @@
         "shortDescription": "Kaynaklı sözleşme desteği",
         "longDescription": "Türkçe kaynaklı sözleşme desteği, EML belge okuma, iş bilgisi ve kesin para/tarih hesabı. E-posta gönderimi yok; yazışma taslakları sohbet içinde hazırlanır. Geliştirme sürümü; üretim Word yetki/QA ve tam kabulü sürüyor.",
         "developerName": "Ozan Beşinci",
-        "websiteURL": "https://github.com/ozanbesinci/kilic-sozlesme-yonetimi-plugin",
+        "websiteURL": "https://github.com/ozanbesinci/plugins/tree/main/kilic-sozlesme-yonetimi",
         "category": "Productivity",
         "capabilities": [
           "Interactive",
