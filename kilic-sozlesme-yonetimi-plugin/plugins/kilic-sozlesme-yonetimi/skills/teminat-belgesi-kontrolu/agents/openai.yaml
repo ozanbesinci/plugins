@@ -1,0 +1,4 @@
+interface:
+  display_name: "Teminat Belgesi Kontrolü"
+  short_description: "Teminat Belgesi Kontrolü için kaynaklı karar desteği"
+  default_prompt: "$teminat-belgesi-kontrolu ile bu mektup uygun mu."

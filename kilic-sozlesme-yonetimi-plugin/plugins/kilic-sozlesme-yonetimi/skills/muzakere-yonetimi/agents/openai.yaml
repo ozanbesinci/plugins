@@ -1,0 +1,4 @@
+interface:
+  display_name: "Müzakere Yönetimi"
+  short_description: "Müzakere Yönetimi için kaynaklı karar desteği"
+  default_prompt: "$muzakere-yonetimi ile alternatif ver; açık maddeleri göster."

@@ -1,0 +1,177 @@
+[
+  {
+    "id": "yetenek_kontrol",
+    "input_contract": "Çalışma yüzeyi/host sürümü ve izinli alan",
+    "output_contract": "Dosya, Python, DuckDB, renderer, Word, ağ, hook, kimlik ve connector yetenek matrisi",
+    "boundary": "Salt-okunur ön kontrol; izin arttırma/kurulum yapmaz",
+    "implementation_status": "NOT_IMPLEMENTED"
+  },
+  {
+    "id": "dosya_envanteri",
+    "input_contract": "İzinli klasör veya seçilmiş dosyalar",
+    "output_contract": "Bütünlük metadata bilgileri, türler ve eksik erişim",
+    "boundary": "Yol kapsamı; symlink/junction/UNC, arşiv boyutu ve zip-slip denetimi",
+    "implementation_status": "NOT_IMPLEMENTED"
+  },
+  {
+    "id": "belge_kaydet",
+    "input_contract": "İzinli dosya baytları ve kaynak bilgisi",
+    "output_contract": "Belge/sürüm/sha256; değişmez kaynak snapshot",
+    "boundary": "Kaynağı ezmez; gizli dosyaları otomatik genelleştirmez",
+    "implementation_status": "NOT_IMPLEMENTED"
+  },
+  {
+    "id": "belge_cikar",
+    "input_contract": "Version ID, desteklenen okuyucu profili",
+    "output_contract": "Konumlu birimler, metadata ve kapsam sorunu",
+    "boundary": "Untrusted kaynak; makro/dış bağlantı yok; timeout/memory sınırı",
+    "implementation_status": "NOT_IMPLEMENTED"
+  },
+  {
+    "id": "okumayi_dogrula",
+    "input_contract": "Kaynak, birimler ve kontrol gereksinimi",
+    "output_contract": "Çok boyutlu kontrol sonucu ve sınır",
+    "boundary": "Kimlik/hukuk/gerçeklik onayı üretmez",
+    "implementation_status": "NOT_IMPLEMENTED"
+  },
+  {
+    "id": "kaynak_bolumu_getir",
+    "input_contract": "Version ID + kaynak konumu",
+    "output_contract": "Metin/tablo/görüntü ve kaynak sürümü",
+    "boundary": "Aktif ACL; eski önbellekten erişim kaçağı yok",
+    "implementation_status": "NOT_IMPLEMENTED"
+  },
+  {
+    "id": "surumleri_karsilastir",
+    "input_contract": "Seçilmiş eski/yeni sürüm",
+    "output_contract": "Ekleme/silme/değişiklik/taşıma ve eşleşme durumu",
+    "boundary": "Normalizasyon gösterimi ham kaynağı değiştirmez",
+    "implementation_status": "NOT_IMPLEMENTED"
+  },
+  {
+    "id": "baglam_paketi_getir",
+    "input_contract": "Case ID, amaç, bağımlılık ve bütçe",
+    "output_contract": "Yeterli kanıt, dahil/dışarıda kayıtlar ve gerekçe",
+    "boundary": "Kritik ek/istisna/olumsuzluk bütçe için düşürülmez",
+    "implementation_status": "NOT_IMPLEMENTED"
+  },
+  {
+    "id": "kayit_komutu",
+    "input_contract": "Şemalı aday veri + güvenilir oturum bağlamı",
+    "output_contract": "Kayıt ID veya red nedeni",
+    "boundary": "Onay/politika tablolarına model alanlarıyla yazma yok",
+    "implementation_status": "NOT_IMPLEMENTED"
+  },
+  {
+    "id": "para_hesapla",
+    "input_contract": "Ondalık string değerler, matrah, para, vergi, oran, yuvarlama",
+    "output_contract": "Aynı girdiye aynı sonuç + hesap izi",
+    "boundary": "Float yasak; karışık para/eksik matrah işlenmez",
+    "implementation_status": "NOT_IMPLEMENTED"
+  },
+  {
+    "id": "tarih_hesapla",
+    "input_contract": "Olay/tarih ve açık süre kuralı",
+    "output_contract": "Tarih veya gerekli eksik parametre",
+    "boundary": "İş/takvim günü ve ay sonu sessiz seçilmez",
+    "implementation_status": "NOT_IMPLEMENTED"
+  },
+  {
+    "id": "hukuk_kaynagi_getir",
+    "input_contract": "Hukuki soru, olay tarihi, izinli ağ ve kaynak türü",
+    "output_contract": "Kaynak metni, konum ve tarih bilgileri",
+    "boundary": "Resmi kaynak önceliği; güncellik kanıtı yoksa açık uyarı",
+    "implementation_status": "NOT_IMPLEMENTED"
+  },
+  {
+    "id": "kurumsal_kaynak_getir",
+    "input_contract": "Konu, şirket, aktif kullanıcı kapsamı",
+    "output_contract": "Onaylı kaynak/görüş ve uygulanabilirlik",
+    "boundary": "Bütün şirket dosyaları varsayılan erişim değil",
+    "implementation_status": "NOT_IMPLEMENTED"
+  },
+  {
+    "id": "portfoy_sorgula",
+    "input_contract": "İzinli dosya seti ve hazır sorgu parametreleri",
+    "output_contract": "Toplamlar, kapsam/eksik dosya ve veri kalitesi",
+    "boundary": "Keyfi SQL/ATTACH/LOAD/INSTALL/COPY çağrısı yok",
+    "implementation_status": "NOT_IMPLEMENTED"
+  },
+  {
+    "id": "eylem_degerlendir",
+    "input_contract": "Tipli plan + güvenilir kimlik/izin/politika",
+    "output_contract": "ALLOW/REQUIRE_CONFIRMATION/ESCALATE/DENY",
+    "boundary": "Kontrol bozuksa kritik eylem kapalı; model allow veremez",
+    "implementation_status": "NOT_IMPLEMENTED"
+  },
+  {
+    "id": "degisiklik_plani",
+    "input_contract": "Kaynak sürüm + seçilmiş hedef/yeni metin",
+    "output_contract": "Kesin hedefli ve hash bağlı plan",
+    "boundary": "Hedef belirsiz veya kaynak değişmişse engel",
+    "implementation_status": "NOT_IMPLEMENTED"
+  },
+  {
+    "id": "revizyon_uygula",
+    "input_contract": "İzinli plan + tam kaynak snapshot",
+    "output_contract": "Yeni DOCX karantina dosyası",
+    "boundary": "Mevcut revizyonu toplu kabul etmez; iş kararı onayı yaratmaz",
+    "implementation_status": "NOT_IMPLEMENTED"
+  },
+  {
+    "id": "belge_uret",
+    "input_contract": "Açık çıktı isteği, içerik, şablon ve çıktı türü",
+    "output_contract": "Yeni belge karantina dosyası",
+    "boundary": "Kullanıcı sorusundan kendiliğinden dosya üretmez",
+    "implementation_status": "NOT_IMPLEMENTED"
+  },
+  {
+    "id": "ciktiyi_dogrula",
+    "input_contract": "Çıktı, kaynak, plan, kontrol profili",
+    "output_contract": "QA kaydı ve geçti/kısmi/hata",
+    "boundary": "QA geçmeden final yayını yok",
+    "implementation_status": "NOT_IMPLEMENTED"
+  },
+  {
+    "id": "gonderim_hazirla",
+    "input_contract": "Metin, hesap, alıcılar, ekler ve dosya",
+    "output_contract": "İncelenebilir sabit taslak + parmakizi",
+    "boundary": "Taslak oluşturma gönderim değildir; mailbox draft yazımı da ayrı eylemdir",
+    "implementation_status": "NOT_IMPLEMENTED"
+  },
+  {
+    "id": "gonderimi_yurut",
+    "input_contract": "Geçerli izin ID + değişmemiş plan + güvenilir kimlik",
+    "output_contract": "Sağlayıcı sonucu ve receipt",
+    "boundary": "Send öncesi yeniden kontrol; replay engeli; unknown tekrar yok",
+    "implementation_status": "NOT_IMPLEMENTED"
+  },
+  {
+    "id": "islem_sonucunu_sorgula",
+    "input_contract": "Operation ID ve yetkili hesap",
+    "output_contract": "Gerçek sağlayıcı durumu/unknown",
+    "boundary": "Teslim edildi iddiası kanıtsız üretilmez",
+    "implementation_status": "NOT_IMPLEMENTED"
+  },
+  {
+    "id": "yedekle_geri_yukle",
+    "input_contract": "İzinli case/backup ve işlem amacı",
+    "output_contract": "Tutarlı snapshot ve kontrol sonucu",
+    "boundary": "Kaynak kaybı yok; anahtar/kimlik gizliliği; testli recovery",
+    "implementation_status": "NOT_IMPLEMENTED"
+  },
+  {
+    "id": "paket_kontrol",
+    "input_contract": "Plugin adı, manifest ve sabit dosya envanteri",
+    "output_contract": "Eksik script/ref, şema, tekrar eden ad ve paket bulgusu",
+    "boundary": "Sentaktik başarı fonksiyonel test başarısı değildir",
+    "implementation_status": "NOT_IMPLEMENTED"
+  },
+  {
+    "id": "regresyon_calistir",
+    "input_contract": "İzinli test planı, fixture ve araç sürümleri",
+    "output_contract": "PASS/FAIL/NOT_RUN/UNSUPPORTED_WITH_REASON",
+    "boundary": "Sadece test kopyaları; canlı model maliyeti için açık izin",
+    "implementation_status": "NOT_IMPLEMENTED"
+  }
+]

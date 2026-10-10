@@ -1,0 +1,4 @@
+interface:
+  display_name: "Sözleşme Değişiklik Yönetimi"
+  short_description: "Sözleşme Değişiklik Yönetimi için kaynaklı karar desteği"
+  default_prompt: "$sozlesme-degisiklik-yonetimi ile süre/fiyat/kapsam değişti."

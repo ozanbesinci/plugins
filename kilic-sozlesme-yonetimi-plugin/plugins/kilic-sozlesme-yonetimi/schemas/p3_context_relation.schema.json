@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "from_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "to_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "unresolved_reference": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "relation": {
+      "enum": [
+        "DEFINITION",
+        "EXCEPTION",
+        "ANNEX",
+        "CROSS_REFERENCE",
+        "EVIDENCE",
+        "RELATED"
+      ]
+    },
+    "rationale": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1000
+    },
+    "supersedes_relation_id": {
+      "type": "string",
+      "format": "uuid"
+    }
+  },
+  "required": [
+    "from_id",
+    "relation",
+    "rationale"
+  ],
+  "oneOf": [
+    {
+      "required": [
+        "to_id"
+      ],
+      "not": {
+        "required": [
+          "unresolved_reference"
+        ]
+      }
+    },
+    {
+      "required": [
+        "unresolved_reference"
+      ],
+      "not": {
+        "required": [
+          "to_id"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Teslim, Kabul ve Garanti"
+  short_description: "Teslim, Kabul ve Garanti için kaynaklı karar desteği"
+  default_prompt: "$teslim-kabul-garanti ile kabul/performans/garanti nasıl."

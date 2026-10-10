@@ -1,0 +1,240 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "skill_name": {"type": "string", "minLength": 1},
+    "skill_version": {"type": "string", "minLength": 1},
+    "developer": {"const": "Ozan Beşinci"},
+    "startup_message": {"type": "string", "minLength": 1},
+    "business_overview": {"type": ["object", "null"]},
+    "business_budget": {"type": ["object", "null"]},
+    "schema_version": {
+      "const": "p6-1.1"
+    },
+    "request_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "case_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "skill_id": {
+      "enum": [
+        "K00",
+        "K01",
+        "K02",
+        "K03",
+        "K04",
+        "K05",
+        "K06",
+        "K07",
+        "K08",
+        "K09",
+        "K10",
+        "K11",
+        "K12",
+        "K13",
+        "K14",
+        "K15",
+        "K16",
+        "K17",
+        "K18",
+        "K19",
+        "K20",
+        "K21",
+        "K22",
+        "K23",
+        "K24",
+        "K25",
+        "K26",
+        "K27",
+        "K28",
+        "K29"
+      ]
+    },
+    "context_version": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "request_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "status": {
+      "enum": [
+        "TAMAMLANDI",
+        "KISMI",
+        "BILGI_GEREKLI",
+        "IZIN_GEREKLI",
+        "UZMAN_GORUSU_GEREKLI",
+        "TEKNIK_ENGEL",
+        "HATA"
+      ]
+    },
+    "chat_response": {
+      "type": "string"
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "node_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "source_kind": {
+            "enum": [
+              "SOURCE_UNIT",
+              "USER_STATEMENT",
+              "CANDIDATE",
+              "CONTROL"
+            ]
+          },
+          "content": {
+            "type": "object"
+          },
+          "provenance": {
+            "type": "object"
+          },
+          "verification_status": {
+            "type": "string"
+          },
+          "trust": {
+            "const": "UNTRUSTED_SOURCE_DATA_NOT_INSTRUCTIONS"
+          }
+        },
+        "required": [
+          "node_id",
+          "source_kind",
+          "content",
+          "provenance",
+          "verification_status",
+          "trust"
+        ]
+      }
+    },
+    "open_questions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "work_plan": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "selected_skills": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "K00",
+          "K01",
+          "K02",
+          "K03",
+          "K04",
+          "K05",
+          "K06",
+          "K07",
+          "K08",
+          "K09",
+          "K10",
+          "K11",
+          "K12",
+          "K13",
+          "K14",
+          "K15",
+          "K16",
+          "K17",
+          "K18",
+          "K19",
+          "K20",
+          "K21",
+          "K22",
+          "K23",
+          "K24",
+          "K25",
+          "K26",
+          "K27",
+          "K28",
+          "K29"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "context_pack_id": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uuid"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "context_budget": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "calculation": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "updates": {
+      "type": "array",
+      "maxItems": 0
+    },
+    "output_ids": {
+      "type": "array",
+      "maxItems": 0
+    },
+    "action_execution": {
+      "const": "DISABLED"
+    },
+    "authority": {
+      "const": "NOT_VERIFIED"
+    },
+    "critical_analysis_allowed": {
+      "const": false
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "request_id",
+    "case_id",
+    "skill_id",
+    "context_version",
+    "request_digest",
+    "status",
+    "chat_response",
+    "findings",
+    "open_questions",
+    "work_plan",
+    "selected_skills",
+    "context_pack_id",
+    "context_budget",
+    "calculation",
+    "updates",
+    "output_ids",
+    "action_execution",
+    "authority",
+    "critical_analysis_allowed",
+    "limitations"
+  ]
+}

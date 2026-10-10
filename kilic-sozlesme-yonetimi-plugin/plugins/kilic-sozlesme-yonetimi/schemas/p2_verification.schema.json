@@ -1,0 +1,72 @@
+{
+ "$schema":"https://json-schema.org/draft/2020-12/schema",
+ "type":"object","additionalProperties":false,
+ "required":["schema_version","verification_id","case_id","document_id","version_id","processing_id","source_sha256","reading_digest","reader_profile_digest","policy_version","method","method_version","request_digest","checked_at","format","scope","outcome","comparison_match","observed_text","artifact","observation","parent_control_id","issues","unverified_aspects","dependencies","dimensions","critical_analysis_allowed","authority","revision_acceptance","stop_reason"],
+ "properties":{
+  "schema_version":{"const":"2.1"},
+  "verification_id":{"$ref":"#/$defs/id"}, "case_id":{"$ref":"#/$defs/id"},
+  "document_id":{"$ref":"#/$defs/id"}, "version_id":{"$ref":"#/$defs/id"},
+  "processing_id":{"$ref":"#/$defs/id"}, "source_sha256":{"$ref":"#/$defs/sha"},
+  "reading_digest":{"$ref":"#/$defs/sha"}, "reader_profile_digest":{"$ref":"#/$defs/sha"},
+  "policy_version":{"type":"string","minLength":1,"maxLength":100},
+  "method":{"enum":["EXTRACTED_TEXT_MATCH","PDF_PAGE_RENDER","LOCAL_VISUAL_OBSERVATION"]},
+  "method_version":{"const":"1.0"}, "request_digest":{"$ref":"#/$defs/sha"},
+  "checked_at":{"type":"string","format":"date-time"}, "format":{"enum":["DOCX","PDF","XLSX","EML"]},
+  "scope":{
+   "type":"object","additionalProperties":false,
+   "required":["unit_id","locator","view","start","end","expected_text","text_sha256","field_kind","field_kind_trust","scope_kind"],
+   "properties":{
+    "unit_id":{"$ref":"#/$defs/sha"}, "locator":{"$ref":"#/$defs/locator"},
+    "view":{"enum":["RAW","BEFORE","AFTER","DISPLAY"]},
+    "start":{"type":"integer","minimum":0}, "end":{"type":"integer","minimum":0},
+    "expected_text":{"type":"string","maxLength":20000}, "text_sha256":{"$ref":"#/$defs/sha"},
+    "field_kind":{"enum":["AMOUNT","DATE","RATE","OBLIGATION","OTHER"]},
+    "field_kind_trust":{"const":"CALLER_CLASSIFICATION_UNVERIFIED"},
+    "scope_kind":{"enum":["EXTRACTED_RANGE_ONLY","TARGET_PAGE_IMAGE_ONLY","LOCAL_REVIEW_OBSERVATION_ONLY"]}
+   }
+  },
+  "outcome":{"enum":["PASS","FAIL","PARTIAL","NOT_RUN"]},
+  "comparison_match":{"type":["boolean","null"]}, "observed_text":{"type":["string","null"],"maxLength":20000},
+  "parent_control_id":{"anyOf":[{"$ref":"#/$defs/id"},{"type":"null"}]},
+  "artifact":{"anyOf":[{"type":"null"},{
+   "type":"object","additionalProperties":false,"required":["sha256","size_bytes","page","width","height","mime_type","renderer_profile"],
+   "properties":{
+    "sha256":{"$ref":"#/$defs/sha"}, "size_bytes":{"type":"integer","minimum":1,"maximum":16777216},
+    "page":{"type":"integer","minimum":1,"maximum":100},
+    "width":{"type":"integer","minimum":1,"maximum":2000}, "height":{"type":"integer","minimum":1,"maximum":2000},
+    "mime_type":{"const":"image/png"}, "renderer_profile":{"type":"string","minLength":1}
+   }
+  }]},
+  "observation":{"anyOf":[{"type":"null"},{
+   "type":"object","additionalProperties":false,"required":["reviewer_label","identity_status","note","trust"],
+   "properties":{
+    "reviewer_label":{"type":"string","minLength":1,"maxLength":200}, "identity_status":{"const":"UNVERIFIED_LOCAL_LABEL"},
+    "note":{"type":"string","minLength":1,"maxLength":2000}, "trust":{"const":"UNVERIFIED_LOCAL_OBSERVATION"}
+   }
+  }]},
+  "issues":{"type":"array","items":{
+   "type":"object","additionalProperties":false,"required":["code","message","locator","severity"],
+   "properties":{"code":{"type":"string"},"message":{"type":"string"},"locator":{"anyOf":[{"$ref":"#/$defs/locator"},{"type":"null"}]},"severity":{"enum":["INFO","WARNING","BLOCKING"]}}
+  }},
+  "unverified_aspects":{"type":"array","minItems":1,"maxItems":20,"items":{"type":"string","minLength":1}},
+  "dependencies":{"type":"array","minItems":2,"maxItems":3,"items":{
+   "type":"object","additionalProperties":false,"required":["record_id","digest","purpose"],
+   "properties":{"record_id":{"$ref":"#/$defs/id"},"digest":{"$ref":"#/$defs/sha"},"purpose":{"enum":["SOURCE","READING","RENDER"]}}
+  }},
+  "dimensions":{
+   "type":"object","additionalProperties":false,"required":["integrity","coverage","source_fidelity","semantic","visual"],
+   "properties":{"integrity":{"const":"PASS"},"coverage":{"const":"PARTIAL"},"source_fidelity":{"const":"PARTIAL"},"semantic":{"const":"NOT_RUN"},"visual":{"enum":["NOT_RUN","PARTIAL"]}}
+  },
+  "critical_analysis_allowed":{"const":false},"authority":{"const":"NOT_VERIFIED"},"revision_acceptance":{"const":false},
+  "stop_reason":{"type":"string","minLength":1}
+ },
+ "allOf":[
+  {"if":{"properties":{"method":{"const":"EXTRACTED_TEXT_MATCH"}}},"then":{"properties":{"outcome":{"enum":["PASS","FAIL"]},"scope":{"properties":{"scope_kind":{"const":"EXTRACTED_RANGE_ONLY"}}},"comparison_match":{"type":"boolean"},"observed_text":{"type":"string"},"artifact":{"type":"null"},"observation":{"type":"null"},"parent_control_id":{"type":"null"}}}},
+  {"if":{"properties":{"method":{"const":"PDF_PAGE_RENDER"}}},"then":{"properties":{"outcome":{"const":"NOT_RUN"},"format":{"const":"PDF"},"scope":{"properties":{"scope_kind":{"const":"TARGET_PAGE_IMAGE_ONLY"}}},"artifact":{"type":"object"},"comparison_match":{"type":"null"},"observed_text":{"type":"null"},"observation":{"type":"null"},"parent_control_id":{"type":"null"}}}},
+  {"if":{"properties":{"method":{"const":"LOCAL_VISUAL_OBSERVATION"}}},"then":{"properties":{"outcome":{"enum":["PARTIAL","FAIL"]},"format":{"const":"PDF"},"scope":{"properties":{"scope_kind":{"const":"LOCAL_REVIEW_OBSERVATION_ONLY"}}},"artifact":{"type":"object"},"comparison_match":{"type":"boolean"},"observed_text":{"type":"string"},"observation":{"type":"object"},"parent_control_id":{"$ref":"#/$defs/id"},"dimensions":{"properties":{"visual":{"const":"PARTIAL"}}}}}}
+ ],
+ "$defs":{
+  "id":{"type":"string","format":"uuid"},"sha":{"type":"string","pattern":"^[0-9a-f]{64}$"},
+  "locator":{"type":"object","additionalProperties":false,"required":["part","path","page","sheet","cell"],"properties":{"part":{"type":"string"},"path":{"type":"string"},"page":{"type":["integer","null"],"minimum":1},"sheet":{"type":["string","null"]},"cell":{"type":["string","null"]}}}
+ }
+}

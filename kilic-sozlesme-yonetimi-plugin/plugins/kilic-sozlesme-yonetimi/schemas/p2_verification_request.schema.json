@@ -1,0 +1,13 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "type": "object", "additionalProperties": false,
+ "required": ["format","unit_id","view","start","end","expected_text","field_kind"],
+ "properties": {
+  "format": {"enum": ["DOCX","PDF","XLSX","EML"]},
+  "unit_id": {"type":"string","pattern":"^[0-9a-f]{64}$"},
+  "view": {"enum":["RAW","BEFORE","AFTER","DISPLAY"]},
+  "start": {"type":"integer","minimum":0}, "end": {"type":"integer","minimum":0},
+  "expected_text": {"type":"string","maxLength":20000},
+  "field_kind": {"enum":["AMOUNT","DATE","RATE","OBLIGATION","OTHER"]}
+ }
+}

@@ -1,0 +1,352 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "p4-1.0"
+    },
+    "plan": {
+      "title": "Tipli işlem planı - izin kaynağı değildir",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "1.0"
+        },
+        "operation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "case_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "action_type": {
+          "enum": [
+            "BUILD_DOCUMENT",
+            "APPLY_TRACK_CHANGES",
+            "CREATE_CLEAN_COPY"
+          ]
+        },
+        "purpose": {
+          "enum": [
+            "INTERNAL_DRAFT",
+            "EXTERNAL_DRAFT",
+            "APPROVED_OUTPUT"
+          ]
+        },
+        "source_versions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "version_id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              }
+            },
+            "required": [
+              "version_id",
+              "sha256"
+            ]
+          }
+        },
+        "parameters": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "output_format": {
+              "enum": [
+                "DOCX",
+                "PDF",
+                "XLSX"
+              ]
+            },
+            "target_relative_path": {
+              "type": "string",
+              "pattern": "^ciktilar/"
+            },
+            "content_plan_sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "change_plan_sha256": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "output_format",
+            "target_relative_path",
+            "content_plan_sha256",
+            "change_plan_sha256"
+          ]
+        }
+      },
+      "required": [
+        "schema_version",
+        "operation_id",
+        "case_id",
+        "action_type",
+        "purpose",
+        "source_versions",
+        "parameters"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "action_type": {
+                "const": "APPLY_TRACK_CHANGES"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "source_versions": {
+                "minItems": 1
+              },
+              "parameters": {
+                "properties": {
+                  "output_format": {
+                    "const": "DOCX"
+                  },
+                  "change_plan_sha256": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "content_plan": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "body_text": {
+              "type": "string",
+              "maxLength": 20000
+            },
+            "comments": {
+              "type": "array",
+              "maxItems": 64,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "change_index": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 63
+                  },
+                  "text": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2000
+                  },
+                  "audience": {
+                    "enum": [
+                      "INTERNAL",
+                      "EXTERNAL"
+                    ]
+                  }
+                },
+                "required": [
+                  "change_index",
+                  "text",
+                  "audience"
+                ]
+              }
+            },
+            "clean_copy": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "mode": {
+                  "enum": [
+                    "INTERNAL_RESOLVED_DRAFT",
+                    "EXTERNAL_CLEAN_DRAFT"
+                  ]
+                },
+                "comment_policy": {
+                  "enum": [
+                    "KEEP_ALL",
+                    "DROP_ALL"
+                  ]
+                },
+                "revision_decisions": {
+                  "type": "array",
+                  "maxItems": 128,
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "revision_id": {
+                        "type": "string",
+                        "pattern": "^[0-9]{1,10}$"
+                      },
+                      "kind": {
+                        "enum": [
+                          "INSERTION",
+                          "DELETION"
+                        ]
+                      },
+                      "expected_author": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 200
+                      },
+                      "expected_date": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "decision": {
+                        "enum": [
+                          "ACCEPT",
+                          "REJECT"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "revision_id",
+                      "kind",
+                      "expected_author",
+                      "expected_date",
+                      "decision"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "mode",
+                "comment_policy",
+                "revision_decisions"
+              ]
+            }
+          },
+          "required": [
+            "body_text"
+          ]
+        },
+        "changes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "version_id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "reading_id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "target": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "format",
+                  "unit_id",
+                  "view",
+                  "start",
+                  "end",
+                  "expected_text",
+                  "field_kind"
+                ],
+                "properties": {
+                  "format": {
+                    "enum": [
+                      "DOCX",
+                      "PDF",
+                      "XLSX"
+                    ]
+                  },
+                  "unit_id": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "view": {
+                    "enum": [
+                      "RAW",
+                      "BEFORE",
+                      "AFTER",
+                      "DISPLAY"
+                    ]
+                  },
+                  "start": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "end": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "expected_text": {
+                    "type": "string",
+                    "maxLength": 20000
+                  },
+                  "field_kind": {
+                    "enum": [
+                      "AMOUNT",
+                      "DATE",
+                      "RATE",
+                      "OBLIGATION",
+                      "OTHER"
+                    ]
+                  }
+                }
+              },
+              "new_text": {
+                "type": "string",
+                "maxLength": 20000
+              }
+            },
+            "required": [
+              "version_id",
+              "reading_id",
+              "target",
+              "new_text"
+            ]
+          },
+          "maxItems": 64
+        },
+        "company_scope_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        }
+      },
+      "required": [
+        "content_plan",
+        "changes",
+        "company_scope_id"
+      ]
+    }
+  },
+  "required": [
+    "schema_version",
+    "plan",
+    "payload"
+  ]
+}

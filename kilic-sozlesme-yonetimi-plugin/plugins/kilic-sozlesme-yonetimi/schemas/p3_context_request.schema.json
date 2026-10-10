@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "root_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "minItems": 1,
+      "maxItems": 64,
+      "uniqueItems": true
+    },
+    "purpose": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1000
+    },
+    "max_context_bytes": {
+      "type": "integer",
+      "minimum": 64,
+      "maximum": 1048576
+    },
+    "policy_version": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_.-]{1,64}$"
+    },
+    "include_related": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "root_ids",
+    "purpose",
+    "max_context_bytes",
+    "policy_version",
+    "include_related"
+  ]
+}

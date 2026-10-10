@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bütünleşik Risk Değerlendirme"
+  short_description: "Bütünleşik Risk Değerlendirme için kaynaklı karar desteği"
+  default_prompt: "$butunlesik-risk-degerlendirme ile bütün şartları birlikte değerlendir."

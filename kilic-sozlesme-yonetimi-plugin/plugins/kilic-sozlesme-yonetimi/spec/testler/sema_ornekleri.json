@@ -1,0 +1,287 @@
+[
+  {
+    "id": "aday_bilgi_valid_1",
+    "schema": "aday_bilgi.schema.json",
+    "expected_valid": true,
+    "payload": {
+      "schema_version": "1.0",
+      "case_id": "11111111-1111-4111-8111-111111111111",
+      "source_record_id": "22222222-2222-4222-8222-222222222222",
+      "field": "advance_rate",
+      "knowledge_kind": "DOCUMENT_TEXT",
+      "value": {
+        "type": "decimal",
+        "value": "0.20"
+      },
+      "unit": "ratio",
+      "currency": null,
+      "source_excerpt": "Avans yüzde yirmidir.",
+      "meaning_status": "CLEAR"
+    }
+  },
+  {
+    "id": "aday_bilgi_valid_2",
+    "schema": "aday_bilgi.schema.json",
+    "expected_valid": true,
+    "payload": {
+      "schema_version": "1.0",
+      "case_id": "11111111-1111-4111-8111-111111111111",
+      "source_record_id": "22222222-2222-4222-8222-222222222222",
+      "field": "acceptance_date",
+      "knowledge_kind": "USER_STATEMENT",
+      "value": {
+        "type": "unknown",
+        "value": null,
+        "reason": "Kabul tarihi henüz belirlenmedi."
+      },
+      "unit": null,
+      "currency": null,
+      "source_excerpt": "Kabul tarihini sonra netleştireceğiz.",
+      "meaning_status": "UNCERTAIN"
+    }
+  },
+  {
+    "id": "aday_bilgi_invalid_1",
+    "schema": "aday_bilgi.schema.json",
+    "expected_valid": false,
+    "payload": {
+      "schema_version": "1.0",
+      "case_id": "11111111-1111-4111-8111-111111111111",
+      "source_record_id": "22222222-2222-4222-8222-222222222222",
+      "field": "advance_rate",
+      "knowledge_kind": "DOCUMENT_TEXT",
+      "value": {
+        "type": "decimal",
+        "value": "0.20"
+      },
+      "unit": "ratio",
+      "currency": null,
+      "source_excerpt": "Avans yüzde yirmidir.",
+      "meaning_status": "CLEAR",
+      "approved": true
+    }
+  },
+  {
+    "id": "aday_bilgi_invalid_2",
+    "schema": "aday_bilgi.schema.json",
+    "expected_valid": false,
+    "payload": {
+      "schema_version": "1.0",
+      "case_id": "11111111-1111-4111-8111-111111111111",
+      "source_record_id": "22222222-2222-4222-8222-222222222222",
+      "field": "advance_rate",
+      "knowledge_kind": "DOCUMENT_TEXT",
+      "value": {
+        "type": "decimal",
+        "value": "1.000,20"
+      },
+      "unit": "ratio",
+      "currency": null,
+      "source_excerpt": "Avans yüzde yirmidir.",
+      "meaning_status": "CLEAR"
+    }
+  },
+  {
+    "id": "islem_plani_valid_1",
+    "schema": "islem_plani.schema.json",
+    "expected_valid": true,
+    "payload": {
+      "schema_version": "1.0",
+      "operation_id": "33333333-3333-4333-8333-333333333333",
+      "case_id": "11111111-1111-4111-8111-111111111111",
+      "action_type": "APPLY_TRACK_CHANGES",
+      "purpose": "INTERNAL_DRAFT",
+      "source_versions": [
+        {
+          "version_id": "22222222-2222-4222-8222-222222222222",
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      ],
+      "parameters": {
+        "output_format": "DOCX",
+        "target_relative_path": "ciktilar/sozlesme_r000002.docx",
+        "content_plan_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "change_plan_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+      }
+    }
+  },
+  {
+    "id": "islem_plani_valid_2",
+    "schema": "islem_plani.schema.json",
+    "expected_valid": true,
+    "payload": {
+      "schema_version": "1.0",
+      "operation_id": "33333333-3333-4333-8333-333333333333",
+      "case_id": "11111111-1111-4111-8111-111111111111",
+      "action_type": "SEND_EMAIL",
+      "purpose": "EXTERNAL_DRAFT",
+      "source_versions": [
+        {
+          "version_id": "22222222-2222-4222-8222-222222222222",
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      ],
+      "parameters": {
+        "account_id": "synthetic-test-account",
+        "from_address": "sender@example.invalid",
+        "to": [
+          "supplier@example.invalid"
+        ],
+        "cc": [],
+        "bcc": [],
+        "subject": "SENTETİK TEST - gönderilecek gerçek e-posta değildir",
+        "body_media_type": "text/plain",
+        "body_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "attachments": []
+      }
+    }
+  },
+  {
+    "id": "islem_plani_invalid_1",
+    "schema": "islem_plani.schema.json",
+    "expected_valid": false,
+    "payload": {
+      "schema_version": "1.0",
+      "operation_id": "33333333-3333-4333-8333-333333333333",
+      "case_id": "11111111-1111-4111-8111-111111111111",
+      "action_type": "APPLY_TRACK_CHANGES",
+      "purpose": "INTERNAL_DRAFT",
+      "source_versions": [],
+      "parameters": {
+        "output_format": "DOCX",
+        "target_relative_path": "ciktilar/sozlesme_r000002.docx",
+        "content_plan_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "change_plan_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+      }
+    }
+  },
+  {
+    "id": "islem_plani_invalid_2",
+    "schema": "islem_plani.schema.json",
+    "expected_valid": false,
+    "payload": {
+      "schema_version": "1.0",
+      "operation_id": "33333333-3333-4333-8333-333333333333",
+      "case_id": "11111111-1111-4111-8111-111111111111",
+      "action_type": "SEND_EMAIL",
+      "purpose": "EXTERNAL_DRAFT",
+      "source_versions": [
+        {
+          "version_id": "22222222-2222-4222-8222-222222222222",
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      ],
+      "parameters": {
+        "account_id": "synthetic-test-account",
+        "from_address": "sender@example.invalid",
+        "to": [
+          "supplier@example.invalid"
+        ],
+        "cc": [],
+        "bcc": [],
+        "subject": "SENTETİK TEST - gönderilecek gerçek e-posta değildir",
+        "body_media_type": "text/plain",
+        "body_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "attachments": []
+      },
+      "authorization": "APPROVED"
+    }
+  },
+  {
+    "id": "kontrol_sonucu_valid_1",
+    "schema": "kontrol_sonucu.schema.json",
+    "expected_valid": true,
+    "payload": {
+      "schema_version": "1.0",
+      "case_id": "11111111-1111-4111-8111-111111111111",
+      "source_version_id": "22222222-2222-4222-8222-222222222222",
+      "source_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "checker_version": "fixture-only-1",
+      "checks": [
+        {
+          "dimension": "STRUCTURE",
+          "scope": "Sentetik örnek ana belge",
+          "method": "fixture demonstration, no real document read",
+          "outcome": "PASS",
+          "details": "Bu örnek yalnız şema testi içindir."
+        }
+      ],
+      "limitations": [
+        "Gerçek belge veya host üzerinde test yapılmadı."
+      ]
+    }
+  },
+  {
+    "id": "kontrol_sonucu_valid_2",
+    "schema": "kontrol_sonucu.schema.json",
+    "expected_valid": true,
+    "payload": {
+      "schema_version": "1.0",
+      "case_id": "11111111-1111-4111-8111-111111111111",
+      "source_version_id": "22222222-2222-4222-8222-222222222222",
+      "source_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "checker_version": "fixture-only-1",
+      "checks": [
+        {
+          "dimension": "FIDELITY",
+          "scope": "Sentetik ekin ikinci sayfası",
+          "method": "fixture demonstration, no real document read",
+          "outcome": "PARTIAL",
+          "details": "Fixture, eksik kontrol raporunun biçimini örnekler."
+        }
+      ],
+      "limitations": [
+        "Gerçek belge veya host üzerinde test yapılmadı."
+      ]
+    }
+  },
+  {
+    "id": "kontrol_sonucu_invalid_1",
+    "schema": "kontrol_sonucu.schema.json",
+    "expected_valid": false,
+    "payload": {
+      "schema_version": "1.0",
+      "case_id": "11111111-1111-4111-8111-111111111111",
+      "source_version_id": "22222222-2222-4222-8222-222222222222",
+      "source_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "checker_version": "fixture-only-1",
+      "checks": [
+        {
+          "dimension": "STRUCTURE",
+          "scope": "Sentetik örnek ana belge",
+          "method": "",
+          "outcome": "PASS",
+          "details": "Bu örnek yalnız şema testi içindir."
+        }
+      ],
+      "limitations": [
+        "Gerçek belge veya host üzerinde test yapılmadı."
+      ]
+    }
+  },
+  {
+    "id": "kontrol_sonucu_invalid_2",
+    "schema": "kontrol_sonucu.schema.json",
+    "expected_valid": false,
+    "payload": {
+      "schema_version": "1.0",
+      "case_id": "11111111-1111-4111-8111-111111111111",
+      "source_version_id": "22222222-2222-4222-8222-222222222222",
+      "source_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "checker_version": "fixture-only-1",
+      "checks": [
+        {
+          "dimension": "STRUCTURE",
+          "scope": "Sentetik örnek ana belge",
+          "method": "fixture demonstration, no real document read",
+          "outcome": "PASS",
+          "details": "Bu örnek yalnız şema testi içindir."
+        }
+      ],
+      "limitations": [
+        "Gerçek belge veya host üzerinde test yapılmadı."
+      ],
+      "legal_approval": true
+    }
+  }
+]

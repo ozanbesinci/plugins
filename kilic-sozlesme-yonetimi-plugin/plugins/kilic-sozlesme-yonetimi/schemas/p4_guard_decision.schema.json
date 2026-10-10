@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "p4-1.1"
+    },
+    "case_id": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uuid"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "operation_id": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uuid"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "decision_id": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uuid"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "stage": {
+      "enum": [
+        "PRE_ACTION",
+        "POST_ACTION",
+        "COMPLETION"
+      ]
+    },
+    "decision": {
+      "enum": [
+        "ALLOW",
+        "REQUIRE_CONFIRMATION",
+        "ESCALATE",
+        "BLOCK"
+      ]
+    },
+    "reasons": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "fingerprint": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "execution_scope": {
+      "enum": [
+        "DISABLED",
+        "SYNTHETIC_TEST_ONLY"
+      ]
+    },
+    "production_ready": {
+      "const": false
+    },
+    "authority": {
+      "const": "NOT_VERIFIED_FOR_PRODUCTION"
+    },
+    "audit_persisted": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schema_version",
+    "case_id",
+    "operation_id",
+    "decision_id",
+    "stage",
+    "decision",
+    "reasons",
+    "fingerprint",
+    "execution_scope",
+    "production_ready",
+    "authority",
+    "audit_persisted"
+  ]
+}

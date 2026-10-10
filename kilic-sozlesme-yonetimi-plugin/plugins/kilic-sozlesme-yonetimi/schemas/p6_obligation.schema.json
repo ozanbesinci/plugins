@@ -1,0 +1,277 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "source_node_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "scope_key": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000
+    },
+    "completion_criterion": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000
+    },
+    "obligated_party": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "due_fact_id": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uuid"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "due_rule": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "start_fact_id": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "count_fact_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "anchor_event": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            },
+            "include_start": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "month_end": {
+              "enum": [
+                null,
+                "CLAMP",
+                "ERROR"
+              ]
+            },
+            "weekend": {
+              "type": "array",
+              "uniqueItems": true,
+              "maxItems": 7,
+              "items": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 6
+              }
+            },
+            "holidays": {
+              "type": "array",
+              "uniqueItems": true,
+              "maxItems": 3660,
+              "items": {
+                "type": "string",
+                "format": "date"
+              }
+            },
+            "holiday_calendar_complete": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "calendar_version": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "maxLength": 100
+            }
+          },
+          "required": [
+            "start_fact_id",
+            "count_fact_id",
+            "anchor_event",
+            "include_start",
+            "month_end",
+            "weekend",
+            "holidays",
+            "holiday_calendar_complete",
+            "calendar_version"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "missing_due_reason": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "supersedes_id": {
+      "type": "string",
+      "format": "uuid"
+    }
+  },
+  "required": [
+    "source_node_id",
+    "scope_key",
+    "description",
+    "completion_criterion",
+    "obligated_party",
+    "due_fact_id",
+    "due_rule",
+    "missing_due_reason"
+  ],
+  "oneOf": [
+    {
+      "properties": {
+        "due_fact_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "due_rule": {
+          "type": "null"
+        },
+        "missing_due_reason": {
+          "type": "null"
+        }
+      }
+    },
+    {
+      "properties": {
+        "due_fact_id": {
+          "type": "null"
+        },
+        "due_rule": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "start_fact_id": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "count_fact_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "anchor_event": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            },
+            "include_start": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "month_end": {
+              "enum": [
+                null,
+                "CLAMP",
+                "ERROR"
+              ]
+            },
+            "weekend": {
+              "type": "array",
+              "uniqueItems": true,
+              "maxItems": 7,
+              "items": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 6
+              }
+            },
+            "holidays": {
+              "type": "array",
+              "uniqueItems": true,
+              "maxItems": 3660,
+              "items": {
+                "type": "string",
+                "format": "date"
+              }
+            },
+            "holiday_calendar_complete": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "calendar_version": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "maxLength": 100
+            }
+          },
+          "required": [
+            "start_fact_id",
+            "count_fact_id",
+            "anchor_event",
+            "include_start",
+            "month_end",
+            "weekend",
+            "holidays",
+            "holiday_calendar_complete",
+            "calendar_version"
+          ]
+        },
+        "missing_due_reason": {
+          "type": "null"
+        }
+      }
+    },
+    {
+      "properties": {
+        "due_fact_id": {
+          "type": "null"
+        },
+        "due_rule": {
+          "type": "null"
+        },
+        "missing_due_reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  ]
+}

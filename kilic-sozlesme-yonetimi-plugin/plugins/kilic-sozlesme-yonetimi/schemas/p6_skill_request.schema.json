@@ -1,0 +1,319 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "business_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "as_of": {
+          "type": "string",
+          "format": "date"
+        },
+        "scope_keys": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+          }
+        }
+      },
+      "required": [
+        "as_of",
+        "scope_keys"
+      ]
+    },
+    "request_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "case_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "skill_id": {
+      "enum": [
+        "K00",
+        "K01",
+        "K02",
+        "K03",
+        "K04",
+        "K05",
+        "K06",
+        "K07",
+        "K08",
+        "K09",
+        "K10",
+        "K11",
+        "K12",
+        "K13",
+        "K14",
+        "K15",
+        "K16",
+        "K17",
+        "K18",
+        "K19",
+        "K20",
+        "K21",
+        "K22",
+        "K23",
+        "K24",
+        "K25",
+        "K26",
+        "K27",
+        "K28",
+        "K29"
+      ]
+    },
+    "intent": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1000
+    },
+    "context_version": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "selected_versions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "uniqueItems": true,
+      "maxItems": 64
+    },
+    "root_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "uniqueItems": true,
+      "maxItems": 64
+    },
+    "max_context_bytes": {
+      "type": "integer",
+      "minimum": 64,
+      "maximum": 1048576
+    },
+    "policy_version": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_.-]{1,64}$"
+    },
+    "requested_output": {
+      "enum": [
+        "CHAT",
+        "DOCX"
+      ]
+    },
+    "scenario_id": {
+      "enum": [
+        "S-01",
+        "S-02",
+        "S-03",
+        "S-04",
+        "S-05",
+        "S-06",
+        "S-07",
+        "S-08",
+        "S-09",
+        "S-10",
+        "S-11",
+        "S-12",
+        "S-13",
+        "S-14",
+        "S-15",
+        "S-16",
+        "S-17",
+        "S-18",
+        "S-19",
+        "S-20",
+        "S-21",
+        "S-22",
+        "S-23",
+        "S-24",
+        "S-25",
+        "S-26",
+        "S-27",
+        "S-28",
+        "S-29",
+        "S-30",
+        "S-31",
+        "S-32",
+        "S-33",
+        "S-34",
+        "S-35",
+        "S-36",
+        "S-37",
+        "S-38",
+        "S-39",
+        "S-40"
+      ]
+    },
+    "calculation": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "MONEY"
+            },
+            "base": {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]{0,23})(\\.[0-9]{1,12})?$"
+            },
+            "rate": {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]{0,23})(\\.[0-9]{1,12})?$"
+            },
+            "periods": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000000
+            },
+            "currency": {
+              "enum": [
+                "TRY",
+                "USD",
+                "EUR",
+                "GBP"
+              ]
+            },
+            "places": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4
+            },
+            "rounding": {
+              "enum": [
+                "HALF_UP",
+                "HALF_EVEN",
+                "DOWN"
+              ]
+            },
+            "cap": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(0|[1-9][0-9]{0,23})(\\.[0-9]{1,12})?$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "base",
+            "rate",
+            "periods",
+            "currency",
+            "places",
+            "rounding",
+            "cap"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "DATE"
+            },
+            "start": {
+              "type": "string",
+              "format": "date"
+            },
+            "count": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 3660
+            },
+            "unit": {
+              "enum": [
+                "DAYS",
+                "MONTHS"
+              ]
+            },
+            "day_type": {
+              "enum": [
+                "CALENDAR",
+                "BUSINESS"
+              ]
+            },
+            "include_start": {
+              "type": "boolean"
+            },
+            "month_end": {
+              "enum": [
+                "CLAMP",
+                "ERROR",
+                null
+              ]
+            },
+            "weekend": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 6
+              },
+              "uniqueItems": true,
+              "maxItems": 6
+            },
+            "holidays": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "date"
+              },
+              "uniqueItems": true,
+              "maxItems": 1000
+            },
+            "holiday_calendar_complete": {
+              "enum": [
+                true,
+                false,
+                null
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "start",
+            "count",
+            "unit",
+            "day_type",
+            "include_start",
+            "month_end",
+            "weekend",
+            "holidays",
+            "holiday_calendar_complete"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "request_id",
+    "case_id",
+    "skill_id",
+    "intent",
+    "context_version",
+    "selected_versions",
+    "root_ids",
+    "max_context_bytes",
+    "policy_version",
+    "requested_output"
+  ]
+}
