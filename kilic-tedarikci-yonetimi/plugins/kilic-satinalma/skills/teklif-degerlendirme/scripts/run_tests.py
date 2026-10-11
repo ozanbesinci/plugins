@@ -4,7 +4,7 @@ import argparse
 import hashlib
 import json
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import platform
 import sqlite3
 import subprocess
@@ -17,10 +17,13 @@ import uuid
 ROOT = Path(__file__).resolve().parent
 SOURCE_ROOT = ROOT.parents[2]
 
-def source_fingerprint():
-    return {str(p.relative_to(SOURCE_ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
-            for p in sorted(SOURCE_ROOT.rglob("*")) if p.is_file()
-            and "__pycache__" not in p.parts and "test-results" not in p.parts
+def source_fingerprint(source_root=None):
+    source_root = SOURCE_ROOT if source_root is None else Path(source_root)
+    # Output ancestors are not plugin contents. A frozen checkout can itself
+    # live below test-results without excluding every source file.
+    return {str(p.relative_to(source_root)): hashlib.sha256(p.read_bytes()).hexdigest()
+            for p in sorted(source_root.rglob("*")) if p.is_file()
+            and not {"__pycache__", "test-results", ".git"}.intersection(p.relative_to(source_root).parts)
             and (p.suffix in {".py", ".json", ".sql", ".md", ".txt", ".toml", ".yaml", ".yml"} or p.name == "VERSION")}
 
 def connection_engine(con):
@@ -76,8 +79,11 @@ def child(engine, pattern, output, source_head=None, run_id=None, duckdb_threads
               "platform": platform.platform(), "executable": sys.executable,
               "pattern": pattern, "run_id": run_id, "observed_connections": observed,
               "source_fingerprint_scope": "kilic-satinalma plugin runtime and instructions"}
-    source = source_fingerprint()
+    source = {}
     try:
+        source = source_fingerprint()
+        if not source:
+            raise RuntimeError("Empty plugin source fingerprint; test run refused")
         with tempfile.TemporaryDirectory() as td:
             probe = checked_connect(Path(td))
             probe.execute("SELECT 1").fetchone()
@@ -101,8 +107,11 @@ def child(engine, pattern, output, source_head=None, run_id=None, duckdb_threads
         report.update(status="NOT_RUN", error=str(exc), executed=0)
         code = 1
     report["source_files"] = source
-    report["source_unchanged_during_run"] = source == source_fingerprint()
-    if not report["source_unchanged_during_run"]:
+    report["source_unchanged_during_run"] = bool(source) and source == source_fingerprint()
+    if not source:
+        report["status"] = "NOT_RUN_SOURCE_INVALID"
+        code = 1
+    elif not report["source_unchanged_during_run"]:
         report["status"] = "INCOMPLETE_SOURCE_CHANGED"
         code = 1
     report["source_sha256"] = hashlib.sha256(json.dumps(source, sort_keys=True).encode()).hexdigest()
@@ -114,7 +123,7 @@ def child(engine, pattern, output, source_head=None, run_id=None, duckdb_threads
     return code
 
 
-def validate_child_report(path, engine, run_id, process_code):
+def validate_child_report(path, engine, run_id, process_code, expected_source=None):
     """Exit zero cannot substitute for a fresh, complete child test report."""
     try:
         report = json.loads(path.read_text(encoding="utf-8"))
@@ -124,8 +133,20 @@ def validate_child_report(path, engine, run_id, process_code):
         count_keys=('discovered','executed','passed','failed','errors','skipped','expected_failures','unexpected_successes')
         counts_valid=all(type(report.get(k)) is int and report[k]>=0 for k in count_keys)
         no_nonpass=counts_valid and all(report[k]==0 for k in count_keys[3:])
+        source = report.get('source_files')
+        source_valid = (type(source) is dict and bool(source)
+                        and all(type(name) is str and name and ':' not in name and '\x00' not in name
+                                and not PurePosixPath(name.replace('\\', '/')).is_absolute()
+                                and PurePosixPath(name.replace('\\', '/')).parts
+                                and '..' not in PurePosixPath(name.replace('\\', '/')).parts
+                                and type(digest) is str and len(digest) == 64
+                                and all(c in '0123456789abcdef' for c in digest)
+                                for name, digest in source.items()))
+        source_valid = (source_valid
+                        and report.get('source_sha256') == hashlib.sha256(json.dumps(source, sort_keys=True).encode()).hexdigest()
+                        and (expected_source is None or source == expected_source))
         valid = (fresh and report.get("status") == "PASS" and report.get("source_unchanged_during_run") is True
-                 and no_nonpass
+                 and no_nonpass and source_valid
                  and report.get("executed", 0) > 0 and report.get("passed") == report.get("executed")
                  and report.get("discovered") == report.get("executed")
                  and set(classes) == {actual_class} and type(classes[actual_class]) is int and classes[actual_class] > 0)
@@ -159,6 +180,9 @@ def main():
     source_root = ROOT.parents[4]
     frozen = Path(tempfile.mkdtemp(prefix="source-", dir=args.output_dir.resolve())) / source_root.name
     shutil.copytree(source_root, frozen, ignore=shutil.ignore_patterns("__pycache__", "test-results", ".git"))
+    frozen_source = source_fingerprint(frozen / SOURCE_ROOT.relative_to(source_root))
+    if not frozen_source:
+        raise RuntimeError("Empty frozen plugin source fingerprint; test run refused")
     frozen_runner = frozen / Path(__file__).resolve().relative_to(source_root)
     head_result = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True, text=True)
     source_head = head_result.stdout.strip() if head_result.returncode == 0 else "UNKNOWN"
@@ -182,7 +206,7 @@ def main():
                     "complete_run":False,"timeout_seconds":args.timeout}),encoding="utf-8")
                 code = 1
         report_path = args.output_dir / f"{engine}.json"
-        validated_code = validate_child_report(report_path, engine, run_id, code)
+        validated_code = validate_child_report(report_path, engine, run_id, code, expected_source=frozen_source)
         if validated_code and code == 0:
             report_path.write_text(json.dumps({"requested_engine": engine, "run_id": run_id,
                 "status": "NOT_RUN_INVALID_CHILD_REPORT", "complete_run": False,
