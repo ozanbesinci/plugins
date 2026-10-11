@@ -1,0 +1,46 @@
+name: Kılıç supplier runtime tests
+
+on:
+  pull_request:
+    paths:
+      - 'kilic-tedarikci-yonetimi/**'
+      - '.github/workflows/kilic-supplier-tests.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'kilic-tedarikci-yonetimi/**'
+      - '.github/workflows/kilic-supplier-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  real-engines:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: kilic-tedarikci-yonetimi/plugins/kilic-satinalma/skills/teklif-degerlendirme
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # verified v5
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # verified v6
+        with:
+          python-version: '3.14'
+      - name: Install test dependencies in isolated CI runner
+        run: python -m pip install -r requirements.txt
+      - name: Run SQLite and native DuckDB with actual connection evidence
+        run: python scripts/run_tests.py --engine both --output-dir test-results --timeout 2400
+      - name: Require both complete current-source result files
+        run: |
+          python -c "import json,pathlib; rows=[json.loads(pathlib.Path('test-results',e+'.json').read_text(encoding='utf-8')) for e in ('sqlite','duckdb')]; assert all(r['status']=='PASS' and r['discovered']==r['executed']==r['passed'] and not any(r[k] for k in ('failed','errors','skipped')) for r in rows); assert rows[0]['source_sha256']==rows[1]['source_sha256']; print('Both real engines passed on the same source')"
+      - name: Keep actual engine JSON and logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # verified v4
+        with:
+          name: kilic-supplier-real-engine-evidence
+          path: |
+            kilic-tedarikci-yonetimi/plugins/kilic-satinalma/skills/teklif-degerlendirme/test-results/*.json
+            kilic-tedarikci-yonetimi/plugins/kilic-satinalma/skills/teklif-degerlendirme/test-results/*.log
+          retention-days: 30
+          if-no-files-found: warn

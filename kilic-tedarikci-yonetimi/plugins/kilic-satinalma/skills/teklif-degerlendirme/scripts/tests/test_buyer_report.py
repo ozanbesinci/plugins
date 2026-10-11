@@ -44,9 +44,9 @@ class BuyerReportTests(unittest.TestCase):
                     "calculations": [{"calculation_id": "calc-polat", "offer_id": "off-polat",
                                       "calculation_type": "cost_summary", "result_json": json.dumps(result)}]}
 
-        class Connection:
-            def close(self):
-                pass
+        from test_engine_support import ReportFixtureConnection
+        class Connection(ReportFixtureConnection):
+            def __init__(self): super().__init__("snapshot-sha")
 
         bindings = []
         with tempfile.TemporaryDirectory() as tmp:

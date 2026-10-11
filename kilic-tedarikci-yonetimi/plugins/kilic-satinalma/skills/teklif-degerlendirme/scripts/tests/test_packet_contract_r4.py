@@ -3,6 +3,7 @@ import tempfile
 import unittest
 import os
 from pathlib import Path
+from test_engine_support import sqlite_modes
 
 from context_packet import decision_packet, task_packet
 from db import connect, init_db, set_meta
@@ -74,7 +75,7 @@ class PacketContractTests(unittest.TestCase):
             self.assertEqual(identity,{'Z':('Derya Mimarlık','1150500'),'A':('Polat Yapı','1727950')})
 
     def test_quantity_search_keeps_specific_price_row_without_generic_header(self):
-        for sqlite in (False,True):
+        for sqlite in sqlite_modes():
             with self.subTest(sqlite=sqlite), tempfile.TemporaryDirectory() as tmp:
                 old=os.environ.get('TEKLIF_TEST_SQLITE')
                 if sqlite: os.environ['TEKLIF_TEST_SQLITE']='1'

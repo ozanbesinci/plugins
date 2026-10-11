@@ -1,4 +1,5 @@
 from __future__ import annotations
+from test_engine_support import artifact_path
 
 import json
 import os
@@ -8,7 +9,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-os.environ['TEKLIF_TEST_SQLITE'] = '1'
+os.environ.setdefault('TEKLIF_TEST_SQLITE', '1')
 SCRIPTS = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SCRIPTS))
 
@@ -134,7 +135,7 @@ class V502ControlTests(unittest.TestCase):
         )
         final = advance(run)
         self.assertEqual(final['status'], 'VERIFIED')
-        xlsx = run / 'output' / 'Teklif_Degerlendirme.xlsx'
+        xlsx = artifact_path(run)
         wb = load_workbook(xlsx)
         ws = wb['Teklif Karsilastirma']
         ws.cell(2, 3).value = 999999999

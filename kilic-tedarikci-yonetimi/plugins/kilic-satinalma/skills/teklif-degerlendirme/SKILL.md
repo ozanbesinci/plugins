@@ -3,8 +3,7 @@ name: teklif-degerlendirme
 description: Satınalma tekliflerini kaynak, kapsam, ticari koşul, deterministik maliyet ve bağımsız kontrol üzerinden değerlendirir; aynı doğrulanmış veriden karar önerisi ve Excel/PDF üretimini yönetir. Teklif karşılaştırma, şartname uygunluğu ve satınalma karar desteğinde ana giriş olarak kullan.
 ---
 
-# Teklif Değerlendirme — 5.0.29
-
+# Teklif Değerlendirme — 5.1.0
 ## Kullanıcı kanıtı önceliği
 
 Kullanıcının doğrudan verdiği olgu, teyit, düzeltme ve karar yetkili kullanıcı kanıtıdır; ilgili değerlendirme girdisinde belge, model çıkarımı ve önceki varsayımdan önceliklidir.
@@ -31,7 +30,7 @@ Bu beceri tek ana giriş noktasıdır. Kullanıcıya bütünleşik bir akış su
 
 ## Başlangıç ve ortak sınır
 
-1. Ortamı `scripts/environment_check.py --strict --output "<run>/environment.json"` ile kontrol et. `READY` olmadan analiz başlatma. Eksikleri gereken/kurulu sürüm ve nedenle tek tabloda göster. Güncelleyici otomatik çağrılmaz; paket kurulmaz. Geliştirme veya sürüm sorusu bir teklif analizi değildir.
+1. Ortamı `scripts/environment_check.py --strict --output "<run>/environment.json"` ile kontrol et. `READY` olmadan analiz başlatma. Eksikleri gereken/kurulu sürüm ve nedenle tek tabloda göster. DuckDB ikincil PDF okuyucusu isteğe bağlıdır; yokluğu uyarı olarak görünür, birincil okuma/rapor yeteneğiyle karıştırılmaz. Özel kabulde `--require-pdf-extension` kullanılabilir. Güncelleyici otomatik çağrılmaz; paket kurulmaz. Geliştirme veya sürüm sorusu bir teklif analizi değildir.
 2. Yalnız yeni boş run için `scripts/workflow.py prepare --source "<source>" --run "<run>" --profile <profil>` kullan. Kaynak salt okunur; arşiv kopyası hash eşit olmalı. Var olan koşuya prepare uygulama. Kullanıcı profil/girdi vermişse tekrar sorma.
 3. Envanteri dosya/format/rol/firma/revizyon/okunabilirlik olarak tek tabloda göster. Kaynak klasör adı kullanıcı tarafından firma olarak belirtilmişse bu ilişkiyi kaydet; diğer adlardan sessiz firma/revizyon seçimi yapma.
 4. [Ortak çalışma sözleşmesini](references/module-contract.md) oku. Tek run/DB, mevcut şema/context, task ID, kaynak/hash/evidence ve gerçek model makbuzu bütün bölümlerde korunur. Normal otomatik keşif açıktır; doğrudan alt skill çağrısı da bu ana akışa bağlanır.
@@ -50,21 +49,27 @@ Bir görevde birincil sorumlu tek bölüm olsun. Ödeme metnini Belge çıkarır
 
 ## Belirsizlikte tek kullanıcı kanalı
 
-[Kritik Belirsizlikte Kullanıcı Yanıtı Sözleşmesi](references/user-input-gate.md) uygulanır. `NEEDS_USER_INPUT` döndüğünde kaynaklı sorular kullanıcıya gösterilir; bağlı karar özeti ve Excel/PDF görevi ilerletilmez. Gerçek yanıt yalnız soru/kaynak kapsamıyla kayıt altına alınır; mevcut koşudaki model veya çıktı onayı doğrudan devralınmaz.
+[Kritik Belirsizlikte Kullanıcı Yanıtı Sözleşmesi](references/user-input-gate.md) uygulanır. `NEEDS_USER_INPUT` döndüğünde kaynaklı sorular kullanıcıya gösterilir; bağlı karar özeti ve kesin öneri bekler. Her profilde tek çok sekmeli XLSX ve çok sayfalı PDF ön raporu üretilir; karar verilememe gerekçesi iki raporda bulunur. Gerçek yanıt yalnız soru/kaynak kapsamıyla kayıt altına alınır; mevcut koşudaki model veya çıktı onayı doğrudan devralınmaz.
 
 Her aşamada karar/hesap etkili belirsizlik görülür görülmez sor; sadece final RFI yeterli değildir. Önce mevcut belge/önceki yanıtı kontrol et, bilinen bilgiyi tekrar isteme. Alt görevler aynı soruyu ana ajana mevcut şemanın issue/difference alanıyla iletir; kullanıcıya ayrı mesaj göndermez. Aynı aşamadaki ilişkili soruları kısa blokta birleştir; farklı firmaların cevap kapsamını birleştirme.
 
 Soruda firma/dosya/locator, belirsiz alan ve karara etkisi görünür olsun; kullanıcıya teknik hata çözümü veya gereksiz uygulama tercihi sorma. Örneğin: “Batu teklifindeki 60 günlük ödeme süresi hangi olaydan başlıyor: teslim, fatura veya başka bir tarih?” Seçeneği varsayılan cevap yapma.
 
-Cevap yok/kısmi/çelişkiliyse bağlı hesap, sıralama, karar ve karar Excel/PDF üretimini beklet. Bağımsız envanter işi devam edebilir. Bilinmeyeni sıfır yapma; kullanıcı susması veya “devam” demesi iş girdisi değildir. Gereken takip soruları sayı sınırı olmadan sürer; aynı cevaplanmış soru sebepsiz tekrarlanmaz. Model retry/bütçe sınırları korunur.
+Cevap yok/kısmi/çelişkiliyse bağlı hesap, sıralama ve kesin karar bekler. Raporlar mevcut kaynakları, hesaplanamayan alanları ve gereken teyitleri gösterir. Bilinmeyeni sıfır yapma; kullanıcı susması veya “devam” demesi iş girdisi değildir. Gereken takip soruları sayı sınırı olmadan sürer; aynı cevaplanmış soru sebepsiz tekrarlanmaz. Model retry/bütçe sınırları korunur.
 
 Yanıtı firma/teklif/alan/kaynak revizyonu ve soru kapsamında tut. Açık kullanıcı iş beyanı ilgili alan için öncelikli kullanıcı kanıtıdır; özgün belge teyidi ve teknik QA sonuçları ayrı kayıtlardır. Pinned görev context'ini ezme; yeni veri bağlı kontrolleri/hesap/snapshot/QA'yı yeniden doğrulatır. Mevcut uyumluluk kuralları yeni run gerektiriyorsa eski koşuyu koru.
 
 ## Motor ile çalışma
 
+Tarihli kullanıcı nakit defteri `dated_costs` alanıyla aynı Excel/PDF içinde değerlendirilir. En çok 48 tekil `cost_id` kaydı; maliyet türü, kaynak tutar/para, nakit tarihi, aynı tarihli kur projeksiyonu ve dayanak gerekir. Satınalma, navlun, sigorta, gümrük, KDV ödeme/geri kazanımı, enerji, bakım, sarf, yenileme, diğer ve kalıntı türleri açıkça beyan edilmeden tam kapsam toplamı verilmez. Gerçek dışı sıfır varsayılmaz. KDV geri kazanımı ve kalıntı geri dönüşü negatif nakittir. Baz tarih ortak; kur yönü hedef/kaynak; nakit tarihine kullanıcı projeksiyonu uygulandıktan sonra hedef para biriminin 365 günlük efektif oranıyla NBD alınır. Gelecekteki yabancı para akışını spot kurla dönüştürmek bu modelde reddedilir. Kur varsayımı fiyat tahmini veya onaylı şirket politikası değildir. Bu bağımsız deftere diğer otomatik fiyat/ödeme/yıllık gider toplamları eklenmez; tek maliyet iki kez sayılmaz. Excel'den içe alma aynı izinli girdileri yeni rapor revizyonuna taşır; kaynak ve resmî karar korunur. Tarihler `YYYY-MM-DD` Gregoryen/1900–9999 aralığında olmalıdır.
+
+Geliştirme adayında resmî rapor çifti ve karar JSON'u `output/revisions/<kimlik>/` altında birlikte doğrulanır; dosya revizyonu yayımlandıktan sonra artefaktlar ve aktif çift tek DB transaction'ında kaydedilir. Dosyanın bulunması tek başına teslim veya VERIFIED kanıtı değildir. `official_delivery.py` aktif grubun dosya/hash/snapshot/metadata bağını denetler; fiziksel arızada önceki çift korunur.
+
+Excel kullanıcı varsayımları sekiz hesap grubuna ve beş finans sekmesine ayrılır. Çok adımlı ödeme, KDV geri kazanımı ve kalıntı NBD'si yalnız açık kullanıcı kur politikası ve yeterli girdilerle hesaplanır. Yaşam gideri modeli `CONSTANT_ANNUAL` sabit enerji/bakımı kapsar; diğer giderler kapsam dışıdır. `YEARLY_SCHEDULE` seçildiğinde en çok 100 yılın her biri için enerji/bakım/diğer gider ayrı ve hedef para biriminde, yıl sonu esasıyla girilir. Bilinen sıfır açıkça 0 yazılır; eksik yıl/kategori/model toplam TCO'yu hesaplanamadı bırakır. Sabit ve yıllık model girdileri karıştırılmaz; dönem dışındaki gider reddedilir. Kullanıcı varsayımları iki raporda da görünür. Mavi hücrelerdeki değişikliklerden yeni ön rapor çifti üretmek için `scenario_import.py --run <açık-koşu> --workbook <kullanıcı-kopyası.xlsx>` kullanılır. Kaynak/formül tahrifi veya değişmiş kaynak bazı reddedilir; kaynak facts ve resmî karar yazılmaz. Kapanmış koşu için yeni analiz gerekir. Eksik varsayım sıfır ve senaryo puanı resmî firma sıralaması olmaz.
+
 Mevcut sıra `PREPARE → INGEST → REQUIREMENTS → EXTRACT → NORMALIZE → SUFFICIENCY → REVIEW → ADJUDICATE → REPORT → QA → COMPLETE`. Sırayı Python belirler; alt skill yeni aşama yaratmaz. Açık iş sorusuna bağlı bir sonraki çağrıyı çalıştırmadan kullanıcıya dön. `NEEDS_LLM` için yalnız listelenen bounded context + görev şeması + listelenen görselleri ver; strict JSON ve gerçek model/efor/token ile `record_results.py` kayıt kapısını uygula.
 
-**Bu geliştirme adayının yürütme sınırı:** `workflow.py prepare/next`, açık kritik iş sorularında `NEEDS_USER_INPUT` döndürür; `user_question_gate.py` yanıtı soru/kaynak kapsamıyla kaydeder ve değişen girdi için yeni koşu talebi üretir. Açık soru varken karar özeti veya ön Excel/PDF teslimi yapılmaz. Yanıt kaynak olgularını doğrudan `verified` yapmaz. Bu geliştirme adayı gerçek belge kabulü ve son iki motorlu test tamamlanmadan üretim kabulü almış sayılmaz.
+**Bu geliştirme adayının yürütme sınırı:** `workflow.py prepare/next`, açık kritik iş sorularında `NEEDS_USER_INPUT` döndürür; `user_question_gate.py` yanıtı soru/kaynak kapsamıyla kaydeder ve değişen girdi için yeni koşu talebi üretir. `report_delivery.py` karar güvencesinden ayrı, iki dosyalı ön rapor teslimini denetler. Kaynak bütünlüğü bozuksa teklif değerlerini yayımlamayan iki dosyalı güvenli bildirim denenir. İki dosya doğrulanmadan teslim READY olmaz. Senaryolar kullanıcı varsayımıdır; kaynaklar ve resmî karar hesabı değişmez. Native yeniden hesaplama yapılmamış senaryo VERIFIED değildir. Yanıt kaynak olgularını doğrudan `verified` yapmaz. Gerçek belge kabulü olmadan üretim kabulü verilmez.
 
 Teknik parser/şema/hesap/QA hatası kullanıcı ticari cevabıyla PASS olmaz. `PASS/SKIPPED/BLOCKED` aşamalarını ayrı bildir. Tamamlanan analiz tek gerekçeli ana satınalma eylemi önerisiyle kapanır: doğrulanmış firma/kapsam/bedel/koşul/risk ve sonraki adım. Yeterli kanıt yoksa somut teyit/yenileme talebi veya mevcut şartlarda alımı önermeme kararı ver; zorla firma seçme. Teknik BLOCKED başarılı karar teslimi değildir.
 
@@ -72,7 +77,7 @@ Teknik parser/şema/hesap/QA hatası kullanıcı ticari cevabıyla PASS olmaz. `
 
 [Kalite yöntemi](references/analysis-quality-workflow.md) kaynak/soru, analiz birimi, bağımsız iz ve görünür çıktı için ortak ayrıntıyı taşır. İlgili alt beceri yalnız kendi bölümünü yükler; aynı kontrolü farklı adlarla yeniden başlatma.
 
-- [Mevcut yürütme protokolü](references/execution-protocol-v5024.md): eski algoritma, CLI, modeller, cache, pin ve teslim kontrolleri. Belirsizlikte otomatik ön Excel/PDF talimatı yerine yukarıdaki yeni kullanıcı bekleme kuralı uygulanır; sürüm ve kullanıcı sorusu kapsamlarında bu ana dosya önceliklidir.
+- [Mevcut yürütme protokolü](references/execution-protocol-v5024.md): mevcut algoritma, CLI, modeller, cache, pin ve teslim kontrolleri. Kullanıcı sorusu bağlı kararı bekletir; zorunlu ön rapor çifti ve güvenli bildirim için bu ana dosyanın teslim kuralı önceliklidir.
 - [Mimari](references/architecture.md) ve [ajan sınırları](references/agent-routing.md): yalnız teknik geçiş veya dar görev gerektiğinde.
 - [Satınalma değişmezleri](references/procurement-invariants.md): bütün profillerde; şartname bulunmadığında teknik uygunluk sonucu üretilmez; tek tedarikçiye karşılaştırmalı puan verilmez.
 

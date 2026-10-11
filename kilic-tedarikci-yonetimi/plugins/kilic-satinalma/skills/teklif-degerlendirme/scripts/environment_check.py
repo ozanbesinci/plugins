@@ -20,6 +20,8 @@ PACKAGE_MODULES = {
     "python-docx": "docx",
     "pillow": "PIL",
     "pywin32": "win32com",
+    "pymupdf": "fitz",
+    "reportlab": "reportlab",
 }
 
 
@@ -131,7 +133,7 @@ def check_requirements(requirements: Path) -> dict[str, Any]:
     }
 
 
-def check_duckdb_pdf(require_pdf_extension: bool = True) -> dict[str, Any]:
+def check_duckdb_pdf(require_pdf_extension: bool = False) -> dict[str, Any]:
     try:
         import duckdb  # type: ignore
     except Exception as exc:
@@ -187,7 +189,7 @@ from error_log import log_failures
 
 
 @log_failures('environment_check.check')
-def check(requirements: Path | None = None, require_pdf_extension: bool = True) -> dict[str, Any]:
+def check(requirements: Path | None = None, require_pdf_extension: bool = False) -> dict[str, Any]:
     skill_root = Path(__file__).resolve().parents[1]
     requirements = requirements or (skill_root / "requirements.txt")
     req = check_requirements(requirements)
@@ -210,6 +212,9 @@ def check(requirements: Path | None = None, require_pdf_extension: bool = True) 
         "requirements": req,
         "duckdb": duck,
         "missing_components": missing_components,
+        "warnings": [] if pdf_ok and duck.get("pdf_extension") else [
+            "DuckDB ikincil PDF okuyucusu kullanılamıyor; birincil PDF okuma ve rapor üretimi ayrı doğrulanır."
+        ],
         "blocking_reasons": [x["reason"] for x in missing_components],
         "automatic_installation": False,
         "installation_performed": False,
@@ -259,9 +264,11 @@ def main() -> int:
     ap.add_argument("--output")
     ap.add_argument("--requirements", type=Path)
     ap.add_argument("--strict", action="store_true", help="Return non-zero when the environment blocks analysis")
-    ap.add_argument("--pdf-extension-optional", action="store_true")
+    pdf_policy = ap.add_mutually_exclusive_group()
+    pdf_policy.add_argument("--pdf-extension-optional", action="store_true", help="Compatibility flag; secondary PDF extension is optional by default")
+    pdf_policy.add_argument("--require-pdf-extension", action="store_true", help="Explicitly require the secondary DuckDB PDF reader")
     args = ap.parse_args()
-    result = check(args.requirements, require_pdf_extension=not args.pdf_extension_optional)
+    result = check(args.requirements, require_pdf_extension=args.require_pdf_extension)
     text = json.dumps(result, ensure_ascii=False, indent=2, default=str)
     if args.output:
         path = Path(args.output)

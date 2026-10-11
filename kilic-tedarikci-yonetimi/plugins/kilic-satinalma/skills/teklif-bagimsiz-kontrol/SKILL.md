@@ -3,8 +3,7 @@ name: teklif-bagimsiz-kontrol
 description: Teklif kanıtı, uygun küme, kritik hesap ve sıralamayı ayrı kanıt/formül yoluyla denetler; yalnız kalan farkları hakeme taşır. Ana teklif akışında bağımsız doğrulama gerektiğinde kullan; ana hesabı tekrar çağırarak onay vermez.
 ---
 
-# Bağımsız Kontrol — 5.0.29
-
+# Bağımsız Kontrol — 5.1.0
 ## Kullanıcı kanıtı önceliği
 
 Kullanıcının doğrudan verdiği olgu, teyit, düzeltme ve karar yetkili kullanıcı kanıtıdır; ilgili değerlendirme girdisinde belge, model çıkarımı ve önceki varsayımdan önceliklidir.

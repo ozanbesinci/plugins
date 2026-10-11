@@ -6,6 +6,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from test_engine_support import sqlite_modes
 from unittest.mock import patch
 
 SCRIPTS = Path(__file__).resolve().parents[1]
@@ -80,7 +81,7 @@ class BuyerControlTests(unittest.TestCase):
         entry = self._entry('currency', value='TRY')
         result = {'known': True, 'currency': 'TRY', 'currency_basis': 'buyer_declaration',
                   'buyer_inputs': {'currency': [entry]}}
-        for sqlite in (False, True):
+        for sqlite in sqlite_modes():
             with self.subTest(sqlite=sqlite):
                 closed, status, count, _ = self._case(sqlite, 'critical_field', ['O/field/currency'], [], [entry], result)
                 self.assertEqual((closed, status, count), (['issue'], 'resolved', 1))
@@ -93,7 +94,7 @@ class BuyerControlTests(unittest.TestCase):
         entry = self._entry('scope_cost', scope_id='scope-1', amount=0, currency='TRY')
         result = {'known': True, 'complete': False, 'buyer_inputs': {'scope_cost': [entry]},
                   'steps': [{'stage': 'buyer_scope_cost', 'scope_id': 'scope-1', 'amount': '0', 'currency': 'TRY'}]}
-        for sqlite in (False, True):
+        for sqlite in sqlite_modes():
             with self.subTest(sqlite=sqlite):
                 closed, status, _, _ = self._case(sqlite, 'unpriced_employer_responsibility', [], ['ev1'], [entry], result,
                     severity='medium', scopes=[{'id': 'scope-1', 'evidence': ['ev1']}, {'id': 'scope-2', 'evidence': ['ev2']}])
@@ -110,7 +111,7 @@ class BuyerControlTests(unittest.TestCase):
                                           {'quantity_item_id': 'q27', 'reference_quantity': '40', 'unit': 'MT'}]}
         normalized = {'items': [{'item_id': 'q26', 'evidence_status': 'verified', 'evidence_refs': ['ev26']},
                                 {'item_id': 'q27', 'evidence_status': 'verified', 'evidence_refs': ['ev27']}]}
-        for sqlite in (False, True):
+        for sqlite in sqlite_modes():
             with self.subTest(sqlite=sqlite):
                 args = dict(extra_facts=[{'id': 'O/field/quantity', 'field': 'quantity', 'normalized': normalized}])
                 closed, status, _, facts = self._case(sqlite, 'quantity_scope_confirmation', ['O/field/quantity'], ['ev26','ev27'], [first, second], result, **args)
@@ -126,7 +127,7 @@ class BuyerControlTests(unittest.TestCase):
         entry = self._entry('scope_cost', scope_id='watering', amount=0, currency='TRY')
         result = {'known': True, 'complete': False, 'buyer_inputs': {'scope_cost': [entry]},
                   'steps': [{'stage': 'buyer_scope_cost', 'scope_id': 'watering', 'amount': '0', 'currency': 'TRY'}]}
-        for sqlite in (False, True):
+        for sqlite in sqlite_modes():
             with self.subTest(sqlite=sqlite):
                 closed, status, _, facts = self._case(sqlite, 'unpriced_employer_responsibility',
                     ['O/field/scope_signature'], ['ev-water'], [entry], result, severity='medium',
@@ -141,7 +142,7 @@ class BuyerControlTests(unittest.TestCase):
         result = {'known': True, 'currency': 'EUR', 'currency_basis': 'buyer_declaration',
                   'buyer_inputs': {'currency': [entry]}}
         fact = {'id': 'O/field/currency', 'field': 'currency'}
-        for sqlite in (False, True):
+        for sqlite in sqlite_modes():
             with self.subTest(sqlite=sqlite):
                 closed, status, count, facts = self._case(sqlite, 'missing_currency', ['O/field/currency'], [],
                     [entry], result, extra_facts=[fact], issue_owner='FIRMA:Alpha')
@@ -158,7 +159,7 @@ class BuyerControlTests(unittest.TestCase):
         entry = {**self._entry('currency', value='EUR'), 'issue_id': 'global-currency'}
         result = {'known': True, 'currency': 'EUR', 'currency_basis': 'buyer_declaration',
                   'buyer_inputs': {'currency': [entry]}}
-        for sqlite in (False, True):
+        for sqlite in sqlite_modes():
             with self.subTest(sqlite=sqlite):
                 closed, status, count, _ = self._case(sqlite, 'missing_currency', ['B/field/currency'], [],
                     [entry], result, extra_offer=True)
@@ -176,7 +177,7 @@ class BuyerControlTests(unittest.TestCase):
         direct = self._entry('currency', value='EUR')
         alias = {**direct, 'issue_id': 'original-currency'}
         fact = {'id': 'O/field/currency', 'field': 'currency'}
-        for sqlite in (False, True):
+        for sqlite in sqlite_modes():
             with self.subTest(sqlite=sqlite):
                 for entry in (direct, alias):
                     result = {'known': True, 'currency': 'EUR', 'currency_basis': 'buyer_declaration',
@@ -202,7 +203,7 @@ class BuyerControlTests(unittest.TestCase):
                   'buyer_inputs': {'currency': [entry]}}
         facts = [{'id': 'O/field/currency', 'field': 'currency'},
                  {'id': 'O/field/total', 'field': 'total', 'status': 'verified', 'evidence_id': 'total-ev'}]
-        for sqlite in (False, True):
+        for sqlite in sqlite_modes():
             with self.subTest(sqlite=sqlite):
                 closed, status, count, after = self._case(sqlite, 'missing_currency',
                     ['O/field/currency', 'O/field/total'], ['total-ev'], [entry], result, extra_facts=facts)
@@ -227,7 +228,7 @@ class BuyerControlTests(unittest.TestCase):
         payment = self._entry('payment_terms', milestones=[{'trigger': 'work_start', 'percent': 50},
                                                          {'trigger': 'work_delivery', 'percent': 50}])
         warranty = self._entry('warranty_terms', duration_years=5, scope='whole_work')
-        for sqlite in (False, True):
+        for sqlite in sqlite_modes():
             for entry, issue_type, field, basis_key, value_key, value in (
                 (payment, 'payment_timing_and_basis', 'payment', 'payment_basis', 'payment_terms',
                  {'milestones': payment['milestones']}),
@@ -264,7 +265,7 @@ class BuyerControlTests(unittest.TestCase):
             'issue_id': 'original-payment'}
         warranty = {**self._entry('warranty_terms', duration_years=5, scope='whole_work'),
                     'issue_id': 'original-warranty'}
-        for sqlite in (False, True):
+        for sqlite in sqlite_modes():
             for entry, issue_type, field, basis_key, value_key, value in (
                 (payment, 'payment_timing', 'payment', 'payment_basis', 'payment_terms',
                  {'milestones': payment['milestones']}),

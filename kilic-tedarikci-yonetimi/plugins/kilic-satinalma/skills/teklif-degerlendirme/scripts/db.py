@@ -86,7 +86,7 @@ def init_db(run_root: Path, skill_root: Path | None = None) -> Path:
         meta = {
             "schema_version": SCHEMA_VERSION,
             "created_at": utc_now(),
-            "db_engine": "sqlite-test" if _sqlite_test_mode() else "duckdb",
+            "db_engine": "sqlite-test" if isinstance(con, sqlite3.Connection) else "duckdb",
         }
         for key, value in meta.items():
             con.execute("INSERT OR REPLACE INTO run_meta(key,value) VALUES (?,?)", [key, str(value)])

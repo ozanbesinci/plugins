@@ -206,7 +206,7 @@ class LoggingAndElevenFieldConfirmation(ScopeConfirmation):
         self.assertEqual(len(set(proof_confirmation_ids)), 11)
         return audit
 
-    def test_actual_advance_budget_exhausted_boundary_logs_without_changing_result_or_run(self):
+    def test_actual_advance_budget_exhausted_keeps_boundary_and_sources_with_paired_report(self):
         self.confirmation_sources()
         before = self.run_snapshot()
         pending = [{"phase": "EXTRACT", "task_kind": "semantic_extraction", "task_id": "fixture-task", "attempts": 0}]
@@ -235,8 +235,14 @@ class LoggingAndElevenFieldConfirmation(ScopeConfirmation):
             contextlib.redirect_stdout(out), contextlib.redirect_stderr(out),
         ):
             result = workflow.advance(self.run)
-        self.assertIs(result, boundary_result[0])
+        for key, value in boundary_result[0].items():
+            self.assertEqual(result[key], value)
         self.assertEqual(result["status"], "BUDGET_EXHAUSTED")
+        self.assertEqual(result["report_delivery_status"], "READY")
+        self.assertTrue(result["deliverable_artifacts"])
+        for kind in ("xlsx", "pdf"):
+            self.assertTrue(Path(result["preliminary_report"][kind]).is_file())
+        self.assertNotEqual(result["decision_assurance"], "VERIFIED")
         self.assertEqual(out.getvalue(), "")
         self.assertEqual(self.run_snapshot(), before)
         self.assertEqual([event["status"] for event in self.events()], ["BUDGET_EXHAUSTED"])

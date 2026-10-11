@@ -13,7 +13,7 @@ from context_packet import task_packet
 
 class OfferFieldTaskTests(unittest.TestCase):
     def setUp(self):
-        os.environ["TEKLIF_TEST_SQLITE"] = "1"
+        os.environ.setdefault('TEKLIF_TEST_SQLITE', '1')
         self.root = Path(tempfile.mkdtemp(prefix="teklif-v514-"))
         init_db(self.root, SCRIPTS.parent)
         con = connect(self.root)

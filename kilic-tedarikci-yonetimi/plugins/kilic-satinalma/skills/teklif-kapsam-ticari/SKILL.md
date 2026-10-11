@@ -3,8 +3,7 @@ name: teklif-kapsam-ticari
 description: Kaynak bağlı teklif kalemlerini şartname, kapsam, miktar/birim, ödeme, teslim ve ticari risk açısından değerlendirir. Ana teklif akışında kapsam veya ticari belirsizlik çözümlerken kullan; fiyat aritmetiği ve rapor ihracı yapmaz.
 ---
 
-# Kapsam ve Ticari Koşullar — 5.0.29
-
+# Kapsam ve Ticari Koşullar — 5.1.0
 ## Kullanıcı kanıtı önceliği
 
 Kullanıcının doğrudan verdiği olgu, teyit, düzeltme ve karar yetkili kullanıcı kanıtıdır; ilgili değerlendirme girdisinde belge, model çıkarımı ve önceki varsayımdan önceliklidir.

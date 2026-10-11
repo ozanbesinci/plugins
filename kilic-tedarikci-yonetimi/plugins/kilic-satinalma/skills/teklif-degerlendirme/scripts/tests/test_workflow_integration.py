@@ -1,4 +1,5 @@
 from __future__ import annotations
+from test_engine_support import artifact_path
 
 import os
 import shutil
@@ -7,7 +8,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-os.environ['TEKLIF_TEST_SQLITE'] = '1'
+os.environ.setdefault('TEKLIF_TEST_SQLITE', '1')
 SCRIPTS = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SCRIPTS))
 
@@ -103,12 +104,12 @@ class WorkflowIntegrationTests(unittest.TestCase):
         )
         final = advance(self.run)
         self.assertEqual(final['status'], 'VERIFIED')
-        self.assertTrue((self.run / 'output' / 'Teklif_Degerlendirme.xlsx').exists())
+        self.assertTrue((artifact_path(self.run)).exists())
         self.assertEqual(final['qa']['status'], 'PASS')
         self.assertEqual(final['qa']['provenance_survival']['status'], 'PASS')
         self.assertEqual(final['qa']['provenance_survival']['findings'], [])
         self.assertTrue(status(self.run)['deliverable_artifacts'])
-        workbook = self.run / 'output' / 'Teklif_Degerlendirme.xlsx'
+        workbook = artifact_path(self.run)
         with workbook.open('ab') as stream:
             stream.write(b'changed-after-closure')
         changed = status(self.run)
@@ -126,7 +127,7 @@ class WorkflowIntegrationTests(unittest.TestCase):
         self.assertEqual(step['status'], 'NEEDS_USER_INPUT')
         self.assertEqual(step.get('gate', {}).get('status'), 'PRELIMINARY_ONLY')
         self.assertTrue(step['questions'])
-        self.assertFalse((self.run/'output'/'Teklif_Degerlendirme.xlsx').exists())
+        self.assertFalse((artifact_path(self.run)).exists())
         con = connect(self.run)
         try:
             review_tasks = con.execute("SELECT count(*) FROM task_queue WHERE task_kind IN ('independent_fact_review','adjudicate_differences')").fetchone()[0]

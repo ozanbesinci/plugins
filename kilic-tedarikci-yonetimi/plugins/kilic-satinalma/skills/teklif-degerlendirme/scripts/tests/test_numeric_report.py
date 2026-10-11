@@ -34,9 +34,9 @@ class NumericReportRegression(unittest.TestCase):
             "claims": [{"claim_id": "claim-rec", "claim_type": "recommendation", "claim_text": "Satın alma onayına sunulsun."}],
         }
 
-        class Connection:
-            def commit(self): pass
-            def close(self): pass
+        from test_engine_support import ReportFixtureConnection
+        class Connection(ReportFixtureConnection):
+            def __init__(self): super().__init__("sha")
 
         bindings = []
         with tempfile.TemporaryDirectory() as tmp:

@@ -1,4 +1,5 @@
 from __future__ import annotations
+from test_engine_support import artifact_path
 import json, shutil, tempfile, unittest
 from pathlib import Path
 from unittest import mock
@@ -56,7 +57,7 @@ class AcceptanceFixTests(unittest.TestCase):
         con.commit(); con.close()
         self.assertTrue(locators)
         self.assertTrue(all(x['value_path']=='value_text' for x in locators))
-        p=self.run/'output/Teklif_Degerlendirme.xlsx'
+        p=artifact_path(self.run)
         wb=load_workbook(p); wb['Teklif Karsilastirma']['N2']='31 gun'; wb.save(p); wb.close()
         result=check(self.run)
         self.assertEqual(result['status'],'FAIL')
@@ -76,7 +77,7 @@ class AcceptanceFixTests(unittest.TestCase):
         freeze(self.run)
         with mock.patch('report_export._recalc_with_excel',return_value={'available':True}):
             export_report(self.run)
-        wb=load_workbook(self.run/'output/Teklif_Degerlendirme.xlsx')
+        wb=load_workbook(artifact_path(self.run))
         self.assertEqual(wb['Teklif Karsilastirma']['N2'].value,30)
         comparison=wb['Teklif Karsilastirma']
         self.assertEqual(comparison.page_setup.scale,100)
