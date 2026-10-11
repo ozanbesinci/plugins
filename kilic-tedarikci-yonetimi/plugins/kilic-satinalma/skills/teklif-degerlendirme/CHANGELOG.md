@@ -1,3 +1,9 @@
+# 5.1.1 — 2026-10-12 (kararlı yama adayı)
+
+- Teyitli elemelerden sonra kalan uygun tekliflerin benzersiz tedarikçileri sayılır. İki aktif firmadan biri elendiğinde tek tedarikçi durumu XLSX ve PDF'de doğru gösterilir.
+- Aynı uygun firmanın iki alternatifi rekabetçi iki firma sayılmaz; teyitsiz eleme uygun kümeyi daraltmaz. Kaynak teklif/firma envanteri, eleme kayıtları, NO_DECISION ve boş sıralama korunur.
+- Üç yeni regresyon, üç profilde iki çıktı ve iki gerçek motorla sınanır. Önceki 530 PASS yeni kaynak sonucu sayılmaz; son tam koşu ve yayın kabulü ayrı sürümlü kanıtlardadır.
+
 # 5.1.0 — 2026-10-11 (kararlı aday)
 
 - Her profilde tek formüllü XLSX ve çok sayfalı PDF; iş karar engelinde güvenli ön rapor ve kaynak bütünlüğü bildirimleri.

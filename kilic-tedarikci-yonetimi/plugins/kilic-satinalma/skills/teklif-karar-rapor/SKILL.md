@@ -3,7 +3,7 @@ name: teklif-karar-rapor
 description: Doğrulanmış teklif analizinden tek gerekçeli satınalma eylemi önerisi, aynı snapshot bağlı Excel/PDF ve çıktı QA üretimini yönetir. Ana teklif akışının rapor/kapanışında kullan; eksik girdiyi tamamlamaz ve kullanıcı adına satınalma onayı vermez.
 ---
 
-# Karar ve Rapor — 5.1.0
+# Karar ve Rapor — 5.1.1
 ## Kullanıcı kanıtı önceliği
 
 Kullanıcının doğrudan verdiği olgu, teyit, düzeltme ve karar yetkili kullanıcı kanıtıdır; ilgili değerlendirme girdisinde belge, model çıkarımı ve önceki varsayımdan önceliklidir.

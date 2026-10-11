@@ -121,10 +121,10 @@ def build_preliminary(run_root: Path, reason: str):
                 raise ValueError("Kaynak arşivi hash uyuşmazlığı: "+doc["relative_path"])
         model["matrix"] = matrix(model)
         active = [o for o in model["offers"] if o.get("status")=="active"]
-        suppliers = {o["supplier_id"] for o in active}
         confirmed = {e["offer_id"] for e in model["exclusions"]
                      if e.get("status")=="confirmed" and e.get("decision")=="exclude"}
         eligible = [o for o in active if o["offer_id"] not in confirmed]
+        suppliers = {o["supplier_id"] for o in eligible}
         model["comparison_status"] = ("NO_ELIGIBLE_OFFERS" if not eligible else
              "NOT_APPLICABLE_SINGLE_SUPPLIER" if len(suppliers)<=1 else "BLOCKED")
         if not model["requirements"]:
