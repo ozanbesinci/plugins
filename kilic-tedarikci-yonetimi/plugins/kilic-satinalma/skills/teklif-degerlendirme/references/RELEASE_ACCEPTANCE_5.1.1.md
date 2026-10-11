@@ -29,3 +29,5 @@ Güncelleyici 2.3.0 kaynak/motoru ve production_approved=false alanı korunur. B
 
 
 5.1.1 ek kabulü: teyitli eleme sonrası tek uygun tedarikçi, tek firmanın çoklu alternatifleri ve teyitsiz elemenin uygun kümeyi daraltmaması; üç profilde doğru karşılaştırma durumu ve tek XLSX/PDF çifti. Kaynak envanteri değişmeden korunur. Eski 530 PASS bu yeni sürümün koşusu değildir.
+
+Güncel şartname kabulü: tarihsel şartname elemeleri güncel uygun kümeyi bozmaz; bütün tarihsel elemeler sahte NO_ELIGIBLE_OFFERS üretmez. Güncel doğrulanmış zorunlu uygunsuzluk kalıcı eleme kaydı olmadan uygulanır; teyitsiz uygunsuzluk eleme sayılmaz. Bütün güncel zorunlu uygunsuzluklarda uygun teklif kalmaz. Beş ek regresyon kaynak olgularının ve eleme geçmişinin rapor üretimi sırasında değişmediğini de doğrular.

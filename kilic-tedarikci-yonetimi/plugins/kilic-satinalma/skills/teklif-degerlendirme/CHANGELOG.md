@@ -2,7 +2,8 @@
 
 - Teyitli elemelerden sonra kalan uygun tekliflerin benzersiz tedarikçileri sayılır. İki aktif firmadan biri elendiğinde tek tedarikçi durumu XLSX ve PDF'de doğru gösterilir.
 - Aynı uygun firmanın iki alternatifi rekabetçi iki firma sayılmaz; teyitsiz eleme uygun kümeyi daraltmaz. Kaynak teklif/firma envanteri, eleme kayıtları, NO_DECISION ve boş sıralama korunur.
-- Üç yeni regresyon, üç profilde iki çıktı ve iki gerçek motorla sınanır. Önceki 530 PASS yeni kaynak sonucu sayılmaz; son tam koşu ve yayın kabulü ayrı sürümlü kanıtlardadır.
+- Şartnameye bağlı tarihsel elemeler güncel zorunlu şartname olgularını geçersiz kılamaz. Güncel doğrulanmış zorunlu uygunsuzluk kalıcı eleme kaydı olmadan da uygulanır; teyitsiz uygunsuzluk eleme sayılmaz. Şartname bağı olmayan açık teyitli eleme korunur. Raporlama kaynak olgularını veya eleme geçmişini değiştirmez.
+- Sekiz yeni regresyon, üç profilde iki çıktı ve iki gerçek motorla sınanır. Önceki 530 veya ara adayın 533 PASS sonucu yeni kaynak sonucu sayılmaz; son tam koşu ve yayın kabulü ayrı sürümlü kanıtlardadır.
 
 # 5.1.0 — 2026-10-11 (kararlı aday)
 

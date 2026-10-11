@@ -13,7 +13,7 @@
   },
   "implementation_and_configuration_unchanged": false,
   "base_commit": "6d592bd4a8c257d505295446dc9fe84dc767ff99",
-  "change_scope": "Confirmed exclusions determine eligible supplier comparison status; source inventory, conservative decision assurance and paired outputs preserved",
+  "change_scope": "Current verified mandatory facts determine requirement-based eligibility; historical requirement exclusions do not override current facts; requirement-free explicit confirmed exclusions preserved; paired reports and source inventory preserved",
   "acceptance_report": "skills/teklif-degerlendirme/references/RELEASE_ACCEPTANCE_5.1.1.md",
   "acceptance_evidence": "Version-bound JSON, logs and artifact hashes delivered with the GitHub release; previous release counts are not current tests",
   "updater_unchanged": true,

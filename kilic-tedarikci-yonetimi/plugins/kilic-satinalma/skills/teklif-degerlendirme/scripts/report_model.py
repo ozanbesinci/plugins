@@ -87,6 +87,25 @@ def matrix_values(row):
             row["status"],row["severity"],row["decision_effect"],row["reason"],
             json_text(row["spec_evidence"]),json_text(row["offer_evidence"])]
 
+def current_excluded_offers(model):
+    """Read current mandatory facts; retain only requirement-free explicit exclusions.
+
+    Historical requirement exclusions are audit records, not current membership.
+    Rendering must neither run the mutating engine nor rewrite those records.
+    """
+    mandatory = {r['requirement_id'] for r in model['requirements']
+                 if r.get('category') == 'mandatory'}
+    excluded = {f['offer_id'] for f in model['facts']
+                if f.get('requirement_id') in mandatory
+                and f.get('evidence_status') == 'verified'
+                and (f.get('value_text') or '').casefold() in
+                    {'noncompliant', 'uygunsuz', 'fail', 'failed'}}
+    excluded.update(e['offer_id'] for e in model['exclusions']
+                    if e.get('status') == 'confirmed' and e.get('decision') == 'exclude'
+                    and not e.get('requirement_id'))
+    return excluded
+
+
 def build_preliminary(run_root: Path, reason: str):
     # Do not create a DB merely to emit a safety notice.
     model = {"schema":"teklif-report-model/v1","profile":"standart",
@@ -121,9 +140,8 @@ def build_preliminary(run_root: Path, reason: str):
                 raise ValueError("Kaynak arşivi hash uyuşmazlığı: "+doc["relative_path"])
         model["matrix"] = matrix(model)
         active = [o for o in model["offers"] if o.get("status")=="active"]
-        confirmed = {e["offer_id"] for e in model["exclusions"]
-                     if e.get("status")=="confirmed" and e.get("decision")=="exclude"}
-        eligible = [o for o in active if o["offer_id"] not in confirmed]
+        excluded = current_excluded_offers(model)
+        eligible = [o for o in active if o["offer_id"] not in excluded]
         suppliers = {o["supplier_id"] for o in eligible}
         model["comparison_status"] = ("NO_ELIGIBLE_OFFERS" if not eligible else
              "NOT_APPLICABLE_SINGLE_SUPPLIER" if len(suppliers)<=1 else "BLOCKED")
