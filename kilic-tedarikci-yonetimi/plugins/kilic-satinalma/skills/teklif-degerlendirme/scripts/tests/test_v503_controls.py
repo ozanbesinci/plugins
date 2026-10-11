@@ -1,8 +1,9 @@
 from __future__ import annotations
+from test_engine_support import artifact_path
 
 import json, os, shutil, sys, tempfile, unittest
 from pathlib import Path
-os.environ['TEKLIF_TEST_SQLITE']='1'
+os.environ.setdefault('TEKLIF_TEST_SQLITE', '1')
 SCRIPTS=Path(__file__).resolve().parents[1]; sys.path.insert(0,str(SCRIPTS))
 from openpyxl import Workbook, load_workbook
 from db import connect
@@ -62,13 +63,13 @@ class V503Controls(unittest.TestCase):
         self.offer('A_teklif.xlsx',100000); self.offer('B_teklif.xlsx',105000); prepare(self.src,self.run,'hizli'); step=self.finish_quick(bad_claim=True)
         self.assertEqual(step['status'],'NEEDS_LLM')
         self.assertEqual(step['summary_retry']['status'],'RETRY_PENDING')
-        self.assertFalse((self.run/'output'/'Teklif_Degerlendirme.xlsx').exists())
+        self.assertFalse((artifact_path(self.run)).exists())
         from workflow import _finish_outputs
         final=_finish_outputs(self.run,preliminary=False)
         self.assertEqual(final['status'],'BLOCKED'); self.assertEqual(final['reviewed_snapshot']['status'],'BLOCKED')
     def test_provenance_survival_detects_exported_evidence_tamper(self):
         self.offer('A_teklif.xlsx',100000); self.offer('B_teklif.xlsx',105000); prepare(self.src,self.run,'hizli'); final=self.finish_quick(); self.assertEqual(final['status'],'VERIFIED')
-        xlsx=self.run/'output'/'Teklif_Degerlendirme.xlsx'; wb=load_workbook(xlsx); ws=wb['Kanitlar']; ws.cell(2,4).value='assumption'; wb.save(xlsx)
+        xlsx=artifact_path(self.run); wb=load_workbook(xlsx); ws=wb['Kanitlar']; ws.cell(2,4).value='assumption'; wb.save(xlsx)
         out=provenance_check(self.run); self.assertEqual(out['status'],'FAIL')
     def test_grain_integrity_detects_duplicate_verified_offer_field(self):
         self.offer('A_teklif.xlsx',100000); self.offer('B_teklif.xlsx',105000); prepare(self.src,self.run,'hizli')

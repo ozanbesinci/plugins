@@ -135,8 +135,8 @@ def _write_table(ws, headers: list[str], rows: Iterable[Iterable[Any]]) -> None:
 
 def _artifact(con, path: Path, run_root: Path, artifact_type: str, parent_hashes: list[str] | None = None) -> str:
     sha = sha256_file(path)
-    aid = stable_id("art", artifact_type, sha, length=22)
     rel = str(path.resolve().relative_to(run_root.resolve()))
+    aid = stable_id("art", artifact_type, sha, rel, length=22)
     con.execute(
         "INSERT OR REPLACE INTO artifacts(artifact_id,artifact_type,relative_path,sha256,parent_hashes_json,status,created_at) VALUES (?,?,?,?,?,?,?)",
         [aid, artifact_type, rel, sha, json_text(parent_hashes or []), "ready", utc_now()],
@@ -145,91 +145,13 @@ def _artifact(con, path: Path, run_root: Path, artifact_type: str, parent_hashes
 
 
 def _recalc_with_excel(path: Path) -> dict[str, Any]:
-    if platform.system() != "Windows":
-        return {"available": False, "reason": "not_windows"}
-    try:
-        import win32com.client  # type: ignore
-    except Exception as exc:
-        return {"available": False, "reason": f"pywin32_unavailable:{exc}"}
-    excel = None
-    wb = None
-    try:
-        excel = win32com.client.DispatchEx("Excel.Application")
-        excel.Visible = False
-        excel.DisplayAlerts = False
-        prior_security = excel.AutomationSecurity
-        prior_events = excel.EnableEvents
-        excel.AutomationSecurity = 3  # msoAutomationSecurityForceDisable
-        excel.EnableEvents = False
-        wb = excel.Workbooks.Open(str(path.resolve()), UpdateLinks=0, ReadOnly=False, AddToMru=False, IgnoreReadOnlyRecommended=True)
-        excel.CalculateFullRebuild()
-        wb.Save()
-        wb.Close(SaveChanges=True)
-        wb = None
-        return {"available": True, "status": "recalculated"}
-    except Exception as exc:
-        return {"available": False, "reason": f"excel_recalc_error:{exc}"}
-    finally:
-        try:
-            if wb is not None:
-                wb.Close(SaveChanges=False)
-        except Exception:
-            pass
-        try:
-            if excel is not None:
-                try:
-                    excel.AutomationSecurity = prior_security
-                    excel.EnableEvents = prior_events
-                except Exception:
-                    pass
-                excel.Quit()
-        except Exception:
-            pass
+    from office_execution import execute_office
+    return execute_office("recalculate",path)
 
 
 def _export_pdf_with_excel(xlsx: Path, pdf: Path) -> dict[str, Any]:
-    if platform.system() != "Windows":
-        return {"available": False, "reason": "not_windows"}
-    try:
-        import win32com.client  # type: ignore
-    except Exception as exc:
-        return {"available": False, "reason": f"pywin32_unavailable:{exc}"}
-    excel = None
-    wb = None
-    try:
-        excel = win32com.client.DispatchEx("Excel.Application")
-        excel.Visible = False
-        excel.DisplayAlerts = False
-        prior_security = excel.AutomationSecurity
-        prior_events = excel.EnableEvents
-        excel.AutomationSecurity = 3  # msoAutomationSecurityForceDisable
-        excel.EnableEvents = False
-        from print_layout import build_print_workbook
-        print_xlsx = pdf.with_name(pdf.stem + "_Baski.xlsx")
-        print_info = build_print_workbook(xlsx, print_xlsx)
-        wb = excel.Workbooks.Open(str(print_xlsx.resolve()), UpdateLinks=0, ReadOnly=True, AddToMru=False, IgnoreReadOnlyRecommended=True)
-        wb.ExportAsFixedFormat(0, str(pdf.resolve()))
-        wb.Close(False)
-        wb = None
-        return {"available": True, "path": str(pdf), "print_workbook": print_info}
-    except Exception as exc:
-        return {"available": False, "reason": f"excel_pdf_error:{exc}"}
-    finally:
-        try:
-            if wb is not None:
-                wb.Close(False)
-        except Exception:
-            pass
-        try:
-            if excel is not None:
-                try:
-                    excel.AutomationSecurity = prior_security
-                    excel.EnableEvents = prior_events
-                except Exception:
-                    pass
-                excel.Quit()
-        except Exception:
-            pass
+    from office_execution import execute_office
+    return execute_office("pdf",xlsx,pdf)
 
 
 def _insert_bindings(con, artifact_id: str, snapshot_sha: str, bindings: list[dict[str, Any]]) -> None:
@@ -246,6 +168,44 @@ def _insert_bindings(con, artifact_id: str, snapshot_sha: str, bindings: list[di
 
 
 def export_report(run_root: Path) -> dict[str, Any]:
+    from official_delivery import RegistrationError
+    try:
+        return _export_report(run_root)
+    except RegistrationError:
+        raise
+    except OSError as primary:
+        result = _export_report(run_root, _directory="output_fallback")
+        return {**result, "alternate_report_path_attempted": True, "primary_path_error": str(primary)}
+
+
+def _register_official(con, run_root, target, manifest, snapshot_sha, formula_contract, bindings, summary_claim_ids):
+    from official_delivery import RegistrationError
+    try:
+        con.execute("BEGIN TRANSACTION")
+        row = con.execute("SELECT value FROM run_meta WHERE key='reviewed_snapshot'").fetchone()
+        if not row or json.loads(row[0]).get("sha256") != snapshot_sha:
+            raise ValueError("Active reviewed snapshot changed during report generation")
+        ids = {}
+        for kind, name, parents, rows in (
+            ("xlsx", "Teklif_Degerlendirme.xlsx", [snapshot_sha], bindings),
+            ("pdf", "Teklif_Degerlendirme.pdf", [snapshot_sha, manifest["files"]["Teklif_Degerlendirme.xlsx"]],
+             [{**b, "component_id": b["component_id"].replace("xlsx:", "pdf-derived:"), "component_type": "derived_from_xlsx", "locator": {"derived_from": b["component_id"]}} for b in bindings]),
+            ("decision_snapshot", "decision_snapshot.json", [snapshot_sha],
+             [{"component_id": "decision_snapshot:claims", "component_type": "json", "locator": {"path": "claims"}, "claim_ids": summary_claim_ids}])):
+            ids[kind] = _artifact(con, target / name, run_root, kind, parents)
+            _insert_bindings(con, ids[kind], snapshot_sha, rows)
+        con.execute("INSERT OR REPLACE INTO run_meta(key,value) VALUES (?,?)",
+                    ["formula_contract_" + ids["xlsx"], json_text(formula_contract)])
+        manifest = {**manifest, "artifact_ids": ids, "relative_directory": str(target.relative_to(run_root))}
+        con.execute("INSERT OR REPLACE INTO run_meta(key,value) VALUES ('official_report_delivery',?)", [json_text(manifest)])
+        con.commit()
+        return ids, manifest
+    except Exception as exc:
+        con.rollback()
+        raise RegistrationError("Official report transaction rolled back: " + str(exc)) from exc
+
+
+def _export_report(run_root: Path, *, _directory="output") -> dict[str, Any]:
     from openpyxl import Workbook
     from openpyxl.comments import Comment
     from openpyxl.styles import Font
@@ -507,28 +467,69 @@ def export_report(run_root: Path) -> dict[str, Any]:
         ws=wb.create_sheet(_safe_sheet("Veri Kalitesi")); _write_table(ws,["Bulgu","Kontrol","Varlik Turu","Varlik","Onem","Guven","Durum","Risk","Duzeltme"],[[x.get("finding_id"),x.get("check_id"),x.get("entity_type"),x.get("entity_id"),x.get("severity"),x.get("confidence"),x.get("status"),x.get("risk"),x.get("remediation")] for x in data_quality])
         ws=wb.create_sheet(_safe_sheet("Degisim Kaydi")); _write_table(ws,["Event ID","Asama","Olay","Detay"],[[x.get("event_id"),x.get("phase"),x.get("event_type"),x.get("payload_json")] for x in events])
 
-        _style_workbook(wb); out_dir=run_root/"output"; out_dir.mkdir(parents=True,exist_ok=True); xlsx=out_dir/"Teklif_Degerlendirme.xlsx"; wb.calculation.fullCalcOnLoad=True; wb.calculation.forceFullCalc=True; wb.save(xlsx)
-        recalc=_recalc_with_excel(xlsx); xlsx_id=_artifact(con,xlsx,run_root,"xlsx",[snapshot_sha]); _insert_bindings(con,xlsx_id,snapshot_sha,bindings)
+        _style_workbook(wb)
+        from scenario_formulas import add_scenarios, validate_formulas
+        from matrix_workbook import add_matrix, seal_source_cells
+        from report_model import matrix
+        report_matrix = matrix(snap)
+        formula_contract = add_scenarios(wb)
+        add_matrix(wb, {**snap, "matrix": report_matrix}, formula_contract)
+        seal_source_cells(wb, formula_contract)
+        from official_delivery import stage_revision, publish
+        out_dir, target = stage_revision(run_root, _directory)
+        xlsx=out_dir/"Teklif_Degerlendirme.xlsx"; wb.calculation.fullCalcOnLoad=True; wb.calculation.forceFullCalc=True; wb.save(xlsx); wb.close()
+        recalc=_recalc_with_excel(xlsx)
+        formula_audit = validate_formulas(xlsx, formula_contract)
+        if formula_audit["status"] != "PASS":
+            raise ValueError("Exported formula contract failed: " + "; ".join(formula_audit["errors"]))
+        (out_dir/"formula_contract.json").write_text(json.dumps(formula_contract,ensure_ascii=False,indent=2),encoding="utf-8")
 
         pdf_info=None
-        if profile=="yuksek_guvence":
-            pdf=out_dir/"Teklif_Degerlendirme.pdf"; pdf_info=_export_pdf_with_excel(xlsx,pdf)
-            if pdf_info.get("available") and pdf.exists():
-                pdf_id=_artifact(con,pdf,run_root,"pdf",[snapshot_sha,sha256_file(xlsx)])
-                pdf_bindings=[{**b,"component_id":b["component_id"].replace("xlsx:","pdf-derived:"),"component_type":"derived_from_xlsx","locator":{"derived_from":b["component_id"]}} for b in bindings]
-                _insert_bindings(con,pdf_id,snapshot_sha,pdf_bindings)
+        if profile in {"hizli","standart","yuksek_guvence"}:
+            pdf=out_dir/"Teklif_Degerlendirme.pdf"
+            from pdf_renderer import render_pdf
+            from report_model import matrix
+            pdf_model={**snap,"profile":profile,"summary":str(summary),
+                       "content_status":"FULL" if snap.get("status")=="READY" else "PRELIMINARY",
+                       "decision_assurance":"İnceleme hazır; nihai QA bekliyor",
+                       "comparison_status":"Karşılaştırma sözleşmesine bağlı değerlendirme",
+                       "recommendation":recommendation,"source_digest":snapshot_sha,
+                       "scenario_reference":formula_contract["reference"],
+                       "scenario_assumptions":formula_contract.get("assumptions",{}),
+                       "recommendation_text":_recommendation_text(recommendation,suppliers,offers),
+                       "limitations":list(snap.get("preliminary_reasons",[])),"matrix":report_matrix,
+                       "recalculation":"NATIVE_RECALCULATED" if recalc.get("available") else "PENDING_NATIVE_RECALC"}
+            from display_values import label as decision_label
+            pdf_model["limitations"].append("Karar için bilgi yeterliliği: "+str(decision_label(decision_status)))
+            try:
+                pdf_info=render_pdf(pdf_model,pdf)
+            except Exception as primary:
+                try:
+                    from pdf_fallback import render_safety_pdf
+                    pdf_info=render_safety_pdf(pdf_model,pdf,str(primary))
+                except Exception as independent:
+                    pdf_info=_export_pdf_with_excel(xlsx,pdf)
+                    pdf_info["independent_error"]=str(independent)
+                pdf_info["primary_error"]=str(primary)
+            if not pdf_info.get("available") or not pdf.exists():
+                raise OSError("Official PDF unavailable; report pair was not published")
+            (out_dir/"report_model.json").write_text(json.dumps(pdf_model,ensure_ascii=False,indent=2,default=str),encoding="utf-8")
 
         decision_out=out_dir/"decision_snapshot.json"
         decision_payload={"reviewed_snapshot_sha256":snapshot_sha,"decision_status":decision_status,"summary":summary,"recommendation":recommendation,"claims":claims,"preliminary_reasons":snap.get('preliminary_reasons',[])}
         decision_out.write_text(json.dumps(decision_payload,ensure_ascii=False,indent=2,default=str),encoding='utf-8')
-        decision_id=_artifact(con,decision_out,run_root,"decision_snapshot",[snapshot_sha]); _insert_bindings(con,decision_id,snapshot_sha,[{"component_id":"decision_snapshot:claims","component_type":"json","locator":{"path":"claims"},"claim_ids":summary_claim_ids}])
-        if hasattr(con,"commit"): con.commit()
-        return {"xlsx":str(xlsx),"xlsx_artifact_id":xlsx_id,"recalc":recalc,"pdf":pdf_info,"decision_snapshot":str(decision_out),"reviewed_snapshot":snap_row["relative_path"],"reviewed_snapshot_sha256":snapshot_sha,"bindings":len(bindings)}
+        # Build/validate/rename precede one transaction; failures preserve the old group.
+        manifest = publish(out_dir,target,formula_contract,pdf_model,snapshot_sha)
+        ids, manifest = _register_official(con,run_root,target,manifest,snapshot_sha,formula_contract,bindings,summary_claim_ids)
+        pdf_info={**pdf_info,"path":str(target/"Teklif_Degerlendirme.pdf")}
+        if recalc.get('available') and recalc.get('path'):
+            recalc={**recalc,'path':str(target/'Teklif_Degerlendirme.xlsx')}
+        return {"xlsx":str(target/"Teklif_Degerlendirme.xlsx"),"xlsx_artifact_id":ids["xlsx"],"recalc":recalc,"pdf":pdf_info,"decision_snapshot":str(target/"decision_snapshot.json"),"reviewed_snapshot":snap_row["relative_path"],"reviewed_snapshot_sha256":snapshot_sha,"bindings":len(bindings),"delivery_status":"READY","paired_revision":manifest}
     finally:
         con.close()
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description="Export source-traceable procurement workbook and optional PDF")
+    ap = argparse.ArgumentParser(description="Export paired source-traceable procurement XLSX and PDF")
     ap.add_argument("--run", required=True)
     args = ap.parse_args()
     print(json.dumps(export_report(Path(args.run)), ensure_ascii=False, indent=2))

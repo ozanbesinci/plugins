@@ -1,5 +1,5 @@
 {
-  "policy_version": "5.0.17",
+  "policy_version": "5.1.0",
   "architecture": "deterministic_first",
   "state_store": "duckdb",
   "database_filename": "analysis.duckdb",
@@ -108,7 +108,7 @@
     "require_python_minimum": "3.11",
     "require_requirements_txt": true,
     "require_duckdb": true,
-    "require_duckdb_pdf_extension": true,
+    "require_duckdb_pdf_extension": false,
     "missing_runtime_status": "BLOCKED_ENVIRONMENT",
     "report_missing_components": true,
     "automatic_installation": false,

@@ -1,4 +1,5 @@
 from __future__ import annotations
+from test_engine_support import artifact_path
 import json,unittest
 from datetime import date
 from unittest import mock
@@ -37,16 +38,16 @@ class ReportFixTests(unittest.TestCase):
         assess(self.run);set_meta(self.run,'decision_status','PRELIMINARY_ONLY')
         c=connect(self.run);status,result=c.execute('SELECT status,result_json FROM calculations WHERE calculation_id=?',[cid]).fetchone();c.close()
         self.assertEqual(status,'incomplete');self.assertEqual(json.loads(result)['status'],'suppressed_by_comparability')
-        freeze(self.run);self.export();w=load_workbook(self.run/'output/Teklif_Degerlendirme.xlsx',data_only=True)
+        freeze(self.run);self.export();w=load_workbook(artifact_path(self.run),data_only=True)
         try:self.assertTrue(all(w['Teklif Karsilastirma'].cell(r,k).value is None for r in range(2,4) for k in [12,13]))
         finally:w.close()
         self.assertEqual(reconcile(self.run)['status'],'PASS')
-        w=load_workbook(self.run/'output/Teklif_Degerlendirme.xlsx');w['Teklif Karsilastirma']['L2']=9;w.save(self.run/'output/Teklif_Degerlendirme.xlsx');w.close()
+        w=load_workbook(artifact_path(self.run));w['Teklif Karsilastirma']['L2']=9;w.save(artifact_path(self.run));w.close()
         self.assertEqual(reconcile(self.run)['status'],'FAIL')
     def test_nonverified_total_is_visible_as_confirmation_without_value_loss(self):
         self.valid_pair();self.finish();c=connect(self.run);oid=c.execute('SELECT min(offer_id) FROM offers').fetchone()[0]
         c.execute("UPDATE facts SET evidence_status='requires_confirmation' WHERE offer_id=? AND field_key='total'",[oid]);c.commit();c.close();assess(self.run);set_meta(self.run,'decision_status','PRELIMINARY_ONLY');freeze(self.run);self.export()
-        w=load_workbook(self.run/'output/Teklif_Degerlendirme.xlsx',data_only=True);ws=w['Teklif Karsilastirma'];r=next(r for r in range(2,ws.max_row+1) if ws.cell(r,2).value==oid)
+        w=load_workbook(artifact_path(self.run),data_only=True);ws=w['Teklif Karsilastirma'];r=next(r for r in range(2,ws.max_row+1) if ws.cell(r,2).value==oid)
         try:
             self.assertEqual(ws.cell(r,17).value,'Teyit bekleniyor');self.assertEqual(ws.cell(r,18).value,'Teyit bekleniyor');self.assertIsInstance(ws.cell(r,3).value,(int,float));self.assertIn('Teyit bekleniyor',ws.cell(r,3).number_format)
         finally:w.close()

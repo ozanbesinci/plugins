@@ -61,11 +61,13 @@ def _source_loci(con, item, *, expected_cell=None):
             locator = json.loads(ev["locator_json"] or "{}")
         except (TypeError, ValueError):
             continue
-        tokens = re.findall(r"\b[A-Z]{1,3}[1-9][0-9]*\b", str(locator.get("cell") or locator.get("range") or "").upper())
+        from xlsx_locator import address as xlsx_address
+        target_address=xlsx_address(locator) or ''
+        tokens = re.findall(r"\b[A-Z]{1,3}[1-9][0-9]*\b", target_address)
         if expected_cell:
             within_range = False
             target = re.fullmatch(r"([A-Z]+)([0-9]+)", expected_cell)
-            span = re.fullmatch(r"([A-Z]+)([0-9]+):([A-Z]+)([0-9]+)", str(locator.get("range") or "").upper())
+            span = re.fullmatch(r"([A-Z]+)([0-9]+):([A-Z]+)([0-9]+)", target_address)
             if target and span:
                 def column(text):
                     value = 0

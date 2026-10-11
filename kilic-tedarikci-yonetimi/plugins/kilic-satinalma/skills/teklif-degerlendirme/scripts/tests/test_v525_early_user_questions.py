@@ -1,3 +1,4 @@
+from test_engine_support import artifact_path
 """User input stops dependent work and never verifies offer evidence by itself."""
 import json
 import unittest
@@ -58,7 +59,7 @@ class EarlyUserQuestions(WorkflowIntegrationTests):
             final=advance(self.run)
         self.assertEqual(final['status'],'NEEDS_USER_INPUT')
         self.assertTrue(any(x['issue_id']=='late-qa' for x in final['questions']))
-        self.assertTrue((self.run/'output'/'Teklif_Degerlendirme.xlsx').is_file())
+        self.assertTrue((artifact_path(self.run)).is_file())
         self.assertFalse(status(self.run)['deliverable_artifacts'])
         self.assertEqual(validate(self.run)['status'],'BLOCKED')
 
@@ -225,7 +226,7 @@ class EarlyUserQuestions(WorkflowIntegrationTests):
         self.assertEqual(resumed['status'],'PREPARED')
         self.assertEqual(advance(self.root/'new-run')['status'],'NEEDS_LLM')
         self.assertEqual(advance(self.run)['status'],'NEEDS_USER_INPUT')
-        self.assertFalse((self.run/'output'/'Teklif_Degerlendirme.xlsx').exists())
+        self.assertFalse((artifact_path(self.run)).exists())
 
 
 def load_tests(loader, tests, pattern):

@@ -1,3 +1,15 @@
+# 5.1.0 — 2026-10-11 (kararlı aday)
+
+- Her profilde tek formüllü XLSX ve çok sayfalı PDF; iş karar engelinde güvenli ön rapor ve kaynak bütünlüğü bildirimleri.
+- Immutable resmî/ön rapor çifti; dosya doğrulaması ve tek metadata transaction; fiziksel arızada bağımsız PDF/dizin yolu.
+- Kaynak bağlı şartname durum matrisi ve bağımsız sayımlar.
+- Konum/ifade bağlı güvenli formüller; mavi kullanıcı girdileriyle yeni ön rapor; kaynak/resmî karar/kapalı koşu korunumu.
+- Çok adımlı ödeme, KDV geri kazanımı, sabit veya yıl bazlı yaşam gideri/kalıntı NBD; bilinmeyen girdiler korunur.
+- 48 tekil maliyetli bağımsız tarihli nakit defteri: ayrı tür/para/tarih/projekte kur ve kapsam; spot kur/vadeli nakit karışımı ve çift kimlik reddi.
+- Python/Excel ortak Gregoryen tarih doğrulaması; yerel DATEVALUE yorumundan bağımsız hesap, gerçek 1900 gün farkı.
+- Gerçek motor kimliği ve taze sayaçlı ayrı test koşuları; Windows Unicode yol çıktısı; Excel izole kopya/süre sınırı.
+- Yeni PDF bağımlılıkları gereksinimlere eklendi; başlıkların ilk içerikle aynı sayfada kalması düzeltildi. Önceki test sayıları bu adayın kabulü değildir; sürümlü gerçek kanıt release varlıklarındadır.
+
 # 5.0.29 — 2026-10-09 (kararlı)
 
 - Ana beceri ve beş alt beceri aynı sürüme alınmıştır. 5.0.29-dev.10 kabul adayının çalışma kodu ve konfigürasyonu bayt bayt korunmuştur.

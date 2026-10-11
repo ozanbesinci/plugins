@@ -43,28 +43,14 @@ def _pdf_content_checks(pdf_path: Path, run_root: Path) -> list[str]:
     if not text.strip():
         return ["PDF has no extractable text; critical values cannot be mechanically verified"]
     folded=" ".join(text.casefold().split())
-    nums=_num_tokens(text)
     snap,_=load_latest(run_root)
     suppliers={r.get('supplier_id'):str(r.get('display_name') or '') for r in snap.get('suppliers',[])}
     for off in [x for x in snap.get('offers',[]) if x.get('status')=='active']:
         name=suppliers.get(off.get('supplier_id'),"")
         if name and " ".join(name.casefold().split()) not in folded:
             errors.append(f"PDF does not contain active supplier label: {name}")
-    expected=[]
-    for f in snap.get('facts',[]):
-        if f.get('field_key')=='total' and f.get('evidence_status')=='verified' and f.get('value_number') is not None:
-            expected.append((f"fact:{f.get('fact_id')}",Decimal(str(f['value_number']))))
-    for c in snap.get('calculations',[]):
-        if c.get('calculation_type')!='cost_summary' or c.get('status')!='complete': continue
-        try: obj=json.loads(c.get('result_json') or '{}')
-        except Exception: obj={}
-        for k in ('comparable_total','base_amount'):
-            if obj.get(k) is not None:
-                expected.append((f"calculation:{c.get('calculation_id')}:{k}",Decimal(str(obj[k]))))
-    for label,val in expected:
-        tol=max(Decimal('0.01'),abs(val)*Decimal('0.0001'))
-        if not any(abs(n-val)<=tol for n in nums):
-            errors.append(f"PDF does not preserve critical numeric value {label}={val}")
+    from pdf_bound_values import check_bound_values
+    errors.extend(check_bound_values(text, snap))
     from display_values import label
     status=str(label((snap.get('meta') or {}).get('decision_status') or '')).casefold()
     if status and status not in folded:
@@ -106,7 +92,7 @@ def _mechanical_db_checks(con, recommendation_present: bool) -> list[str]:
     return errors
 
 
-def _workbook_checks(path: Path, profile: str) -> tuple[list[str], list[str]]:
+def _workbook_checks(path: Path, profile: str, formula_contract=None) -> tuple[list[str], list[str]]:
     from openpyxl import load_workbook
 
     errors: list[str] = []
@@ -123,16 +109,22 @@ def _workbook_checks(path: Path, profile: str) -> tuple[list[str], list[str]]:
     missing = required - set(wb.sheetnames)
     if missing:
         errors.append(f"Missing required sheets: {sorted(missing)}")
+    if formula_contract is not None:
+        from scenario_formulas import validate_formulas
+        checked = validate_formulas(path, formula_contract)
+        errors.extend(checked["errors"])
     for ws in wb.worksheets:
         for row in ws.iter_rows():
             for cell in row:
                 v = cell.value
                 if isinstance(v, str) and any(tok in v for tok in ERROR_TOKENS):
                     errors.append(f"Formula/error token in {ws.title}!{cell.coordinate}: {v}")
-                if isinstance(v, str) and v.startswith("="):
+                if cell.data_type == "f" and (formula_contract is None or
+                        formula_contract["formulas"].get(ws.title + "!" + cell.coordinate) != v):
                     errors.append(f"Unverified formula remains in final workbook {ws.title}!{cell.coordinate}: {v}")
         if ws.max_column > 60:
             warnings.append(f"Very wide sheet: {ws.title} has {ws.max_column} columns")
+    wb.close()
     return errors, warnings
 
 
@@ -265,6 +257,8 @@ def run_qa(run_root: Path) -> dict[str, Any]:
     from provenance_survival import check as provenance_check
     cross_output = cross_output_check(run_root)
     provenance = provenance_check(run_root)
+    from official_delivery import inspect_official
+    official_delivery = inspect_official(run_root)
     recommendation_raw = get_meta(run_root, "decision_recommendation", "null")
     try:
         recommendation_present = json.loads(recommendation_raw) is not None
@@ -276,6 +270,8 @@ def run_qa(run_root: Path) -> dict[str, Any]:
         con.execute("DELETE FROM qa_findings WHERE finding_type LIKE 'mechanical_%'")
         con.execute("DELETE FROM qa_findings WHERE finding_type LIKE 'formula_audit_%'")
         errors = _mechanical_db_checks(con, recommendation_present)
+        if official_delivery["delivery_status"] == "FAILED":
+            errors.append("Official paired delivery failed: " + official_delivery["error"])
         if cross_output.get("status") != "PASS":
             errors.append(f"Cross-output reconciliation failed with {len(cross_output.get('findings', []))} mismatch(es)")
         if provenance.get("status") != "PASS":
@@ -288,7 +284,8 @@ def run_qa(run_root: Path) -> dict[str, Any]:
             xlsx_path = run_root / xlsx_art["relative_path"]
             if sha256_file(xlsx_path) != xlsx_art["sha256"]:
                 errors.append("XLSX artifact hash mismatch")
-            wb_errors, wb_warnings = _workbook_checks(xlsx_path, profile)
+            formula_contract = get_meta(run_root, "formula_contract_" + xlsx_art["artifact_id"], None, parse_json=True)
+            wb_errors, wb_warnings = _workbook_checks(xlsx_path, profile, formula_contract)
             errors.extend(wb_errors)
             warnings.extend(wb_warnings)
             from xlsx_formula_audit import audit as formula_audit
@@ -312,10 +309,10 @@ def run_qa(run_root: Path) -> dict[str, Any]:
         visual_pending = 0
         visual_status = "NOT_APPLICABLE" if profile != "yuksek_guvence" else "NOT_RUN"
         pdf_art = _latest_artifact(con, "pdf")
-        if profile == "yuksek_guvence":
+        if profile in {"hizli", "standart", "yuksek_guvence"}:
             if not pdf_art:
-                _finding(con, "mechanical_missing_pdf", "critical", "High-assurance profile requires final PDF export.")
-                errors.append("High-assurance PDF missing")
+                _finding(con, "mechanical_missing_pdf", "critical", "Every profile requires final PDF export.")
+                errors.append("Mandatory PDF missing")
             else:
                 pdf_path = run_root / pdf_art["relative_path"]
                 if sha256_file(pdf_path) != pdf_art["sha256"]:
@@ -328,7 +325,7 @@ def run_qa(run_root: Path) -> dict[str, Any]:
                     # Validate mechanical content/hash first. A failed or
                     # preliminary artifact cannot begin final visual acceptance.
                     decision_status = str(get_meta(run_root, "decision_status", "UNKNOWN"))
-                    if not errors and decision_status == "SUFFICIENT":
+                    if profile == "yuksek_guvence" and not errors and decision_status == "SUFFICIENT":
                         renders = _render_pdf(pdf_path, run_root / "qa" / pdf_art["artifact_id"])
                         visual_tasks = _visual_tasks(con, run_root, pdf_art, renders, full_first=True)
                         visual_status = "PENDING" if renders else "NOT_RUN"

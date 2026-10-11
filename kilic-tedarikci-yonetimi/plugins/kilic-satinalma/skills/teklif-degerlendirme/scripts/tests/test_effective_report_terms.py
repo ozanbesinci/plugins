@@ -23,8 +23,9 @@ class EffectiveReportTermTests(unittest.TestCase):
               'facts':facts,'calculations':[{'calculation_id':'C','offer_id':'O','calculation_type':'cost_summary','result_json':json.dumps(cost)},
                                           {'calculation_id':'SC','offer_id':None,'calculation_type':'scoring','result_json':json.dumps({'status':'cost_only','price_scores':[{'offer_id':'O','price_score_0_10':'10'}]})}]}
         original=copy.deepcopy(snap); bindings=[]
-        class Con:
-            def close(self):pass
+        from test_engine_support import ReportFixtureConnection
+        class Con(ReportFixtureConnection):
+            def __init__(self): super().__init__('snapshot')
         with tempfile.TemporaryDirectory() as temp:
             run=Path(temp)
             with mock.patch('reviewed_snapshot.load_latest',return_value=(snap,{'sha256':'snapshot','relative_path':'reviewed/snapshot.json'})),mock.patch('report_export.connect',return_value=Con()),mock.patch('report_export._artifact',return_value='A'),mock.patch('report_export._insert_bindings',side_effect=lambda c,a,s,r:bindings.extend(r)),mock.patch('report_export._recalc_with_excel',return_value={'available':False}):

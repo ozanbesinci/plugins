@@ -10,6 +10,7 @@ from typing import Any
 from generated_issues import is_generated_issue
 from common import json_text, stable_id, utc_now
 from db import connect, one_as_dict, rows_as_dict
+from xlsx_locator import address as xlsx_address
 from llm_result_validate import ResultValidationError, record_validation, validate_result
 
 VALID_EVIDENCE_STATUS = {"verified", "missing", "excluded", "unreadable", "conflicting", "assumption", "requires_confirmation"}
@@ -320,10 +321,10 @@ def _validate_locator_and_quote(con, document_id: str, unit_id: str | None, loca
             continue
         if locator.get("page") is not None and uloc.get("page") != locator.get("page"):
             continue
-        if u.get("unit_type") == "xlsx_sheet" and (locator.get("range") or locator.get("cell")):
+        target = xlsx_address(locator) if u.get("unit_type") == "xlsx_sheet" else None
+        if target:
             st = _json(u.get("structured_json"), {}) or {}
             cells = {str(c.get("cell")) for c in st.get("cells", []) if c.get("cell")}
-            target = str(locator.get("cell") or locator.get("range") or "")
             refs = re.findall(r"\b[A-Z]{1,3}\d+\b", target.upper())
             if refs and not all(ref in cells for ref in refs):
                 continue

@@ -1,3 +1,4 @@
+from test_engine_support import artifact_path
 """Production transitions with independently authored expected values, no model calls."""
 import json
 import unittest
@@ -146,11 +147,11 @@ class BoundaryIntegration(unittest.TestCase):
         self.assertNotEqual(items[0]['evidence_refs'],['item-a'])
         self.finish_saved()
         from openpyxl import load_workbook
-        wb=load_workbook(self.run/'output/Teklif_Degerlendirme.xlsx',data_only=True);ws=wb['Kalem Detayi']
+        wb=load_workbook(artifact_path(self.run),data_only=True);ws=wb['Kalem Detayi']
         self.assertEqual([ws.cell(r,5).value for r in [2,3]],[10,10]);self.assertEqual([ws.cell(r,8).value for r in [2,3]],[100,100])
         self.assertEqual(wb['Kalem Hesabi']['D2'].value,'calculated');self.assertEqual(wb['Kalem Hesabi']['E2'].value,'2000');self.assertEqual(wb['Kalem Hesabi']['H2'].value,'Hayir');wb.close()
         from cross_output_consistency import check
-        wb=load_workbook(self.run/'output/Teklif_Degerlendirme.xlsx');wb['Kalem Detayi']['H2']=999;wb.save(self.run/'output/Teklif_Degerlendirme.xlsx');wb.close()
+        wb=load_workbook(artifact_path(self.run));wb['Kalem Detayi']['H2']=999;wb.save(artifact_path(self.run));wb.close()
         self.assertEqual(check(self.run)['status'],'FAIL')
 
     def test_alternative_item_keys_do_not_silently_export_blank_prices(self):

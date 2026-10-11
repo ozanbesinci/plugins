@@ -327,7 +327,8 @@ def _buyer_declarations(con, response: dict, question: dict) -> list[dict]:
                     if ev['unit_id'] != source_row['unit_id']:
                         continue
                     try:
-                        loc=json.loads(ev['locator_json'] or '{}').get('range','').upper()
+                        from xlsx_locator import address as xlsx_address
+                        loc=xlsx_address(json.loads(ev['locator_json'] or '{}')) or ''
                     except ValueError:
                         continue
                     m=re.fullmatch(r'([A-Z]+)(\d+)(?::([A-Z]+)(\d+))?',loc)
@@ -403,6 +404,33 @@ def _buyer_declarations(con, response: dict, question: dict) -> list[dict]:
             'source_hashes':{d['document_id']:d['sha256'] for d in documents}})
     return result
 
+
+def open_correction(run_root: Path, offer_id: str, field_key: str, user_message: str) -> dict:
+    """Bind an explicit buyer correction to a question; never change source facts."""
+    assert_compatible(run_root, Path(__file__).resolve().parents[1])
+    if not isinstance(offer_id,str) or not isinstance(field_key,str) or field_key not in {'quantity','validity'} or not isinstance(user_message,str) or not user_message.strip() or len(user_message)>6000:
+        raise ValueError('Explicit quantity/validity correction message required')
+    con=connect(run_root)
+    try:
+        if con.execute("SELECT 1 FROM workflow_state WHERE phase='COMPLETE' AND status IN ('PASS','PARTIAL')").fetchone():
+            raise ValueError('Tamamlanmış koşuya düzeltme eklenemez; yeni koşu gerekir')
+        fact=con.execute("SELECT f.fact_id FROM facts f JOIN offers o ON o.offer_id=f.offer_id WHERE f.offer_id=? AND f.field_key=? AND o.status='active'",[offer_id,field_key]).fetchall()
+        if len(fact)!=1:raise ValueError('Correction requires one exact active offer/field')
+        docs=rows_as_dict(con,'SELECT document_id,sha256,metadata_json FROM documents WHERE offer_id=? AND active=true',[offer_id])
+        if not docs:raise ValueError('Correction requires active source documents')
+        for doc in docs:
+            relative=json.loads(doc['metadata_json'] or '{}').get('archived_source_path')
+            archived=(run_root/relative).resolve() if isinstance(relative,str) else None
+            if not archived or not archived.is_relative_to(run_root.resolve()) or not archived.is_file() or sha256_file(archived)!=doc['sha256']:
+                raise ValueError('Correction source archive integrity failed')
+        issue_id=stable_id('buyer_correction',offer_id,field_key,user_message,length=24)
+        if not con.execute('SELECT 1 FROM open_issues WHERE issue_id=?',[issue_id]).fetchone():
+            con.execute("INSERT INTO open_issues(issue_id,owner,severity,issue_type,question,fact_ids_json,evidence_ids_json,status,created_at) VALUES (?,?,?,?,?,?,?,?,?)",[issue_id,'IDARE','critical','critical_field','Açık kullanıcı düzeltmesi: '+user_message,json_text([fact[0][0]]),'[]','open',utc_now()])
+            con.execute('INSERT INTO workflow_events(event_id,phase,event_type,payload_json,created_at) VALUES (?,?,?,?,?)',[stable_id('event',issue_id,length=24),'SUFFICIENCY','buyer_correction_requested',json_text({'offer_id':offer_id,'field_key':field_key,'user_message':user_message,'source_hashes':{d['document_id']:d['sha256'] for d in docs}}),utc_now()])
+            con.commit()
+    finally:con.close()
+    question=next(q for q in questions(run_root,limit=10000,include_medium=True)['questions'] if q['issue_id']==issue_id)
+    return {'status':'CORRECTION_QUESTION_OPEN','question':question,'source_facts_changed':False,'issue_resolved':False}
 
 def record_response(run_root: Path, response: dict, next_run: Path) -> dict:
     """Audit an actual user response and create a new-run request. No fact is verified here."""
@@ -541,10 +569,18 @@ def record_response(run_root: Path, response: dict, next_run: Path) -> dict:
 def main() -> None:
     ap=argparse.ArgumentParser(description='Kaynak kapsamına bağlı kullanıcı yanıtı kaydı')
     ap.add_argument('--run',required=True)
-    ap.add_argument('--response-file',required=True)
-    ap.add_argument('--next-run',required=True)
+    action=ap.add_mutually_exclusive_group(required=True)
+    action.add_argument('--response-file')
+    action.add_argument('--correction-file')
+    ap.add_argument('--next-run')
     a=ap.parse_args()
-    result=record_response(Path(a.run),json.loads(Path(a.response_file).read_text(encoding='utf-8-sig')),Path(a.next_run))
+    if a.correction_file:
+        request=json.loads(Path(a.correction_file).read_text(encoding='utf-8-sig'))
+        if not isinstance(request,dict) or set(request)!={'offer_id','field_key','user_message'}:ap.error('Correction fields invalid')
+        result=open_correction(Path(a.run),**request)
+    else:
+        if not a.next_run:ap.error('--next-run required for response')
+        result=record_response(Path(a.run),json.loads(Path(a.response_file).read_text(encoding='utf-8-sig')),Path(a.next_run))
     print(json.dumps(result,ensure_ascii=False,indent=2))
 
 

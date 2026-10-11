@@ -1,7 +1,7 @@
 from __future__ import annotations
 import json, os, shutil, sys, tempfile, unittest
 from pathlib import Path
-os.environ['TEKLIF_TEST_SQLITE']='1'
+os.environ.setdefault('TEKLIF_TEST_SQLITE', '1')
 SCRIPTS=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(SCRIPTS))
 from db import init_db, connect

@@ -7,7 +7,7 @@ Kullanıcının doğrudan verdiği olgu, teyit, düzeltme ve karar yetkili kulla
 
 ## Durma ve soru gösterimi
 
-`workflow.py prepare` veya `workflow.py next` sonucu `NEEDS_USER_INPUT` ise `questions` alanındaki sorular, kaynak ve kapsam bilgileriyle kullanıcıya gösterilir. Aynı kapsamda en çok üç soru bir turda sunulur; `remaining_question_count` sonraki turu gösterir. Gereken soru sayısı toplamda sınırlandırılmaz. `PREPARE` içindeki belge sınıflandırma görevi kaynak ilişkisini açıklığa kavuşturabilir; kaynak otoritesi açıkken sonraki bağımlı görevler dispatch edilmez. Karar özeti, Excel/PDF ve teslim bekler.
+`workflow.py prepare` veya `workflow.py next` sonucu `NEEDS_USER_INPUT` ise `questions` alanındaki sorular, kaynak ve kapsam bilgileriyle kullanıcıya gösterilir. Aynı kapsamda en çok üç soru bir turda sunulur; `remaining_question_count` sonraki turu gösterir. Gereken soru sayısı toplamda sınırlandırılmaz. `PREPARE` içindeki belge sınıflandırma görevi kaynak ilişkisini açıklığa kavuşturabilir; kaynak otoritesi açıkken sonraki bağımlı görevler dispatch edilmez. Karar özeti ve kesin öneri bekler. Ön XLSX/PDF çifti kaynakları, belirsizlikleri ve gereken aksiyonu gösterir; teslim READY olsa da karar VERIFIED değildir.
 
 Her soru `issue_id`, `scope_sha256`, `owner`, `fact_ids`, `evidence_ids`, `sources` ve karar etkisiyle gelir. Soruların başlığı ve kullanıcıya sunulan açıklama resmî ve nesnel Türkçeyle hazırlanır. Aynı soru, aynı kapsamda tekrarlanan `next` çağrısında yeni bir soru sayılmaz.
 
@@ -33,7 +33,11 @@ Firma/teklif/revizyon ve ticari alan için açık kullanıcı teyidi öncelikli 
 
 ## Yapılandırılmış alıcı beyanı
 
-Gerçek kullanıcı yanıtı `answer_kind: clarification` ve `buyer_inputs` ile kaydedilebilir. Mevcut kodun desteklediği türler: `currency`, `reference_quantity`, `scope_cost`, `payment_terms`, `warranty_terms`. Tarih beyanlarının motora uygulanması henüz desteklenmemektedir; kullanıcı teyidi geçerlidir fakat bu entegrasyon tamamlanmış sayılmaz. Her kayıt kesin teklif kimliği, soru kimliği, soru kapsamı ve değişmemiş kaynak hashlerine bağlıdır. Bir açıklamadan verilmemiş miktar, bedel, para birimi veya ödeme tarihi türetilmez.
+Gerçek kullanıcı yanıtı `answer_kind: clarification` ve `buyer_inputs` ile kaydedilebilir. Desteklenen türler: `currency`, `reference_quantity`, `scope_cost`, `payment_terms`, `warranty_terms`, `validity_date`, `quote_date`. Her kayıt kesin teklif kimliği, soru kimliği, soru kapsamı ve değişmemiş kaynak hashlerine bağlıdır. Bir açıklamadan verilmemiş miktar, bedel, para birimi veya ödeme tarihi türetilmez.
+
+Kullanıcı miktarı veya son geçerlilik tarihini açıkça düzeltir ve uygun açık soru yoksa `user_question_gate.py --run "<run>" --correction-file "<json>"` dar bir düzeltme sorusu açar. JSON yalnız `offer_id`, `field_key` (`quantity`/`validity`) ve gerçek kullanıcı cümlesi `user_message` içerir. Kaynak arşivi ve tek aktif teklif/alan bağı doğrulanır; kapanmış koşu açılmaz. Bu işlem kaynağı değiştirmez, değeri uygulamaz, VERIFIED vermez. Dönen sorunun güncel kapsamına bağlı gerçek yapılandırılmış yanıt normal `record_response` ve yeni koşu yoluyla uygulanır. Tedarikçi belgesinin veya modelin içeriği kullanıcı düzeltmesi diye kullanılmaz.
+
+XLSX kaynak adresleri `cell`, `range` ve `cell_range` biçimlerinde aynı dar adres kontrolüne tabidir; çelişen veya geçersiz adresler reddedilir. Miktar düzeltmesinde miktar/birim/fiyat/satır toplamı aynı teklif ve kaynak satırının kanıtı içinde kalmalıdır.
 
 Referans miktarı yalnız kaynakta kanıtlanan satırın birim fiyatıyla yeniden hesaplanır; kaynak toplamı korunur ve fark ayrı gösterilir. Kullanıcının açık sıfır ilave maliyet yanıtı yalnız ilgili kapsam kalemine uygulanır. Yanıtın başarıyla kaydedilmesi sorunun çözüldüğü veya teklif olgusunun `verified` olduğu anlamına gelmez. Yeni koşuda bağlı hesap doğrulandıktan sonra yalnız kapsanan soru kapanabilir. Kaynak veya soru kapsamı değişirse eski yanıt doğrudan taşınmaz.
 

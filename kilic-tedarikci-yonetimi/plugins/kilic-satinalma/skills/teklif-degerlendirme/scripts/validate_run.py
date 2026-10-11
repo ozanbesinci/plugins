@@ -34,6 +34,10 @@ def validate(run_root: Path) -> dict[str, Any]:
         suff = {}
     con = connect(run_root)
     blocking: list[str] = []
+    from official_delivery import inspect_official
+    official = inspect_official(run_root)
+    if official["delivery_status"] == "FAILED":
+        blocking.append("Official paired delivery failed: " + official["error"])
     preliminary: list[str] = []
     from user_question_gate import waiting as user_input_waiting
     wait = user_input_waiting(run_root)
@@ -165,10 +169,10 @@ def validate(run_root: Path) -> dict[str, Any]:
             bindings = con.execute("SELECT count(*) FROM artifact_bindings WHERE artifact_id=? AND snapshot_sha256=?", [xlsx[0]["artifact_id"], snapshot_sha or ""]).fetchone()[0]
             if not bindings:
                 blocking.append("Final XLSX has no reviewed-snapshot artifact bindings")
-        if profile == "yuksek_guvence":
+        if profile in {"hizli", "standart", "yuksek_guvence"}:
             pdf = rows_as_dict(con, "SELECT * FROM artifacts WHERE artifact_type='pdf' AND status='ready' ORDER BY created_at DESC")
             if not pdf:
-                blocking.append("High-assurance final PDF artifact is missing")
+                blocking.append("Mandatory final PDF artifact is missing")
             else:
                 p = run_root / pdf[0]["relative_path"]
                 if not p.exists() or sha256_file(p) != pdf[0]["sha256"]:

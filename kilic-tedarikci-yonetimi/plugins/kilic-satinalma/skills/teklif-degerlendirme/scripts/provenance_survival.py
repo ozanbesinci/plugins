@@ -18,7 +18,7 @@ def check(run_root:Path)->dict[str,Any]:
     try:
         facts={x['fact_id']:x for x in snap.get('facts',[])}; calcs={x['calculation_id']:x for x in snap.get('calculations',[])}; reqs={x['requirement_id']:x for x in snap.get('requirements',[])}; claims={x['claim_id']:x for x in snap.get('claims',[])}
         latest=current_artifacts(con)
-        for kind in ['xlsx','decision_snapshot'] + (['pdf'] if str(snap.get('meta',{}).get('profile'))=='yuksek_guvence' else []):
+        for kind in ['xlsx', 'decision_snapshot', 'pdf']:
             a=latest.get(kind)
             if not a: findings.append({'severity':'critical','kind':kind,'message':'required artifact missing'}); continue
             path=run_root/a['relative_path']

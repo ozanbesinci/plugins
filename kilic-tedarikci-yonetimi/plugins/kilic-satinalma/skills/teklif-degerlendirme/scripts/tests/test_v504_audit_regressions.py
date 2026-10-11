@@ -1,4 +1,5 @@
 from __future__ import annotations
+from test_engine_support import artifact_path
 
 import json
 import os
@@ -15,7 +16,7 @@ from datetime import date, datetime
 from pathlib import Path
 from unittest import mock
 
-os.environ['TEKLIF_TEST_SQLITE'] = '1'
+os.environ.setdefault('TEKLIF_TEST_SQLITE', '1')
 SCRIPTS = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SCRIPTS))
 
@@ -145,7 +146,7 @@ class V504AuditRegressionTests(unittest.TestCase):
         self.assertEqual(step['status'],'NEEDS_LLM')
         self.assertEqual(step['summary_retry']['status'],'RETRY_PENDING')
         self.assertNotEqual(step['tasks'][0]['task_id'],tid)
-        self.assertFalse((self.run/'output'/'Teklif_Degerlendirme.xlsx').exists())
+        self.assertFalse((artifact_path(self.run)).exists())
         from workflow import _finish_outputs
         self.assertEqual(_finish_outputs(self.run,preliminary=False)['status'],'BLOCKED')
         con=connect(self.run)
@@ -294,10 +295,10 @@ class V504AuditRegressionTests(unittest.TestCase):
         self.assertEqual(rr['scoring_parameters'],scoring)
         self.assertIn('--resume-request',result['resume_command'])
 
-    def test_verified_output_is_formula_free_and_source_archive_is_hash_bound(self):
+    def test_verified_base_has_only_contracted_scenarios_and_hash_bound_sources(self):
         import hashlib
         self.valid_pair(); final=self.finish_valid(); self.assertEqual(final['status'],'VERIFIED')
-        out=self.run/'output'/'Teklif_Degerlendirme.xlsx'
+        out=artifact_path(self.run)
         wb=load_workbook(out,data_only=False)
         formulas=[]
         for ws in wb.worksheets:
@@ -305,7 +306,16 @@ class V504AuditRegressionTests(unittest.TestCase):
                 for cell in row:
                     if cell.data_type=='f' or (isinstance(cell.value,str) and cell.value.startswith('=')):
                         formulas.append(f"{ws.title}!{cell.coordinate}")
-        self.assertEqual(formulas,[])
+        contract=get_meta(self.run,'formula_contract_'+final['report']['xlsx_artifact_id'],None,parse_json=True)
+        self.assertIsNotNone(contract)
+        self.assertEqual(set(formulas),set(contract['formulas']))
+        from scenario_formulas import SHEETS, validate_formulas
+        from finance_workbook import FINANCIAL_SHEETS
+        from dated_workbook import SUMMARY, DETAIL
+        self.assertTrue(all(locator.rsplit('!',1)[0] in set(SHEETS)|set(FINANCIAL_SHEETS)|{SUMMARY,DETAIL,'Sartname Sayim'} for locator in formulas))
+        self.assertEqual(validate_formulas(out,contract)['status'],'PASS')
+        self.assertTrue(all(cell.data_type!='f' for row in wb['Teklif Karsilastirma'] for cell in row))
+        wb.close()
         con=connect(self.run)
         try:
             docs=con.execute("SELECT sha256, metadata_json FROM documents WHERE active=true").fetchall()
@@ -441,7 +451,7 @@ class V504AuditRegressionTests(unittest.TestCase):
         self.assertEqual(diff['basis'],'fx_normalized')
         self.assertEqual(abs(float(diff['difference'])),220000.0)
 
-    def test_pdf_content_check_requires_critical_snapshot_values(self):
+    def test_unbound_pdf_numbers_never_verify_snapshot_values(self):
         import qa
         fake=types.SimpleNamespace(pages=[types.SimpleNamespace(extract_text=lambda:'Alpha teklif Beta teklif 100000 105000 sufficient')])
         with mock.patch.dict(sys.modules,{'pypdf':types.SimpleNamespace(PdfReader=lambda _:fake)}):
@@ -451,7 +461,7 @@ class V504AuditRegressionTests(unittest.TestCase):
             set_meta(self.run,'decision_status','SUFFICIENT')
             snap=freeze(self.run)
             errors=qa._pdf_content_checks(self.root/'fake.pdf',self.run)
-            self.assertFalse(any('critical numeric value' in e for e in errors),errors)
+            self.assertTrue(any('critical numeric value' in e for e in errors),errors)
         fake_bad=types.SimpleNamespace(pages=[types.SimpleNamespace(extract_text=lambda:'Alpha teklif Beta teklif sufficient')])
         with mock.patch.dict(sys.modules,{'pypdf':types.SimpleNamespace(PdfReader=lambda _:fake_bad)}):
             errors=qa._pdf_content_checks(self.root/'fake.pdf',self.run)

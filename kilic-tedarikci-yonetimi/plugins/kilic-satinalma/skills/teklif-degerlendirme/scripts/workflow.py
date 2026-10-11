@@ -28,6 +28,7 @@ from grain_integrity import check as check_grain_integrity
 from scope_ledger import build as build_scope_ledger
 from error_log import log_failures, log_error
 from user_question_gate import waiting as user_input_waiting
+from report_hooks import terminal_reports
 
 PHASES = ["PREPARE", "INGEST", "REQUIREMENTS", "EXTRACT", "NORMALIZE", "SUFFICIENCY", "REVIEW", "ADJUDICATE", "REPORT", "QA", "COMPLETE"]
 
@@ -163,6 +164,7 @@ def _refresh_deterministic_controls(run_root: Path) -> dict[str, Any]:
     }
 
 @log_failures('workflow.prepare')
+@terminal_reports(run_arg=1)
 def prepare(source: Path, run_root: Path, profile: str, analysis_date_value: date | None = None, financial_params: dict[str, Any] | None = None, scoring_params: dict[str, Any] | None = None, user_response_record: Path | None = None, user_response_sha256: str | None = None, supplier_folder_declaration: Path | None = None) -> dict[str, Any]:
     skill_root = Path(__file__).resolve().parents[1]
     if user_response_record is not None:
@@ -200,7 +202,7 @@ def prepare(source: Path, run_root: Path, profile: str, analysis_date_value: dat
     # SQLite bypass exists only for this skill's deterministic test suite.
     if os.environ.get("TEKLIF_TEST_SQLITE") != "1":
         from environment_check import check as environment_check
-        env = environment_check(skill_root / "requirements.txt", require_pdf_extension=True)
+        env = environment_check(skill_root / "requirements.txt", require_pdf_extension=False)
         dump_json(run_root / "environment.json", env)
         if env.get("status") != "READY":
             # Fail closed: no inventory, no analysis and no installation attempt.
@@ -260,7 +262,7 @@ def prepare(source: Path, run_root: Path, profile: str, analysis_date_value: dat
                        "legal_entity_verified": False, "declaration_file_sha256": declaration_sha,
                        "declaration_file_path": str(supplier_folder_declaration.resolve())}
         set_meta(run_root, "supplier_folder_declaration_v1", declaration)
-    run_contract={"schema":"teklif-run-contract/v1","source_root":str(source_resolved),"profile":profile,"analysis_date":(analysis_date_value or date.today()).isoformat(),"expected_sources":expected_sources,"expected_outputs":["xlsx"]+(["pdf"] if profile=="yuksek_guvence" else [])}
+    run_contract={"schema":"teklif-run-contract/v1","source_root":str(source_resolved),"profile":profile,"analysis_date":(analysis_date_value or date.today()).isoformat(),"expected_sources":expected_sources,"expected_outputs":["xlsx","pdf"]}
     if declaration_sha is not None:
         run_contract["supplier_folder_declaration_sha256"] = declaration_sha
     dump_json(run_root/"run_contract.json",run_contract)
@@ -437,6 +439,7 @@ def _completed_verified_result(run_root: Path) -> dict[str, Any] | None:
 
 
 @log_failures('workflow.advance')
+@terminal_reports(run_arg=0)
 def advance(run_root: Path) -> dict[str, Any]:
     from run_compatibility import assert_compatible
     assert_compatible(run_root, Path(__file__).resolve().parents[1])
@@ -582,6 +585,7 @@ def _summary_retry_step(run_root: Path, policy: dict[str, Any]) -> dict[str, Any
     return result
 
 
+@terminal_reports(run_arg=0)
 def _finish_outputs(run_root: Path, preliminary: bool) -> dict[str, Any]:
     wait = user_input_waiting(run_root)
     if wait:
@@ -601,11 +605,21 @@ def _finish_outputs(run_root: Path, preliminary: bool) -> dict[str, Any]:
         set_state(run_root, "QA", "SKIPPED", {"reason": "pre-output reviewed snapshot gate blocked"})
         set_state(run_root, "COMPLETE", "BLOCKED", result)
         return result
-    if not _artifact_bound_to_snapshot(run_root, "xlsx", snapshot["sha256"]):
+    from official_delivery import inspect_official
+    official = inspect_official(run_root, snapshot["sha256"])
+    legacy_pair = official["delivery_status"] == "NOT_CREATED" and all(
+        _artifact_bound_to_snapshot(run_root, kind, snapshot["sha256"]) for kind in ("xlsx", "pdf", "decision_snapshot"))
+    if official["delivery_status"] != "READY" and not legacy_pair:
         from report_export import export_report
-        report = export_report(run_root)
+        from official_delivery import PairValidationError
+        try:
+            report = export_report(run_root)
+        except PairValidationError as exc:
+            result = {"status": "BLOCKED", "reason": "Resmî rapor çiftinin doğrulaması başarısız: " + str(exc), "deliverable_artifacts": False}
+            set_state(run_root, "REPORT", "BLOCKED", result)
+            return result
     else:
-        report = {"reused": True, "reviewed_snapshot": snapshot}
+        report = {"reused": True, "reviewed_snapshot": snapshot, "official_report_delivery": official}
     wait = user_input_waiting(run_root)
     if wait:
         set_state(run_root, "REPORT", "BLOCKED", {"reason": "critical business input arose during report export"})
@@ -681,6 +695,8 @@ def status(run_root: Path) -> dict[str, Any]:
             delivery_reason = 'final verification cannot be read'
     if delivery_reason:
         artifacts = [{**item, 'deliverable': False, 'delivery_reason': delivery_reason} for item in artifacts]
+    from report_delivery import inspect_preliminary
+    preliminary_delivery = inspect_preliminary(run_root)
     return {
         "profile": _profile(run_root),
         "budget": _token_budget(run_root, policy),
@@ -697,6 +713,8 @@ def status(run_root: Path) -> dict[str, Any]:
         "user_input": question_state,
         "deliverable_artifacts": delivery_reason is None,
         "delivery_reason": delivery_reason,
+        "preliminary_report_delivery": preliminary_delivery,
+        "report_delivery_status": "READY" if delivery_reason is None else preliminary_delivery["delivery_status"],
     }
 
 

@@ -3,8 +3,7 @@ name: teklif-karar-rapor
 description: Doğrulanmış teklif analizinden tek gerekçeli satınalma eylemi önerisi, aynı snapshot bağlı Excel/PDF ve çıktı QA üretimini yönetir. Ana teklif akışının rapor/kapanışında kullan; eksik girdiyi tamamlamaz ve kullanıcı adına satınalma onayı vermez.
 ---
 
-# Karar ve Rapor — 5.0.29
-
+# Karar ve Rapor — 5.1.0
 ## Kullanıcı kanıtı önceliği
 
 Kullanıcının doğrudan verdiği olgu, teyit, düzeltme ve karar yetkili kullanıcı kanıtıdır; ilgili değerlendirme girdisinde belge, model çıkarımı ve önceki varsayımdan önceliklidir.
@@ -39,11 +38,13 @@ Karar için yeterli girdi ve snapshot olması **rapora hazır** durumudur; `VERI
 
 Tamamlanan analiz tek ana eylem ve gerekçeyle kapanır: firma/kapsam/kanıtlı tutar/ticari koşul/risk ve sonraki adım. Tam doğrulanmış girdide uygun firmayla ilerlemeyi önerebilirsin. Kritik ticari bilgi eksikse somut teklif/teyit yenileme talebi veya mevcut şartlarda alımı önermeme eylemi verir; zorla firma seçmezsin. Cevap bekleyen işi bitmiş sayma. Teknik hesap/QA BLOCKED başarılı karar teslimi değildir. Öneri, satınalma onayı/teklif kabulü/imza değildir.
 
-Karar veya karşılaştırmalı Excel/PDF öncesi çözülmemiş kullanıcı sorusuna dön. Otomatik ön Excel/PDF'yi yeni soru kuralı sağlanmış gibi sunma. Kullanıcı ayrıca RFI listesi isterse ayrı bilgi çıktısı olabilir; karar raporu veya VERIFIED değildir.
+Kesin karar öncesi çözülmemiş kullanıcı sorusuna dön. Açık soru, eksik fiyat/belge, tek tedarikçi veya tüm tekliflerin elenmesi rapor üretimini durdurmaz. Tek XLSX/PDF çiftinde gerekçe, kapsam, kaynak ve sonraki aksiyon bulunur. Ön rapor teslimini soru çözümü veya VERIFIED olarak sunma; kullanıcı senaryolarını kaynak ve resmî karar hesabından ayrı göster.
 
-Claim_registry + scope_ledger + bağımsız hesap ve yeterlilik kapılarından sonra reviewed_snapshot immutable dondurulur. Excel/PDF/özet aynı snapshot ve parent SHA'dan türetilir; canlı DB'den yeni değer ekleme. Artifact bindings kaynak/locator/status/claim/caveat'ı korur. report_export.py tek export yoludur; yeni rapor motoru kurma.
+Claim_registry + scope_ledger + bağımsız hesap ve yeterlilik kapılarından sonra reviewed_snapshot immutable dondurulur. Resmî Excel/PDF/özet aynı snapshot ve parent SHA'dan türetilir; canlı DB'den yeni değer ekleme. Artifact bindings kaynak/locator/status/claim/caveat'ı korur. `report_export.py` resmî çıktı yoludur; `report_delivery.py` kesin karar kapısını yükseltmeden ön rapor veya güvenli bildirim çifti üretir. Fiziksel arızada sınırlı alternatif yol denenir; iki dosya yoksa başarı denmez.
 
 ## Kapanış
+
+Resmî aktif çıktı grubu `official_delivery.py` ile, ön rapor grubu `report_delivery.py` ile doğrulanır. Geçmiş sabit `output/` dosyasını güncel revizyon yerine kullanma. Excel'den içe alınan kullanıcı senaryosu yeni ön rapor çiftidir; resmî snapshot/karar veya kapanış güvencesini yükseltmez. PDF'de senaryo girdileri ve hesaplanan/bilinmeyen finansal değerler kaynak olgularından ayrı gösterilir.
 
 Mekanik formül/kaynak/bütünlük QA, cross_output_consistency, provenance_survival, revision-aware coverage ve gereken görsel QA'dan sonra validate_run.py. artifact_visual_review yalnız paketteki renderlara bakar; mekanik PASS görsel inceleme değildir. Kaynak tutarlarını Excel/PDF ile elle mutabıklaştır; brüt tutar eşliği tüm maliyet hesabının doğrulandığı anlamına gelmez.
 

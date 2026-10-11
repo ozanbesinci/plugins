@@ -43,6 +43,10 @@ def _inspect_closure(run_root: Path) -> list[str]:
         snap, snapshot_row = load_latest(run_root)
     except (RuntimeError, ValueError, OSError):
         return ["reviewed snapshot missing or invalid"]
+    from official_delivery import inspect_official
+    official = inspect_official(run_root, snapshot_row['sha256'])
+    if official['delivery_status'] == 'FAILED':
+        errors.append('closed official report pair invalid: ' + official['error'])
     con = connect(run_root)
     try:
         if con.execute("SELECT count(*) FROM task_queue WHERE status='pending'").fetchone()[0]:
