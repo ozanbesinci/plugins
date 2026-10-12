@@ -1,26 +1,26 @@
 {
   "schema": "kilic-satinalma-stable-release/v2",
   "package_channel": "stable",
-  "plugin_version": "1.3.1",
+  "plugin_version": "1.3.2",
   "skill_versions": {
-    "teklif-bagimsiz-kontrol": "5.1.1",
-    "teklif-belge-kaynak": "5.1.1",
-    "teklif-degerlendirme": "5.1.1",
-    "teklif-kapsam-ticari": "5.1.1",
-    "teklif-karar-rapor": "5.1.1",
-    "teklif-maliyet": "5.1.1",
+    "teklif-bagimsiz-kontrol": "5.1.2",
+    "teklif-belge-kaynak": "5.1.2",
+    "teklif-degerlendirme": "5.1.2",
+    "teklif-kapsam-ticari": "5.1.2",
+    "teklif-karar-rapor": "5.1.2",
+    "teklif-maliyet": "5.1.2",
     "guncelleyici": "2.3.0"
   },
   "implementation_and_configuration_unchanged": false,
-  "base_commit": "6d592bd4a8c257d505295446dc9fe84dc767ff99",
-  "change_scope": "Current verified mandatory facts determine requirement-based eligibility; historical requirement exclusions do not override current facts; requirement-free explicit confirmed exclusions preserved; paired reports and source inventory preserved",
-  "acceptance_report": "skills/teklif-degerlendirme/references/RELEASE_ACCEPTANCE_5.1.1.md",
+  "base_commit": "ecbdb9fed71aaf94854df772620df760aa645335",
+  "change_scope": "Preserve the requested profile in paired safety reports when environment validation fails before database creation; reject malformed, oversized, external or another-run resume records; no change to normal calculations or assurance gates",
+  "acceptance_report": "skills/teklif-degerlendirme/references/RELEASE_ACCEPTANCE_5.1.2.md",
   "acceptance_evidence": "Version-bound JSON, logs and artifact hashes delivered with the GitHub release; previous release counts are not current tests",
   "updater_unchanged": true,
   "production_installation_performed": false,
   "previous_release": {
-    "plugin_version": "1.3.0",
-    "offer_skill_version": "5.1.0",
-    "acceptance_report": "skills/teklif-degerlendirme/references/RELEASE_ACCEPTANCE_5.1.0.md"
+    "plugin_version": "1.3.1",
+    "offer_skill_version": "5.1.1",
+    "acceptance_report": "skills/teklif-degerlendirme/references/RELEASE_ACCEPTANCE_5.1.1.md"
   }
 }

@@ -1,15 +1,15 @@
-# Kılıç Tedarikçi Yönetimi 1.3.1
+# Kılıç Tedarikçi Yönetimi 1.3.2
 
-Teklif Değerlendirme **5.1.1** ve bağımsız Güncelleyici **2.3.0** içerir. Kılıç Satınalma Departmanı tarafından geliştirilmiştir.
+Teklif Değerlendirme **5.1.2** ve bağımsız Güncelleyici **2.3.0** içerir. Kılıç Satınalma Departmanı tarafından geliştirilmiştir.
 
 | Beceri | Görev | Sürüm |
 |---|---|---|
-| teklif-degerlendirme | Ana giriş; teklif değerlendirme akışını ve kalite kapılarını yönetir. | 5.1.1 |
-| teklif-belge-kaynak | Belgeleri, kaynak kimliğini, revizyonu ve kanıtı değerlendirir. | 5.1.1 |
-| teklif-kapsam-ticari | Kapsam ve ticari koşulları karşılaştırır; gerekli soruları oluşturur. | 5.1.1 |
-| teklif-maliyet | Kanıtlı miktar, fiyat, maliyet köprüsü ve satır hesaplarını yönetir. | 5.1.1 |
-| teklif-bagimsiz-kontrol | Bağımsız inceleme ve hesap doğrulama kapılarını yönetir. | 5.1.1 |
-| teklif-karar-rapor | Gerekçeli öneri, aynı inceleme kaydına bağlı Excel/PDF ve çıktı kontrollerini yönetir. | 5.1.1 |
+| teklif-degerlendirme | Ana giriş; teklif değerlendirme akışını ve kalite kapılarını yönetir. | 5.1.2 |
+| teklif-belge-kaynak | Belgeleri, kaynak kimliğini, revizyonu ve kanıtı değerlendirir. | 5.1.2 |
+| teklif-kapsam-ticari | Kapsam ve ticari koşulları karşılaştırır; gerekli soruları oluşturur. | 5.1.2 |
+| teklif-maliyet | Kanıtlı miktar, fiyat, maliyet köprüsü ve satır hesaplarını yönetir. | 5.1.2 |
+| teklif-bagimsiz-kontrol | Bağımsız inceleme ve hesap doğrulama kapılarını yönetir. | 5.1.2 |
+| teklif-karar-rapor | Gerekçeli öneri, aynı inceleme kaydına bağlı Excel/PDF ve çıktı kontrollerini yönetir. | 5.1.2 |
 | guncelleyici | Windows programlarını açık seçim/onayla kontrol eder ve günceller. | 2.3.0 |
 
 Her beceri başlatıldığında gerçek adı ve sürümüyle Kılıç Satınalma Departmanı geliştirme bildirimi gösterilir. Ana giriş `teklif-degerlendirme` becerisidir; alt beceriler aynı değerlendirme koşusuna bağlanır.
@@ -18,9 +18,9 @@ Kullanıcının ilgili firma ve alana ilişkin doğrudan teyit veya düzeltmesi 
 
 Hesaplar ve Excel/PDF aynı dondurulmuş inceleme kaydından üretilir. Rapor dosyasının oluşması kabul tamamlandığı anlamına gelmez: gerekli son kalite ve kapanış kontrolleri tamamlanmalıdır. Satınalma önerisi, satınalma onayı veya sözleşme imzası değildir.
 
-## 5.1.1 kapsamı
+## 5.1.2 kapsamı
 
-Her profilde tek çok sekmeli formüllü XLSX ve çok sayfalı PDF; iş engellerinde güvenli ön rapor; atomik resmî/ön rapor revizyonları; kaynak bağlı şartname matrisi; kullanıcı varsayımlarıyla sekiz hesap grubu, çok adımlı ödeme, yıllık gider ve ayrı tarihli nakit defteri desteklenir. Eksik maliyet, tarih veya kur sıfır değildir. Güncel [kabul sözleşmesi](skills/teklif-degerlendirme/references/RELEASE_ACCEPTANCE_5.1.1.md) ve [yayın manifesti](release-manifest.json) geçerlidir. Son sürümlü kaynak üzerinde gerçek motor, Excel/PDF ve host kabul sonuçları release JSON/loglarıyla izlenir.
+Her profilde tek çok sekmeli formüllü XLSX ve çok sayfalı PDF; iş engellerinde güvenli ön rapor; atomik resmî/ön rapor revizyonları; kaynak bağlı şartname matrisi; kullanıcı varsayımlarıyla sekiz hesap grubu, çok adımlı ödeme, yıllık gider ve ayrı tarihli nakit defteri desteklenir. Eksik maliyet, tarih veya kur sıfır değildir. Güncel [kabul sözleşmesi](skills/teklif-degerlendirme/references/RELEASE_ACCEPTANCE_5.1.2.md) ve [yayın manifesti](release-manifest.json) geçerlidir. Son sürümlü kaynak üzerinde gerçek motor, Excel/PDF ve host kabul sonuçları release JSON/loglarıyla izlenir.
 
 ## Önceki 5.0.29 sürümünün tarihsel kabulü
 

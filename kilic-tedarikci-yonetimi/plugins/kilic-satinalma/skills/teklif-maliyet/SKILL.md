@@ -3,7 +3,7 @@ name: teklif-maliyet
 description: Tekliflerin doğrulanmış kalem/kapsam/ödeme/finans girdilerini mevcut Python motoruyla hesaplar ve maliyet farkını mutabıklaştırır. Ana teklif akışında maliyet hesabı gerektiğinde kullan; model aritmetiği, kaynak yorumu ve bağımsız onay üretmez.
 ---
 
-# Maliyet Hesabı — 5.1.1
+# Maliyet Hesabı — 5.1.2
 ## Kullanıcı kanıtı önceliği
 
 Kullanıcının doğrudan verdiği olgu, teyit, düzeltme ve karar yetkili kullanıcı kanıtıdır; ilgili değerlendirme girdisinde belge, model çıkarımı ve önceki varsayımdan önceliklidir.
