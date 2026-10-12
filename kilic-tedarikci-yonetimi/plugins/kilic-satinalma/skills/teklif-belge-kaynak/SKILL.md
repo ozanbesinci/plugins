@@ -3,7 +3,7 @@ name: teklif-belge-kaynak
 description: Teklif değerlendirmede dosya okuma, firma/teklif/revizyon ilişkisi, kaynak otoritesi ve locator bağlı olgu çıkarımını yürütür. Ana teklif akışının belge aşamasında veya belge/revizyon incelemesi istendiğinde kullan; maliyet hesabı ve nihai karar üretmez.
 ---
 
-# Belge ve Kaynak — 5.1.0
+# Belge ve Kaynak — 5.1.1
 ## Kullanıcı kanıtı önceliği
 
 Kullanıcının doğrudan verdiği olgu, teyit, düzeltme ve karar yetkili kullanıcı kanıtıdır; ilgili değerlendirme girdisinde belge, model çıkarımı ve önceki varsayımdan önceliklidir.

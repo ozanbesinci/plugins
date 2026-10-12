@@ -1,4 +1,4 @@
-"""Model packets describe the actual canonical IDs and assertion paths."""
+"""Synthetic counterparties and amounts only. Model packets describe the actual canonical IDs and assertion paths."""
 import tempfile
 import unittest
 import os
@@ -62,7 +62,7 @@ class PacketContractTests(unittest.TestCase):
             run=Path(tmp)/'run';init_db(run,Path(__file__).resolve().parents[2])
             con=connect(run)
             try:
-                for supplier,offer,name,cost in [('S0','Z','Derya Mimarlık','1150500'),('S1','A','Polat Yapı','1727950')]:
+                for supplier,offer,name,cost in [('S0','Z','Sentetik Tedarikçi Alfa','10100'),('S1','A','Sentetik Tedarikçi Beta','11200')]:
                     con.execute('INSERT INTO suppliers(supplier_id,display_name) VALUES (?,?)',[supplier,name])
                     con.execute("INSERT INTO offers(offer_id,supplier_id,display_name,status) VALUES (?,?,?,'active')",[offer,supplier,name])
                     con.execute("INSERT INTO calculations(calculation_id,offer_id,calculation_type,inputs_json,result_json,calculation_version,input_hash,status,updated_at) VALUES (?,?,'cost_summary','{}',?,'test','hash','complete','now')",['calc-'+offer,offer,'{"comparable_total":"'+cost+'"}'])
@@ -72,7 +72,7 @@ class PacketContractTests(unittest.TestCase):
             self.assertEqual([x['offer_id'] for x in packet['offers']],['Z','A'])
             self.assertEqual([x['offer_id'] for x in packet['calculations']],['A','Z'])
             identity={x['offer_id']:(x['display_name'],x['result']['comparable_total']) for x in packet['calculations']}
-            self.assertEqual(identity,{'Z':('Derya Mimarlık','1150500'),'A':('Polat Yapı','1727950')})
+            self.assertEqual(identity,{'Z':('Sentetik Tedarikçi Alfa','10100'),'A':('Sentetik Tedarikçi Beta','11200')})
 
     def test_quantity_search_keeps_specific_price_row_without_generic_header(self):
         for sqlite in sqlite_modes():
