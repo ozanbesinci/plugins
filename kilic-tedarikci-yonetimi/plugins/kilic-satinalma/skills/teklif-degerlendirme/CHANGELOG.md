@@ -1,3 +1,10 @@
+# 5.1.2 — 2026-10-12 (kararlı yama)
+
+- Veri deposu oluşturulmadan ortam denetimi durduğunda güvenli XLSX/PDF çifti istenen hızlı, standart veya yüksek güvence profilini korur.
+- Profil yalnız aynı koşuya bağlı, boyutu sınırlı ve geçerli devam kaydından okunur. Geçersiz kayıt UNKNOWN olarak gösterilir; doğrulanmamış teklif olgusu veya sıralama üretilmez.
+- Altı yeni regresyon ortam engelini ve bozuk/başka koşuya ait kayıtları sınar. Güncel iki gerçek motor sonuçları ayrı sürümlü yayın kanıtıdır.
+- Normal hesap, bağımsız denetim ve model makbuzu kapıları korunur. Business analitik kabulündeki host makbuzu eksikliği bu yamayla çözülmüş sayılmaz.
+
 # 5.1.1 — 2026-10-12 (kararlı yama adayı)
 
 - Teyitli elemelerden sonra kalan uygun tekliflerin benzersiz tedarikçileri sayılır. İki aktif firmadan biri elendiğinde tek tedarikçi durumu XLSX ve PDF'de doğru gösterilir.

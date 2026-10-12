@@ -117,6 +117,19 @@ def build_preliminary(run_root: Path, reason: str):
              "integrity_findings":[],"buyer_declarations":[],"buyer_quantity_totals":[]}
     try:
         if not any((run_root / name).is_file() for name in ("analysis.test.sqlite","analysis.duckdb")):
+            # prepare records the requested profile before an environment gate.
+            # This metadata identifies a safety report; it never proves source facts.
+            pending = run_root / "resume_request.json"
+            if pending.is_file():
+                model["profile"] = "UNKNOWN"
+                if not pending.resolve().is_relative_to(run_root.resolve()) or pending.stat().st_size > 65536:
+                    raise ValueError("Güvenli rapor profil kaydı geçersiz")
+                request = json.loads(pending.read_text(encoding="utf-8"))
+                if (not isinstance(request, dict) or request.get("schema") != "teklif-resume/v1"
+                        or request.get("profile") not in {"hizli", "standart", "yuksek_guvence"}
+                        or request.get("run") != str(run_root.resolve())):
+                    raise ValueError("Güvenli rapor profil kaydı bu koşuya bağlı değil")
+                model["profile"] = request["profile"]
             raise ValueError("Çalışma veri deposu bulunamadı")
         con = connect(run_root)
         try:
