@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from question_waits import guard_run_operation
+
 import argparse
 import json
 import re
@@ -251,6 +253,7 @@ def _supersede_visual_findings(con, run_root: Path, artifact: dict[str, Any], re
     return len(candidates)
 
 
+@guard_run_operation
 def run_qa(run_root: Path) -> dict[str, Any]:
     profile = str(get_meta(run_root, "profile", "standart"))
     from cross_output_consistency import check as cross_output_check
@@ -352,4 +355,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    from question_waits import run_guarded_main
+    raise SystemExit(run_guarded_main(main))

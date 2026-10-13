@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from question_waits import guard_run_operation
+
 import argparse
 import difflib
 import json
@@ -30,6 +32,7 @@ def _row_page_text(row: dict[str, Any]) -> tuple[int | None, str]:
     return page, text
 
 
+@guard_run_operation
 def review_pdf(run_root: Path, document: dict[str, Any]) -> dict[str, Any]:
     source_path = Path(document["source_path"])
     result = duckdb_pdf_secondary(source_path)
@@ -100,6 +103,7 @@ def review_pdf(run_root: Path, document: dict[str, Any]) -> dict[str, Any]:
     return {"document_id": document["document_id"], "available": True, "secondary_pages": len(secondary), "matched_pages": matched_pages, "mismatches": mismatches}
 
 
+@guard_run_operation
 def run(run_root: Path) -> dict[str, Any]:
     con = connect(run_root)
     try:
@@ -118,4 +122,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    from question_waits import run_guarded_main
+    raise SystemExit(run_guarded_main(main))

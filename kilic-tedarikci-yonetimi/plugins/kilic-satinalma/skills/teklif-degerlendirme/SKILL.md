@@ -3,7 +3,11 @@ name: teklif-degerlendirme
 description: Satınalma tekliflerini kaynak, kapsam, ticari koşul, deterministik maliyet ve bağımsız kontrol üzerinden değerlendirir; aynı doğrulanmış veriden karar önerisi ve Excel/PDF üretimini yönetir. Teklif karşılaştırma, şartname uygunluğu ve satınalma karar desteğinde ana giriş olarak kullan.
 ---
 
-# Teklif Değerlendirme — 5.1.2
+# Teklif Değerlendirme — 5.1.3
+## Sorunun yanıtına bağlı bekleme
+
+[Kullanıcı yanıtı bekleme kuralı](../../USER-EVIDENCE-POLICY.md#sorunun-yanıtına-bağlı-bekleme) zorunludur. Yalnız sorunun cevabına bağlı ajan ve işler durur; soru anında çalışan bağımsız ajanlar devam eder. Bekleyen ajan cevap gelene kadar araç/model çağrısı, okuma, hesap, yazma, rapor veya kontrol yapmaz; süre sınırı ve periyodik sorgulama yoktur. Soru kimliği/kapsamı ve bağımlı görev/ajan kimliklerini gösterimden önce kaydet. Yalnız ilgili yeterli yanıt bu bağımlılığı açar; “devam”, sessizlik veya seçili varsayılan cevap/onay değildir. Cevaplanmış soruyu sebepsiz tekrarlama.
+
 ## Kullanıcı kanıtı önceliği
 
 Kullanıcının doğrudan verdiği olgu, teyit, düzeltme ve karar yetkili kullanıcı kanıtıdır; ilgili değerlendirme girdisinde belge, model çıkarımı ve önceki varsayımdan önceliklidir.
@@ -49,7 +53,7 @@ Bir görevde birincil sorumlu tek bölüm olsun. Ödeme metnini Belge çıkarır
 
 ## Belirsizlikte tek kullanıcı kanalı
 
-[Kritik Belirsizlikte Kullanıcı Yanıtı Sözleşmesi](references/user-input-gate.md) uygulanır. `NEEDS_USER_INPUT` döndüğünde kaynaklı sorular kullanıcıya gösterilir; bağlı karar özeti ve kesin öneri bekler. Her profilde tek çok sekmeli XLSX ve çok sayfalı PDF ön raporu üretilir; karar verilememe gerekçesi iki raporda bulunur. Gerçek yanıt yalnız soru/kaynak kapsamıyla kayıt altına alınır; mevcut koşudaki model veya çıktı onayı doğrudan devralınmaz.
+[Kritik Belirsizlikte Kullanıcı Yanıtı Sözleşmesi](references/user-input-gate.md) uygulanır. `NEEDS_USER_INPUT` döndüğünde kaynaklı sorular kullanıcıya gösterilir; bağlı karar özeti ve kesin öneri bekler. Bu yanıtları bekleyen rapor/karar görevi de durur; soru gösterimi otomatik ön rapor üretimi başlatmaz. Bağımsız çalışan ajanların görevleri durdurulmaz. Gerçek yanıt yalnız soru/kaynak kapsamıyla kayıt altına alınır; mevcut koşudaki model veya çıktı onayı doğrudan devralınmaz.
 
 Her aşamada karar/hesap etkili belirsizlik görülür görülmez sor; sadece final RFI yeterli değildir. Önce mevcut belge/önceki yanıtı kontrol et, bilinen bilgiyi tekrar isteme. Alt görevler aynı soruyu ana ajana mevcut şemanın issue/difference alanıyla iletir; kullanıcıya ayrı mesaj göndermez. Aynı aşamadaki ilişkili soruları kısa blokta birleştir; farklı firmaların cevap kapsamını birleştirme.
 

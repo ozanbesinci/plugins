@@ -1,13 +1,11 @@
-# Kılıç Satınalma eklentisi
+# Kılıç Tedarikçi Yönetimi
 
-**Plugin 1.3.2**, **Teklif Değerlendirme 5.1.2** ve bağımsız **Güncelleyici 2.3.0** içerir. Kılıç Satınalma Departmanı tarafından geliştirilmiştir.
+**Kararlı plugin 1.3.3**, **Teklif Değerlendirme 5.1.3** ve paket içi **Güncelleyici 2.3.1** içerir. Kılıç Satınalma Departmanı tarafından geliştirilmiştir.
 
-Her analiz profilinde tek çok sekmeli formüllü XLSX ve çok sayfalı PDF üretilir. Şartname uygunsuzluğu, eksik veri, tek firma veya elenmiş teklifler gerekçeli raporu engellemez. Kaynak ve kullanıcı varsayımları ayrıdır; bilinmeyen maliyet sıfır olmaz. Atomik çift teslim, şartname matrisi, yıl bazlı giderler, çok adımlı ödeme ve ayrı tarihli/para birimli nakit senaryoları desteklenir. Senaryo puanı veya nakit NBD şirket onayı ve rekabetçi firma sıralaması değildir.
+Kullanıcı sorusunda yalnız yanıtı bekleyen ajan ve işler durur; çalışan bağımsız işler devam eder. Süresiz, kalıcı bekleme kaydı görev/model/hesap/rapor girişlerine uygulanır. Cevaplanmış sorular aynı kapsamda tekrar gösterilmez. Teklif nüshası seçimi ve KDV olumsuzluk kanıtı düzeltmeleri kaynak/karar kapıları korunarak uygulanır.
 
-Güncel kapsam ve yayın kabulü: [5.1.2 kabul sözleşmesi](plugins/kilic-satinalma/skills/teklif-degerlendirme/references/RELEASE_ACCEPTANCE_5.1.2.md). Gerçek sonuç JSON/logları sürüme bağlı release kanıtlarıdır; önceki sürüm test sayıları bu sürümün sonucu değildir.
+Güncel kapsam ve kabul: [5.1.3 kabul sözleşmesi](plugins/kilic-satinalma/skills/teklif-degerlendirme/references/RELEASE_ACCEPTANCE_5.1.3.md), [plugin bilgileri](plugins/kilic-satinalma/README.md).
 
-Teklif akışı bir ana beceri ve beş alt beceriden oluşur. Kaynak kanıtı, kapsam, maliyet, ticari koşullar ve riskleri değerlendirir; gerekli kullanıcı cevaplarını işler; gerekçeli satınalma önerisi ile Excel/PDF üretir. Güncelleyici2.3.0motoru `vendor/guncelleyici` altında tutulur; beceri girişi bu motoru çağırır. Motor çalışma kodu, testler, konfigürasyon ve sürüm önceki yayından korunmuştur; iki dokümantasyon dosyası kabul adayındaki kurumsal dil düzenlemelerini taşır.
+Marketplace plugin kaynağı `./plugins/kilic-satinalma` olarak korunur. GitHub release ZIP'i bu plugin klasörünü içerir; SHA256 dosyası indirme bütünlüğünü doğrular. Tam SQLite/native DuckDB JSON/logları son kaynak ağacına bağlıdır. Güncelleyici offline Python testleri ayrı kanıttır; canlı kurulum yapılmış sayılmaz.
 
-Ayrıntı ve kabul kapsamı: [Plugin bilgileri](plugins/kilic-satinalma/README.md).
-
-Marketplace plugin kaynağı `./plugins/kilic-satinalma` olarak korunur. Release ZIP'i bu plugin klasörünü içerir; birlikte verilen SHA256 dosyası indirme bütünlüğünü doğrulamak için kullanılır.
+Business çalışma alanı mevcut GitHub main pazarını eşitleyerek bu kararlı sürümü alır. Aynı kapsam, maliyet, kullanıcı kanıtı, gerçek model makbuzu ve satınalma/QA kuralları korunur.

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from question_waits import guard_run_operation
+
 import argparse
 import json
 from datetime import date
@@ -19,6 +21,7 @@ def _active_offers(con) -> list[dict[str, Any]]:
     return rows_as_dict(con, "SELECT offer_id,supplier_id,quote_date,validity_end,status FROM offers WHERE status='active' ORDER BY offer_id")
 
 
+@guard_run_operation
 def run_gate(run_root: Path, analysis_date: date | None = None) -> dict[str, Any]:
     analysis_date = analysis_date or date.today()
     con = connect(run_root)
@@ -261,4 +264,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    from question_waits import run_guarded_main
+    raise SystemExit(run_guarded_main(main))

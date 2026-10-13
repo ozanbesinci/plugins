@@ -47,3 +47,7 @@ Do not send unchanged decisions to a later adjudicator. SQL/deterministic diff p
 - `artifact_visual_review`: `generated_artifact_reviewer`; yalniz listelenmis renderlar.
 
 Her LLM sonucu task-specific JSON Schema ile dogrulanir. Schema disi alan, uzunluk/enum ihlali veya beklenmeyen serbest metin sonucu canonical store'a giremez.
+
+## Sorunun yanıtına bağlı bekleme
+
+[Ortak kural](../../../USER-EVIDENCE-POLICY.md#sorunun-yanıtına-bağlı-bekleme) ve [kod kapısı](user-input-gate.md#kod-kapısı) uygulanır. Bağımlı ajanlar/görevler süre sınırı olmadan durur; soruya bağlı olmayan çalışan ajanlar devam eder. Yeni bağımlı iş başlatılmaz; yanıt ilgili soru kapsamına bağlı işlenir. Alt ajan kendi soru metnini ana ajana aktarır; ana ajan bağımlılıkları kaydetmeden ve bekleyen ajanı durdurmadan soruyu kullanıcıya göstermez.

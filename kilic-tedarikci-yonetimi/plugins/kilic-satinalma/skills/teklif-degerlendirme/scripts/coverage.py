@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+from question_waits import guard_run_operation
 from active_records import current_claims
 
 import argparse
@@ -45,6 +47,7 @@ def _check(state: str, *evidence: str, note: str | None = None) -> dict[str, Any
     return out
 
 
+@guard_run_operation
 def build(run_root: Path) -> dict[str, Any]:
     con = connect(run_root)
     try:
@@ -310,5 +313,6 @@ def main() -> None:
     args=ap.parse_args()
     print(json.dumps(build(Path(args.run)),ensure_ascii=False,indent=2,default=str))
 
-if __name__=='__main__':
-    main()
+if __name__ == "__main__":
+    from question_waits import run_guarded_main
+    raise SystemExit(run_guarded_main(main))

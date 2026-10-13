@@ -3,7 +3,11 @@ name: teklif-maliyet
 description: Tekliflerin doğrulanmış kalem/kapsam/ödeme/finans girdilerini mevcut Python motoruyla hesaplar ve maliyet farkını mutabıklaştırır. Ana teklif akışında maliyet hesabı gerektiğinde kullan; model aritmetiği, kaynak yorumu ve bağımsız onay üretmez.
 ---
 
-# Maliyet Hesabı — 5.1.2
+# Maliyet Hesabı — 5.1.3
+## Sorunun yanıtına bağlı bekleme
+
+[Kullanıcı yanıtı bekleme kuralı](../../USER-EVIDENCE-POLICY.md#sorunun-yanıtına-bağlı-bekleme) zorunludur. Yalnız sorunun cevabına bağlı ajan ve işler durur; soru anında çalışan bağımsız ajanlar devam eder. Bekleyen ajan cevap gelene kadar araç/model çağrısı, okuma, hesap, yazma, rapor veya kontrol yapmaz; süre sınırı ve periyodik sorgulama yoktur. Soru kimliği/kapsamı ve bağımlı görev/ajan kimliklerini gösterimden önce kaydet. Yalnız ilgili yeterli yanıt bu bağımlılığı açar; “devam”, sessizlik veya seçili varsayılan cevap/onay değildir. Cevaplanmış soruyu sebepsiz tekrarlama.
+
 ## Kullanıcı kanıtı önceliği
 
 Kullanıcının doğrudan verdiği olgu, teyit, düzeltme ve karar yetkili kullanıcı kanıtıdır; ilgili değerlendirme girdisinde belge, model çıkarımı ve önceki varsayımdan önceliklidir.

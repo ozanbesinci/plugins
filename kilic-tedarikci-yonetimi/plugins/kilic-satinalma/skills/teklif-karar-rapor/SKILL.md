@@ -3,7 +3,11 @@ name: teklif-karar-rapor
 description: Doğrulanmış teklif analizinden tek gerekçeli satınalma eylemi önerisi, aynı snapshot bağlı Excel/PDF ve çıktı QA üretimini yönetir. Ana teklif akışının rapor/kapanışında kullan; eksik girdiyi tamamlamaz ve kullanıcı adına satınalma onayı vermez.
 ---
 
-# Karar ve Rapor — 5.1.2
+# Karar ve Rapor — 5.1.3
+## Sorunun yanıtına bağlı bekleme
+
+[Kullanıcı yanıtı bekleme kuralı](../../USER-EVIDENCE-POLICY.md#sorunun-yanıtına-bağlı-bekleme) zorunludur. Yalnız sorunun cevabına bağlı ajan ve işler durur; soru anında çalışan bağımsız ajanlar devam eder. Bekleyen ajan cevap gelene kadar araç/model çağrısı, okuma, hesap, yazma, rapor veya kontrol yapmaz; süre sınırı ve periyodik sorgulama yoktur. Soru kimliği/kapsamı ve bağımlı görev/ajan kimliklerini gösterimden önce kaydet. Yalnız ilgili yeterli yanıt bu bağımlılığı açar; “devam”, sessizlik veya seçili varsayılan cevap/onay değildir. Cevaplanmış soruyu sebepsiz tekrarlama.
+
 ## Kullanıcı kanıtı önceliği
 
 Kullanıcının doğrudan verdiği olgu, teyit, düzeltme ve karar yetkili kullanıcı kanıtıdır; ilgili değerlendirme girdisinde belge, model çıkarımı ve önceki varsayımdan önceliklidir.
@@ -38,7 +42,7 @@ Karar için yeterli girdi ve snapshot olması **rapora hazır** durumudur; `VERI
 
 Tamamlanan analiz tek ana eylem ve gerekçeyle kapanır: firma/kapsam/kanıtlı tutar/ticari koşul/risk ve sonraki adım. Tam doğrulanmış girdide uygun firmayla ilerlemeyi önerebilirsin. Kritik ticari bilgi eksikse somut teklif/teyit yenileme talebi veya mevcut şartlarda alımı önermeme eylemi verir; zorla firma seçmezsin. Cevap bekleyen işi bitmiş sayma. Teknik hesap/QA BLOCKED başarılı karar teslimi değildir. Öneri, satınalma onayı/teklif kabulü/imza değildir.
 
-Kesin karar öncesi çözülmemiş kullanıcı sorusuna dön. Açık soru, eksik fiyat/belge, tek tedarikçi veya tüm tekliflerin elenmesi rapor üretimini durdurmaz. Tek XLSX/PDF çiftinde gerekçe, kapsam, kaynak ve sonraki aksiyon bulunur. Ön rapor teslimini soru çözümü veya VERIFIED olarak sunma; kullanıcı senaryolarını kaynak ve resmî karar hesabından ayrı göster.
+Kesin karar öncesi çözülmemiş kullanıcı sorusuna dön. Cevabı bekleyen rapor görevi yanıt gelene kadar durur. Eksik fiyat/belge, tek tedarikçi veya tüm tekliflerin elenmesi, kullanıcı yanıtı beklenmeyen bir raporun üretimini tek başına durdurmaz. Tek XLSX/PDF çiftinde gerekçe, kapsam, kaynak ve sonraki aksiyon bulunur. Ön rapor teslimini soru çözümü veya VERIFIED olarak sunma; kullanıcı senaryolarını kaynak ve resmî karar hesabından ayrı göster.
 
 Claim_registry + scope_ledger + bağımsız hesap ve yeterlilik kapılarından sonra reviewed_snapshot immutable dondurulur. Resmî Excel/PDF/özet aynı snapshot ve parent SHA'dan türetilir; canlı DB'den yeni değer ekleme. Artifact bindings kaynak/locator/status/claim/caveat'ı korur. `report_export.py` resmî çıktı yoludur; `report_delivery.py` kesin karar kapısını yükseltmeden ön rapor veya güvenli bildirim çifti üretir. Fiziksel arızada sınırlı alternatif yol denenir; iki dosya yoksa başarı denmez.
 

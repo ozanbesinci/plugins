@@ -1,6 +1,7 @@
 """Regression cases for comparison questions while semantic extraction is pending."""
 import json
 import unittest
+from unittest.mock import patch
 
 from test_workflow_integration import WorkflowIntegrationTests
 from comparison_contract import assess
@@ -17,7 +18,10 @@ class PendingExtractionQuestions(WorkflowIntegrationTests):
         self._write_offer('Alpha_rev1_teklif.xlsx', 100000)
         self._write_offer('Alpha_rev2_teklif.xlsx', 99000)
         self._write_offer('Beta_teklif.xlsx', 105000)
-        prepared = prepare(self.src, self.run, 'standart')
+        # This parser/coverage fixture represents the state before publishing
+        # a user ask. Post-ask suspension has its own real dependency tests.
+        with patch('workflow.user_input_waiting',return_value=None):
+            prepared = prepare(self.src, self.run, 'standart')
         self.assertIn(prepared['status'], {'PREPARED', 'NEEDS_USER_INPUT'})
 
         con = connect(self.run)

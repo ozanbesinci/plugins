@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from question_waits import guard_run_operation
+
 import argparse
 import hashlib
 import json
@@ -10,6 +12,7 @@ from common import json_text, stable_id, utc_now
 from db import connect, rows_as_dict
 
 
+@guard_run_operation
 def check(run_root: Path) -> dict[str, Any]:
     con = connect(run_root)
     try:
@@ -67,4 +70,6 @@ def main():
     ap.add_argument("--run",required=True)
     a=ap.parse_args(); print(json.dumps(check(Path(a.run)),ensure_ascii=False,indent=2,default=str))
 
-if __name__=="__main__": main()
+if __name__ == "__main__":
+    from question_waits import run_guarded_main
+    raise SystemExit(run_guarded_main(main))

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from question_waits import guard_run_operation
+
 import argparse
 import json
 from pathlib import Path
@@ -34,6 +36,7 @@ def _same(a: dict[str, Any], b: dict[str, Any]) -> bool:
     return all(a.get(k) == b.get(k) for k in keys)
 
 
+@guard_run_operation
 def compare(run_root: Path, review_id: str, generation: int = 1, chunk_size: int = 25) -> dict[str, Any]:
     con = connect(run_root)
     created = 0
@@ -99,4 +102,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    from question_waits import run_guarded_main
+    raise SystemExit(run_guarded_main(main))

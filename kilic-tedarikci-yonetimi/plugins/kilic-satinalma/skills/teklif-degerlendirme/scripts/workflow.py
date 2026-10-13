@@ -51,6 +51,9 @@ def _analysis_date(run_root: Path) -> date:
 
 
 def _task_contexts(run_root: Path, policy: dict[str, Any], tasks: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    from question_waits import assert_task_allowed
+    for task in tasks:
+        assert_task_allowed(run_root, task)
     out = []
     cfg = policy["context_packet"]
     task_dir = run_root / "tasks"
@@ -74,6 +77,8 @@ def _task_contexts(run_root: Path, policy: dict[str, Any], tasks: list[dict[str,
             "task_kind": task["task_kind"],
             "critical": bool(task["critical"]),
             "context_path": str(path),
+            "user_wait_control": {"state_path":str((run_root/'user_wait_control'/'state.json').resolve()),
+                                  "task_id":task['task_id'], "policy":"dependent_tasks_only_no_timeout"},
             "model_policy": role_cfg,
             "security_envelope": packet.get("security_envelope", {}),
         })
@@ -330,7 +335,9 @@ def _independent_early_extraction(run_root: Path, pending: list[dict[str, Any]])
         if isinstance(document_ids, list) and document_ids and all(
             isinstance(did, str) and statuses.get(did) == "controlling" for did in document_ids
         ):
-            safe.append(task)
+            from question_waits import task_waits
+            if not task_waits(run_root, task):
+                safe.append(task)
     return safe
 
 
@@ -441,6 +448,29 @@ def _completed_verified_result(run_root: Path) -> dict[str, Any] | None:
 @log_failures('workflow.advance')
 @terminal_reports(run_arg=0)
 def advance(run_root: Path) -> dict[str, Any]:
+    # Do not repeat answer-dependent whole-run processing after displaying an
+    # ask. Existing unrelated source tasks may still be dispatched/recorded.
+    from question_waits import active as active_question_waits
+    active_waits = active_question_waits(run_root)
+    if active_waits:
+        wait = user_input_waiting(run_root)
+        if wait:
+            policy = _policy(Path(__file__).resolve().parents[1])
+            independent = _independent_early_extraction(run_root, _pending_by_phase(run_root))
+            if independent:
+                response = _needs_llm_response(run_root, policy, independent)
+                if response.get('status') == 'NEEDS_LLM':
+                    return {**response, 'questions':wait['questions'],
+                            'open_question_count':wait['open_question_count'],
+                            'remaining_question_count':wait['remaining_question_count'],
+                            'user_input_pending':True, 'wait_policy':wait['wait_policy'],
+                            'deliverable_artifacts':False}
+            return wait
+        if any(row['state'] == 'new_run_required' for row in active_waits):
+            # The user already answered. Preserve the rerun barrier without
+            # repeating the question or entering whole-run processing.
+            return {'status':'NEW_RUN_REQUIRED', 'deliverable_artifacts':False,
+                    'reason':'Kullanıcı yanıtı kaydedildi; değişen girdiler için yeni koşu gerekir.'}
     from run_compatibility import assert_compatible
     assert_compatible(run_root, Path(__file__).resolve().parents[1])
     completed = _completed_verified_result(run_root)
@@ -475,7 +505,7 @@ def advance(run_root: Path) -> dict[str, Any]:
                     return {**response, "questions": wait["questions"],
                             "open_question_count": wait["open_question_count"],
                             "remaining_question_count": wait["remaining_question_count"],
-                            "user_input_pending": True, "deliverable_artifacts": False}
+                            "user_input_pending": True, "wait_policy":wait['wait_policy'], "deliverable_artifacts": False}
                 return {**wait, "independent_dispatch": response}
             return wait
     if pending:
@@ -779,4 +809,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    from question_waits import run_guarded_main
+    raise SystemExit(run_guarded_main(main))

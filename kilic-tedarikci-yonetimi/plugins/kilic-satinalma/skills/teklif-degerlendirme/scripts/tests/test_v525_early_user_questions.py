@@ -61,7 +61,10 @@ class EarlyUserQuestions(WorkflowIntegrationTests):
         self.assertTrue(any(x['issue_id']=='late-qa' for x in final['questions']))
         self.assertTrue((artifact_path(self.run)).is_file())
         self.assertFalse(status(self.run)['deliverable_artifacts'])
-        self.assertEqual(validate(self.run)['status'],'BLOCKED')
+        from question_waits import UserAnswerRequired
+        # The already published ask suspends this dependent verification too.
+        with self.assertRaises(UserAnswerRequired):
+            validate(self.run)
 
     def test_report_export_question_is_shown_before_qa(self):
         self._write_offer('Alpha_fiyat_teklifi.xlsx',100000)
@@ -184,7 +187,8 @@ class EarlyUserQuestions(WorkflowIntegrationTests):
             record_response(self.run,answer,self.root/'different-run')
         request=json.loads(Path(result['resume_request']).read_text(encoding='utf-8'))
         self.assertEqual(request['financial_parameters']['discount_rates']['EUR'],0.12)
-        self.assertEqual(waiting(self.run)['status'],'NEEDS_USER_INPUT')
+        self.assertIsNone(waiting(self.run))
+        self.assertEqual(advance(self.run)['status'],'NEW_RUN_REQUIRED')
         parent=Path(request['user_response_record'])
         self.assertTrue(parent.is_file())
         bad_hash='0'*64

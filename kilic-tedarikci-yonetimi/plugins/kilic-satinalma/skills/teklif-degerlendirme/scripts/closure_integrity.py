@@ -1,4 +1,6 @@
 """Read-only re-entry check; an old verification label is not approval."""
+
+from question_waits import guard_run_operation
 import json
 import hashlib
 from pathlib import Path
@@ -17,6 +19,7 @@ def _closed_state(con) -> str:
     return hashlib.sha256(json_text(payload).encode()).hexdigest()
 
 
+@guard_run_operation
 def freeze_closure(run_root: Path) -> None:
     con=connect(run_root)
     try:

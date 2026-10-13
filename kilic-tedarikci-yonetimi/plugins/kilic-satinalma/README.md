@@ -1,33 +1,21 @@
-# Kılıç Tedarikçi Yönetimi 1.3.2
+# Kılıç Tedarikçi Yönetimi 1.3.3
 
-Teklif Değerlendirme **5.1.2** ve bağımsız Güncelleyici **2.3.0** içerir. Kılıç Satınalma Departmanı tarafından geliştirilmiştir.
+Teklif Değerlendirme **5.1.3** ve paket içi Güncelleyici **2.3.1** içerir. Kılıç Satınalma Departmanı tarafından geliştirilmiştir.
 
-| Beceri | Görev | Sürüm |
-|---|---|---|
-| teklif-degerlendirme | Ana giriş; teklif değerlendirme akışını ve kalite kapılarını yönetir. | 5.1.2 |
-| teklif-belge-kaynak | Belgeleri, kaynak kimliğini, revizyonu ve kanıtı değerlendirir. | 5.1.2 |
-| teklif-kapsam-ticari | Kapsam ve ticari koşulları karşılaştırır; gerekli soruları oluşturur. | 5.1.2 |
-| teklif-maliyet | Kanıtlı miktar, fiyat, maliyet köprüsü ve satır hesaplarını yönetir. | 5.1.2 |
-| teklif-bagimsiz-kontrol | Bağımsız inceleme ve hesap doğrulama kapılarını yönetir. | 5.1.2 |
-| teklif-karar-rapor | Gerekçeli öneri, aynı inceleme kaydına bağlı Excel/PDF ve çıktı kontrollerini yönetir. | 5.1.2 |
-| guncelleyici | Windows programlarını açık seçim/onayla kontrol eder ve günceller. | 2.3.0 |
+Teklif akışı bir ana beceri ve beş alt beceriden oluşur: Belge ve Kaynak, Kapsam ve Ticari Koşullar, Maliyet Hesabı, Bağımsız Kontrol, Karar ve Rapor. Tek koşu, kaynak/hash/kanıt, gerçek model makbuzu ve ortak Excel/PDF veri özeti korunur. Her beceri kendi gerçek adı ve VERSION kaynağıyla başlangıç bildirimi gösterir.
 
-Her beceri başlatıldığında gerçek adı ve sürümüyle Kılıç Satınalma Departmanı geliştirme bildirimi gösterilir. Ana giriş `teklif-degerlendirme` becerisidir; alt beceriler aynı değerlendirme koşusuna bağlanır.
+## Bu sürüm
 
-Kullanıcının ilgili firma ve alana ilişkin doğrudan teyit veya düzeltmesi geçerli değerlendirme kanıtıdır. Özgün belge ve değişiklik izi korunur. Bilinmeyen değerler uydurulmaz; cevaplanan alanlar tekrar sorulmaz. Kararı etkileyen belirsizlikler kullanıcıya sorulur. Kaynak, sayı, hesap ve görsel kalite kontrolleri kendi gerçek sonuçlarıyla kaydedilir.
+Yalnız kullanıcı sorusunun cevabına bağlı ajan ve işler durur. Soru anında çalışan bağımsız işler devam eder. Bekleme süresiz ve kalıcıdır; bağlı dispatch, araç/model, sonuç kaydı, hesap, rapor ve güncelleyici girişleri korunur. Aynı kaynak kapsamındaki cevaplanmış soru tekrar gösterilmez. Kısmi veya ilgisiz yanıt işi başlatmaz; “bilinmiyor” yanıtı eksik ticari değer üretmez.
 
-Hesaplar ve Excel/PDF aynı dondurulmuş inceleme kaydından üretilir. Rapor dosyasının oluşması kabul tamamlandığı anlamına gelmez: gerekli son kalite ve kapanış kontrolleri tamamlanmalıdır. Satınalma önerisi, satınalma onayı veya sözleşme imzası değildir.
+Kullanıcının seçtiği teklif nüshaları hash bağlı kaynak otoritesi kaydıyla uygulanır. “KDV dahil değildir” ifadesinin doğru sınıflandırılması düzeltilmiştir. Kaynak kanıtı, satınalma onayı, miktar/fiyat doğruluğu, bağımsız kontrol ve gerçek QA kuralları korunmuştur.
 
-## 5.1.2 kapsamı
+## Değerlendirme ve rapor sınırı
 
-Her profilde tek çok sekmeli formüllü XLSX ve çok sayfalı PDF; iş engellerinde güvenli ön rapor; atomik resmî/ön rapor revizyonları; kaynak bağlı şartname matrisi; kullanıcı varsayımlarıyla sekiz hesap grubu, çok adımlı ödeme, yıllık gider ve ayrı tarihli nakit defteri desteklenir. Eksik maliyet, tarih veya kur sıfır değildir. Güncel [kabul sözleşmesi](skills/teklif-degerlendirme/references/RELEASE_ACCEPTANCE_5.1.2.md) ve [yayın manifesti](release-manifest.json) geçerlidir. Son sürümlü kaynak üzerinde gerçek motor, Excel/PDF ve host kabul sonuçları release JSON/loglarıyla izlenir.
+Tek çok sekmeli formüllü Excel ve çok sayfalı PDF aynı dondurulmuş inceleme kaydından üretilir. Kullanıcı varsayımları kaynak verisinden ayrıdır. Bilinmeyen maliyet, tarih ve kur sıfır yapılmaz. Dosyanın oluşması VERIFIED veya satınalma onayı değildir. Yıllık gider, çok adımlı ödeme ve ayrı tarihli nakit akışı önceki kapsamıyla korunur.
 
-## Önceki 5.0.29 sürümünün tarihsel kabulü
+Paket içi Güncelleyici 2.3.1 yalnız yanıta bağlı aktör kontrollerini ekler; kurulum yetkisini genişletmez. Güncelleyici kullanıcı seçimi ve somut plan için açık uygulama onayı gerektirir. Teklif analizi kendiliğinden program kurmaz. Ayrı Güncelleyici deposu yayını ve canlı kurulum bu sürümün kapsamı değildir.
 
-5.0.29-dev.10 kabul adayının çalışma kodu ve konfigürasyonu kararlı paketle birebir aynıdır; yalnız sürüm ve yayın dokümantasyonu değiştirilmiştir. Aynı üç gerçek XLSX/33 fiyat satırıyla yüksek güvence kabulü, gerçek Excel/PDF ve95sayfa görsel inceleme tamamlanmıştır; nihai sonuç VERIFIED. Mevcut tek belirsizlikli sentetik soru–cevap örneği de VERIFIED. Kabul adayında SQLite ve nativeDuckDB399/399PASS. Ayrıntı: [Kabul raporu](skills/teklif-degerlendirme/references/RELEASE_ACCEPTANCE_5.0.29.md), [yayın manifesti](release-manifest.json).
-
-Bu kanıt, incelenen belge seti ve test kapsamı içindir. Her satınalmada kaynak doğrulaması, gerekli sorular ve kalite kontrolleri yeniden uygulanır. Finansal girdiler verilmeden kur, iskonto oranı veya finansman maliyeti türetilmez; şartname yoksa uygunluk değerlendirmesi yapılmadığı açıkça belirtilir.
-
-Güncelleyici2.3.0motoru `vendor/guncelleyici` altında tutulur; `skills/guncelleyici` kabul adayındaki giriş yönergesidir. Önceki 1.1.5 yayınının 43 motor dosyasından 40'ı bayt bayt aynıdır; SKILL.md ve CHANGELOG.md yalnız kabul adayındaki kurumsal dil düzenlemelerini taşır. MANIFEST.sha256.json içinde bu iki belgenin hash kayıtları güncellenmiştir. Çalışma kodu, testler, konfigürasyon ve sürüm değişmemiştir. Kabul adayının Güncelleyici giriş/vendor 45 dosyasından 44'ü kararlı paketle birebir aynıdır; tek fark bu yayın bütünlüğü metadatasıdır. Güncelleyici teklif becerisini güncellemez. DuckDB PDF desteği isteğe bağlıdır. Güncelleyicinin kendi kabul kapsamı ve sınırlamaları, korunmuş BUILD.json ve test raporlarında belirtilir.
+Güncel [yayın kabulü](skills/teklif-degerlendirme/references/RELEASE_ACCEPTANCE_5.1.3.md) ve [manifest](release-manifest.json) geçerlidir. Son kaynak ağacına bağlı gerçek test JSON/logları GitHub release ile birlikte verilir; tarihsel test sayıları güncel sonuç olarak sunulmaz. Business eşitlemesi ve görünen sürüm ayrıca doğrulanır.
 
 [Kullanıcı Kanıtı ve Değerlendirme Önceliği](USER-EVIDENCE-POLICY.md) ve [Kurumsal Dil ve Yayın Standardı](EDITORIAL-POLICY.md) bütün teklif becerilerine uygulanır.

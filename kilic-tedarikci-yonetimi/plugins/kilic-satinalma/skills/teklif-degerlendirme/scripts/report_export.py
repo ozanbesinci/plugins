@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+from question_waits import guard_run_operation
 from artifact_values import comparison_fact_path, comparison_fact_value, evidence_label, offer_display_status, pending_offer_fields, ranking_visible
 from effective_report_values import buyer_term, weighted_score_display
 
@@ -167,6 +169,7 @@ def _insert_bindings(con, artifact_id: str, snapshot_sha: str, bindings: list[di
         )
 
 
+@guard_run_operation
 def export_report(run_root: Path) -> dict[str, Any]:
     from official_delivery import RegistrationError
     try:
@@ -536,4 +539,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    from question_waits import run_guarded_main
+    raise SystemExit(run_guarded_main(main))

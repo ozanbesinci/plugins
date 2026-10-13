@@ -1,4 +1,6 @@
 """Import only editable scenario cells into a new preliminary report revision."""
+
+from question_waits import guard_run_operation
 import argparse
 import json
 from pathlib import Path
@@ -8,6 +10,7 @@ from report_delivery import inspect_preliminary,export_preliminary
 from scenario_formulas import INPUTS,validate_formulas
 from finance_workbook import read_lifecycle_inputs
 
+@guard_run_operation
 def import_scenarios(run_root,workbook):
     con=connect(run_root)
     try:
@@ -58,4 +61,6 @@ def main():
     try:result=import_scenarios(Path(args.run),Path(args.workbook))
     except (ValueError,OSError) as exc:result={'scenario_import':'FAILED','deliverable_artifacts':False,'error':str(exc)}
     print(json.dumps(result,ensure_ascii=False,indent=2));raise SystemExit(0 if result.get('scenario_import')=='IMPORTED' else 2)
-if __name__=='__main__':main()
+if __name__ == "__main__":
+    from question_waits import run_guarded_main
+    raise SystemExit(run_guarded_main(main))

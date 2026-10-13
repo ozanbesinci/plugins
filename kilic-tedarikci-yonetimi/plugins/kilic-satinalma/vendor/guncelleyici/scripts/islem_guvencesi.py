@@ -25,6 +25,32 @@ class SafetyError(ValueError):
     pass
 
 
+def assert_user_answer_dependencies():
+    """Stop only the actor bound to a published question, without a timer."""
+    raw = os.environ.get('KILIC_USER_WAIT_STATE')
+    if not raw: return
+    path = Path(raw)
+    if not path.is_file():
+        if path.parent.exists(): raise SafetyError('NEEDS_USER_INPUT: bekleme kaydı eksik')
+        return
+    state = json.loads(path.read_text(encoding='utf-8'))
+    if state.get('schema') != 'kilic-question-waits/v1':
+        raise SafetyError('NEEDS_USER_INPUT: bekleme kaydı geçersiz')
+    agent = os.environ.get('KILIC_AGENT_ID')
+    task = os.environ.get('KILIC_TASK_ID')
+    for row in state['questions']:
+        dep = row['dependency']
+        if (agent and agent in dep['agent_ids']) or (task and task in dep['task_ids']):
+            raise SafetyError('NEEDS_USER_INPUT: bu ajan/görev kullanıcı yanıtını bekliyor')
+
+
+try:
+    assert_user_answer_dependencies()
+except (SafetyError, OSError, ValueError, TypeError, KeyError):
+    print('@@SONUC ' + json.dumps({'status':'NEEDS_USER_INPUT','ozet':'YANIT BEKLENİYOR'},ensure_ascii=False))
+    raise SystemExit(4)
+
+
 def utcnow():
     return dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
 

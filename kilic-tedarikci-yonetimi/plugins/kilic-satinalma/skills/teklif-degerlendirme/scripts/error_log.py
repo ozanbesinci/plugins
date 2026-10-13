@@ -91,6 +91,8 @@ def log_failures(operation: str, statuses=ERROR_STATUSES):
             try:
                 result = fn(*args,**kwargs)
             except Exception as exc:
+                if type(exc).__name__ == 'UserAnswerRequired':
+                    raise
                 log_error(operation,status='ERROR',exception=exc)
                 raise
             if isinstance(result,dict) and isinstance(result.get('status'),str) and result['status'] in statuses:

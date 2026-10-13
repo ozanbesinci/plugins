@@ -1,26 +1,28 @@
 {
   "schema": "kilic-satinalma-stable-release/v2",
   "package_channel": "stable",
-  "plugin_version": "1.3.2",
+  "plugin_version": "1.3.3",
   "skill_versions": {
-    "teklif-bagimsiz-kontrol": "5.1.2",
-    "teklif-belge-kaynak": "5.1.2",
-    "teklif-degerlendirme": "5.1.2",
-    "teklif-kapsam-ticari": "5.1.2",
-    "teklif-karar-rapor": "5.1.2",
-    "teklif-maliyet": "5.1.2",
-    "guncelleyici": "2.3.0"
+    "guncelleyici": "2.3.1",
+    "teklif-bagimsiz-kontrol": "5.1.3",
+    "teklif-belge-kaynak": "5.1.3",
+    "teklif-degerlendirme": "5.1.3",
+    "teklif-kapsam-ticari": "5.1.3",
+    "teklif-karar-rapor": "5.1.3",
+    "teklif-maliyet": "5.1.3"
   },
   "implementation_and_configuration_unchanged": false,
-  "base_commit": "ecbdb9fed71aaf94854df772620df760aa645335",
-  "change_scope": "Preserve the requested profile in paired safety reports when environment validation fails before database creation; reject malformed, oversized, external or another-run resume records; no change to normal calculations or assurance gates",
-  "acceptance_report": "skills/teklif-degerlendirme/references/RELEASE_ACCEPTANCE_5.1.2.md",
-  "acceptance_evidence": "Version-bound JSON, logs and artifact hashes delivered with the GitHub release; previous release counts are not current tests",
-  "updater_unchanged": true,
+  "base_commit": "6fa484da81ab16ca15111b423709343f666ae33f",
+  "change_scope": "Persistent answer-dependent task/agent guards; exact-scope answered question suppression; audited standalone offer source selection; VAT negation evidence validation",
+  "acceptance_report": "skills/teklif-degerlendirme/references/RELEASE_ACCEPTANCE_5.1.3.md",
+  "acceptance_evidence": "Release assets: sqlite.json/sqlite.log, duckdb.json/duckdb.log, updater-python.json and source/package hash proof",
+  "updater_unchanged": false,
+  "updater_change_scope": "Actor wait guards only; installer algorithms and configuration unchanged",
   "production_installation_performed": false,
   "previous_release": {
-    "plugin_version": "1.3.1",
-    "offer_skill_version": "5.1.1",
-    "acceptance_report": "skills/teklif-degerlendirme/references/RELEASE_ACCEPTANCE_5.1.1.md"
-  }
+    "plugin_version": "1.3.2",
+    "offer_skill_version": "5.1.2",
+    "updater_version": "2.3.0"
+  },
+  "historical_acceptance_is_not_current_acceptance": true
 }

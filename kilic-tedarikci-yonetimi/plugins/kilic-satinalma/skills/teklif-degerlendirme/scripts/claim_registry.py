@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from question_waits import guard_run_operation
+
 import argparse
 import hashlib
 import json
@@ -124,6 +126,7 @@ def _numeric_tokens(text: str) -> set[str]:
     return out
 
 
+@guard_run_operation
 def rebuild(run_root: Path) -> dict[str, Any]:
     con = connect(run_root)
     try:
@@ -258,4 +261,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    from question_waits import run_guarded_main
+    raise SystemExit(run_guarded_main(main))

@@ -3,7 +3,11 @@ name: teklif-kapsam-ticari
 description: Kaynak bağlı teklif kalemlerini şartname, kapsam, miktar/birim, ödeme, teslim ve ticari risk açısından değerlendirir. Ana teklif akışında kapsam veya ticari belirsizlik çözümlerken kullan; fiyat aritmetiği ve rapor ihracı yapmaz.
 ---
 
-# Kapsam ve Ticari Koşullar — 5.1.2
+# Kapsam ve Ticari Koşullar — 5.1.3
+## Sorunun yanıtına bağlı bekleme
+
+[Kullanıcı yanıtı bekleme kuralı](../../USER-EVIDENCE-POLICY.md#sorunun-yanıtına-bağlı-bekleme) zorunludur. Yalnız sorunun cevabına bağlı ajan ve işler durur; soru anında çalışan bağımsız ajanlar devam eder. Bekleyen ajan cevap gelene kadar araç/model çağrısı, okuma, hesap, yazma, rapor veya kontrol yapmaz; süre sınırı ve periyodik sorgulama yoktur. Soru kimliği/kapsamı ve bağımlı görev/ajan kimliklerini gösterimden önce kaydet. Yalnız ilgili yeterli yanıt bu bağımlılığı açar; “devam”, sessizlik veya seçili varsayılan cevap/onay değildir. Cevaplanmış soruyu sebepsiz tekrarlama.
+
 ## Kullanıcı kanıtı önceliği
 
 Kullanıcının doğrudan verdiği olgu, teyit, düzeltme ve karar yetkili kullanıcı kanıtıdır; ilgili değerlendirme girdisinde belge, model çıkarımı ve önceki varsayımdan önceliklidir.

@@ -1,5 +1,6 @@
 ﻿# Shared orchestration; definitions only. No GUI and no installation on import.
 . (Join-Path $PSScriptRoot 'program-ortak.ps1')
+Assert-UserAnswerDependencies
 $script:Skill=Split-Path $PSScriptRoot -Parent
 $skillItem=Get-Item -LiteralPath $script:Skill -Force
 if($skillItem.Attributes -band [IO.FileAttributes]::ReparsePoint){

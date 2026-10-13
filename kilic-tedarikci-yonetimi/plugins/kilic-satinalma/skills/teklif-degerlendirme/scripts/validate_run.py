@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from question_waits import guard_run_operation
+
 import argparse
 import json
 from pathlib import Path
@@ -15,6 +17,7 @@ from reviewed_snapshot import load_latest
 from error_log import log_failures
 
 
+@guard_run_operation
 @log_failures('validate_run.validate')
 def validate(run_root: Path) -> dict[str, Any]:
     from run_compatibility import assert_compatible
@@ -293,4 +296,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    from question_waits import run_guarded_main
+    raise SystemExit(run_guarded_main(main))

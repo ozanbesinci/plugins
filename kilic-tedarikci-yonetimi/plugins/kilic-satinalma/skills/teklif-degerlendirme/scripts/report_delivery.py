@@ -114,6 +114,8 @@ def _register(run_root,revision,manifest):
 
 def export_preliminary(run_root: Path,reason: str,scenarios=None,*,_directory="reports",_allow_fallback=True):
     """No analytical state/snapshot is promoted; never overwrite a completed run."""
+    from question_waits import assert_operation_allowed
+    assert_operation_allowed(run_root, 'report_delivery.export_preliminary')
     model=build_preliminary(run_root,reason)
     model["scenario_reference"]={}
     if _directory not in {"reports", "reports_fallback"}:

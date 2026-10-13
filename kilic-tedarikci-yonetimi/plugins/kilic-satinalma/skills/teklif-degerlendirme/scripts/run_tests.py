@@ -177,8 +177,9 @@ def main():
         return child(args.engine, args.pattern, args.output_dir / f"{args.engine}.json", args.source_head, args.run_id, args.duckdb_threads)
     # Freeze the whole plugin subtree (including sibling policies/vendor) once.
     # Concurrent development cannot alter a running test's compatibility hashes.
-    source_root = ROOT.parents[4]
-    frozen = Path(tempfile.mkdtemp(prefix="source-", dir=args.output_dir.resolve())) / source_root.name
+    source_root = SOURCE_ROOT
+    # Keep Windows fixture paths below MAX_PATH even in long OneDrive roots.
+    frozen = Path(tempfile.mkdtemp(prefix="kilic-test-")) / source_root.name
     shutil.copytree(source_root, frozen, ignore=shutil.ignore_patterns("__pycache__", "test-results", ".git"))
     frozen_source = source_fingerprint(frozen / SOURCE_ROOT.relative_to(source_root))
     if not frozen_source:

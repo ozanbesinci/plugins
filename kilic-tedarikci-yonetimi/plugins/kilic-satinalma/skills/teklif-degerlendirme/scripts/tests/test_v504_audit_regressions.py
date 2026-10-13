@@ -233,7 +233,10 @@ class V504AuditRegressionTests(unittest.TestCase):
     def test_mixed_currency_cost_bridge_is_unverified_without_provenance(self):
         self.offer('Alpha_teklif.xlsx',100000,currency='EUR')
         self.offer('Beta_teklif.xlsx',105000,currency='USD')
-        prepare(self.src,self.run,'hizli',date(2026,10,3),financial_params={'base_currency':'TRY','fx':{'EUR':40,'USD':36}})
+        # Exercise cost provenance before a user ask is published. The distinct
+        # post-ask contract blocks this calculation until its answer arrives.
+        with mock.patch('workflow.user_input_waiting',return_value=None):
+            prepare(self.src,self.run,'hizli',date(2026,10,3),financial_params={'base_currency':'TRY','fx':{'EUR':40,'USD':36}})
         bridge=build_cost_bridge(self.run)
         self.assertEqual(bridge['status'],'UNVERIFIED')
         self.assertEqual(bridge['pairwise_differences'],[])

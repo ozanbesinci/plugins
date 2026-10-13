@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from question_waits import guard_run_operation
+
 import argparse
 import json
 import re
@@ -132,6 +134,7 @@ def _upsert_issue(con, owner: str, severity: str, issue_type: str, question: str
     return issue_id
 
 
+@guard_run_operation
 def normalize(run_root: Path) -> dict[str, Any]:
     con = connect(run_root)
     derived = 0
@@ -249,4 +252,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    from question_waits import run_guarded_main
+    raise SystemExit(run_guarded_main(main))

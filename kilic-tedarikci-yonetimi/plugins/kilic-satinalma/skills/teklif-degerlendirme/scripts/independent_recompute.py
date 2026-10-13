@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from question_waits import guard_run_operation
+
 import argparse
 import hashlib
 import json
@@ -549,6 +551,7 @@ def _check_id_membership(mism: list[dict[str,Any]], field: str, actual: Any, exp
 from error_log import log_failures
 
 
+@guard_run_operation
 @log_failures('independent_recompute.run')
 def run(run_root: Path, amount_tolerance: float=0.01, score_tolerance: float=0.0001) -> dict[str,Any]:
     con=connect(run_root)
@@ -791,4 +794,6 @@ def run(run_root: Path, amount_tolerance: float=0.01, score_tolerance: float=0.0
 def main():
     ap=argparse.ArgumentParser(description="Independently recompute critical procurement calculations")
     ap.add_argument("--run",required=True); a=ap.parse_args(); print(json.dumps(run(Path(a.run)),ensure_ascii=False,indent=2,default=str))
-if __name__=="__main__": main()
+if __name__ == "__main__":
+    from question_waits import run_guarded_main
+    raise SystemExit(run_guarded_main(main))

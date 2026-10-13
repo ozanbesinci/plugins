@@ -1,4 +1,6 @@
 """Bounded mechanical confirmation before decision sufficiency, without model guesses."""
+
+from question_waits import guard_run_operation
 import json
 from decimal import Decimal
 from pathlib import Path
@@ -113,6 +115,7 @@ def _resolve_confirmation_issues(con, confirmed_now: dict) -> list[str]:
     return closed
 
 
+@guard_run_operation
 def confirm(run_root: Path) -> dict:
     con = connect(run_root)
     result = {'confirmed': [], 'unresolved': []}

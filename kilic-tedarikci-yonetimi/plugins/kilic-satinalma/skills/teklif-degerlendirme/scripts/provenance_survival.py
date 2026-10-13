@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+from question_waits import guard_run_operation
 import argparse, json
 from pathlib import Path
 from typing import Any
@@ -12,6 +14,7 @@ def _j(v,default=None):
     try: return v if isinstance(v,(dict,list)) else json.loads(v) if v is not None else default
     except Exception: return default
 
+@guard_run_operation
 def check(run_root:Path)->dict[str,Any]:
     from openpyxl import load_workbook
     snap,srow=load_latest(run_root); sha=srow['sha256']; con=connect(run_root); findings=[]
@@ -82,4 +85,6 @@ def check(run_root:Path)->dict[str,Any]:
 
 def main():
     ap=argparse.ArgumentParser(description='Verify that source status, lineage and caveats survive export'); ap.add_argument('--run',required=True); a=ap.parse_args(); print(json.dumps(check(Path(a.run)),ensure_ascii=False,indent=2))
-if __name__=='__main__': main()
+if __name__ == "__main__":
+    from question_waits import run_guarded_main
+    raise SystemExit(run_guarded_main(main))

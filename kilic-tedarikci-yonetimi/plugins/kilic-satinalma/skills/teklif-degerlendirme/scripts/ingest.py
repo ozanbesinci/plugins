@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from question_waits import guard_run_operation
+
 import argparse
 import json
 import mimetypes
@@ -213,6 +215,7 @@ def _parse_from_cache(run_root: Path, source_sha: str, fmt: str) -> ParseResult 
         con.close()
 
 
+@guard_run_operation
 def ingest_file(
     path: Path,
     source_root: Path,
@@ -300,6 +303,7 @@ def ingest_file(
     return record
 
 
+@guard_run_operation
 def write_to_db(run_root: Path, record: dict[str, Any]) -> None:
     con = connect(run_root)
     try:
@@ -414,6 +418,7 @@ def _ingest_email_attachments(rec: dict[str, Any], path: Path, run_root: Path,
     return out
 
 
+@guard_run_operation
 def ingest_source(source: Path, run_root: Path, inventory_only: bool = False,
                   folder_mappings: dict[str, str] | None = None) -> list[dict[str, Any]]:
     source = source.resolve()
@@ -488,4 +493,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    from question_waits import run_guarded_main
+    raise SystemExit(run_guarded_main(main))

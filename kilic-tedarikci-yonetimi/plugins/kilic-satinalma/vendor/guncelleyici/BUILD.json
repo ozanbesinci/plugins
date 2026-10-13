@@ -1,8 +1,8 @@
 {
   "schema": "guncelleyici-build/v1",
   "base_version": "2.3.0",
-  "build_id": "2026-10-04-v2.3.0-standalone-release",
-  "state": "stable-source-release",
+  "build_id": "2026-10-13-kilic-plugin-1.3.3-bundled-patch",
+  "state": "stable-plugin-bundled-source",
   "production_approved": false,
   "windows_acceptance": "PARTIAL",
   "native_pnpm_staging_acceptance": "PASS",
@@ -19,16 +19,7 @@
   ],
   "user_surface": "chatgpt-desktop-work-or-codex-chat-only",
   "terminal_required_for_end_user": false,
-  "source_release_version": "2.3.0",
-  "source_repository": "ozanbesinci/guncelleyici",
   "distribution_path": "skills/guncelleyici/",
-  "github_release_note": "Stable standalone source/package release; GitHub publication is verified externally. This is not personnel-wide production approval.",
-  "github_release_tag": "v2.3.0",
-  "github_release_assets": [
-    "skill.zip",
-    "skill.zip.sha256"
-  ],
-  "windows_evidence": "references/RELEASE_TESTS_2.3.0.json",
   "historical_windows_evidence": "references/WINDOWS_KABUL_2026-10-04.json",
   "managed_components": [
     "python",
@@ -39,5 +30,20 @@
     "powerbi",
     "pdf (opt-in)"
   ],
-  "offer_skill_management": "removed"
+  "offer_skill_management": "removed",
+  "bundled_source_version": "2.3.1",
+  "distributed_in_plugin": "1.3.3",
+  "previous_standalone_release": {
+    "source_release_version": "2.3.0",
+    "source_repository": "ozanbesinci/guncelleyici",
+    "github_release_note": "Stable standalone source/package release; GitHub publication is verified externally. This is not personnel-wide production approval.",
+    "github_release_tag": "v2.3.0",
+    "github_release_assets": [
+      "skill.zip",
+      "skill.zip.sha256"
+    ],
+    "windows_evidence": "references/RELEASE_TESTS_2.3.0.json"
+  },
+  "change_scope": "Answer-dependent actor guards only; no installer/version-selection/configuration change",
+  "current_python_evidence": "GitHub plugin release asset updater-python.json"
 }

@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+from question_waits import guard_run_operation
 import argparse, hashlib, json
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
@@ -17,6 +19,7 @@ def j(v,default=None):
     try: return v if isinstance(v,(dict,list)) else json.loads(v) if v is not None else default
     except Exception: return default
 
+@guard_run_operation
 def build(run_root:Path,tolerance:float=0.01)->dict[str,Any]:
     con=connect(run_root)
     try:
@@ -88,4 +91,6 @@ def build(run_root:Path,tolerance:float=0.01)->dict[str,Any]:
 def main():
     ap=argparse.ArgumentParser(description='Reconcile procurement cost bridge and residual')
     ap.add_argument('--run',required=True); a=ap.parse_args(); print(json.dumps(build(Path(a.run)),ensure_ascii=False,indent=2))
-if __name__=='__main__': main()
+if __name__ == "__main__":
+    from question_waits import run_guarded_main
+    raise SystemExit(run_guarded_main(main))

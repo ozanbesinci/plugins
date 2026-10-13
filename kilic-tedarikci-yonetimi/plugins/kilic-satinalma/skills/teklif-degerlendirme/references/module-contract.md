@@ -36,3 +36,7 @@ Model independent_fact_review farklı semantik/kanıt görevini kendi strict şe
 Claim/scope/hesap/bağımsız kontrol kapıları geçmeden kesin firma önerisi yok. Tek reviewed snapshot'tan Excel/PDF/özet; kaynak/statü/locator korunur. QA ve validate_run zorunludur. Somut öneri satınalma onayı veya teklif kabulü değildir. Yetersiz bilgi için teyit/yenileme/alımı önermeme eylemiyle kapanabilir; cevap bekleyen analiz tamamlanmış veya VERIFIED sayılmaz.
 
 Yeni talimatın erken soruyu uyguladığını ileri testte gözlemek, Python'da otomatik bekleme/audit/invalidation kapısının işlendiğini kanıtlamaz. Mevcut motor sınırı ana SKILL'de açıkça belirtilir; gerçek runtime kabulü ayrıca gereklidir.
+
+## Sorunun yanıtına bağlı bekleme
+
+[Ortak kural](../../../USER-EVIDENCE-POLICY.md#sorunun-yanıtına-bağlı-bekleme) ve [kod kapısı](user-input-gate.md#kod-kapısı) uygulanır. Bağımlı ajanlar/görevler süre sınırı olmadan durur; soruya bağlı olmayan çalışan ajanlar devam eder. Yeni bağımlı iş başlatılmaz; yanıt ilgili soru kapsamına bağlı işlenir. Alt ajan kendi soru metnini ana ajana aktarır; ana ajan bağımlılıkları kaydetmeden ve bekleyen ajanı durdurmadan soruyu kullanıcıya göstermez.

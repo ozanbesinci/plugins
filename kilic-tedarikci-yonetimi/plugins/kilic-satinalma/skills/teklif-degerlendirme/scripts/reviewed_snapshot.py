@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+from question_waits import guard_run_operation
 import argparse, hashlib, json
 from pathlib import Path
 from typing import Any
@@ -50,6 +52,7 @@ def decision_preflight_from_connection(con) -> dict[str, Any]:
             'preliminary_reasons':sorted(set(preliminary)), 'scope_ledger':scope}
 
 
+@guard_run_operation
 def freeze(run_root:Path)->dict[str,Any]:
     con=connect(run_root)
     try:
@@ -164,4 +167,6 @@ def load_latest(run_root:Path)->tuple[dict[str,Any],dict[str,Any]]:
 
 def main():
     ap=argparse.ArgumentParser(description='Freeze immutable pre-output reviewed procurement snapshot'); ap.add_argument('--run',required=True); a=ap.parse_args(); print(json.dumps(freeze(Path(a.run)),ensure_ascii=False,indent=2))
-if __name__=='__main__': main()
+if __name__ == "__main__":
+    from question_waits import run_guarded_main
+    raise SystemExit(run_guarded_main(main))

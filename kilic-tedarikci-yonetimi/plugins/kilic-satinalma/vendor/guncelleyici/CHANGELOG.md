@@ -4,6 +4,12 @@ Sürümleme: büyük sürüm akış değişikliklerini, küçük sürüm yeni a�
 kontrolleri, yama sürümü düzeltmeleri belirtir. Yayımlanmamış değişiklikler
 yerel geliştirme durumundadır.
 
+## v2.3.1 — 2026-10-13 — Kılıç plugininde yanıta bağlı çalışma
+
+- Ortak bekleme kaydına bağlı PowerShell/Python girişleri yalnız cevabı bekleyen ajan veya görevi durdurur. Bağımsız aktörler devam eder; bekleyen aktör periyodik kontrol yapmaz.
+- Kurulum, program sürümü seçimi, açık uygulama onayı ve kurtarma kuralları korunur.
+- Bu paket Kılıç Tedarikçi Yönetimi 1.3.3 içinde dağıtılır. Ayrı Güncelleyici deposuna yeni yayın yapılmış sayılmaz. Canlı kurulum ve personel pilotu bu yayın testinin kapsamı değildir.
+
 ## v2.3.0 — 2026-10-04 — Bağımsız güncelleyici ve pnpm native düzeltmesi
 
 - 2026-10-04: Teklif değerlendirme sürüm kontrolü, kurulum/güncelleme/doğrulama yolu ve ilgili araç/talimatlar kaldırıldı. Ana tablo altı program bileşeni içerir; PDF destekleyen kaynakta isteğe bağlı yedinci satır korunur.

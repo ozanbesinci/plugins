@@ -1,4 +1,6 @@
 """Immutable official report revisions; only a committed DB pointer is delivered."""
+
+from question_waits import guard_run_operation
 from pathlib import Path
 import json
 import tempfile
@@ -15,6 +17,7 @@ class RegistrationError(OSError):
 class PairValidationError(ValueError):
     """Files exist but do not satisfy the same model/paired artifact contract."""
 
+@guard_run_operation
 def stage_revision(run_root, directory):
     if directory not in {"output", "output_fallback"}:
         raise ValueError("Unknown official report directory")

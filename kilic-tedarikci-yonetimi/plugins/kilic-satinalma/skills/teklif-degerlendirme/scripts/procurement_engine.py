@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from question_waits import guard_run_operation
+
 import argparse
 import hashlib
 import json
@@ -509,6 +511,7 @@ def calculate_scoring(con, eligible_offers: list[str], scoring_params: dict[str,
     return result
 
 
+@guard_run_operation
 def run_engine(run_root: Path) -> dict[str, Any]:
     financial_params = get_meta(run_root, "financial_parameters", {}, parse_json=True) or {}
     scoring_params = get_meta(run_root, "scoring_parameters", {}, parse_json=True) or {}
@@ -534,4 +537,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    from question_waits import run_guarded_main
+    raise SystemExit(run_guarded_main(main))

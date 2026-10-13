@@ -412,7 +412,12 @@ def _validate_fact_evidence_semantics(con, fact: dict[str, Any], ev_id: str | No
             if not any(alias in hay or alias in quote for alias in CURRENCY_EVIDENCE[needle.upper()]):
                 raise ValueError("Evidence quote does not support currency")
         elif field == "vat" and needle in {"included", "excluded"}:
-            aliases = {"included": ["dahil", "included", "include"], "excluded": ["haric", "excluded", "exclude", "not included"]}[needle]
+            negative_inclusion = ["dahil degil", "dahil edilmem", "dahil edilmez", "not included", "not include"]
+            if needle == "included" and any(x in hay for x in negative_inclusion):
+                raise ValueError("Evidence quote excludes VAT; included normalization refused")
+            if needle == "excluded" and "haric degil" in hay:
+                raise ValueError("Negated VAT exclusion cannot establish excluded normalization")
+            aliases = {"included": ["dahil", "included", "include"], "excluded": ["haric", "excluded", "exclude", *negative_inclusion]}[needle]
             if not any(x in hay for x in aliases):
                 raise ValueError("Evidence quote does not support VAT normalization")
         elif needle and needle not in hay:
@@ -1096,6 +1101,8 @@ def record_task_result(
     output_tokens: int | None = None,
 ) -> dict[str, Any]:
     from run_compatibility import assert_dispatch
+    from question_waits import assert_task_allowed
+    assert_task_allowed(run_root, task_id)
     assert_dispatch(run_root, task_id, Path(__file__).resolve().parents[1])
     con = connect(run_root)
     try:
@@ -1201,6 +1208,8 @@ def main() -> None:
     ap.add_argument("--cached-input-tokens", type=int)
     ap.add_argument("--output-tokens", type=int)
     args = ap.parse_args()
+    from question_waits import assert_task_allowed
+    assert_task_allowed(Path(args.run), args.task_id)
     path = Path(args.input)
     payload = json.loads(path.read_text(encoding="utf-8-sig"))
     print(json.dumps(record_task_result(
@@ -1211,4 +1220,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    from question_waits import run_guarded_main
+    raise SystemExit(run_guarded_main(main))

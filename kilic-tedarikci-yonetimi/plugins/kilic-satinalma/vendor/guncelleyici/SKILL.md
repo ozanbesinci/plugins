@@ -5,6 +5,10 @@ description: Windows'ta Python, sabit Python paket seti, Node.js, pnpm, DuckDB, 
 
 # Güncelleyici
 
+## Sorunun yanıtına bağlı bekleme
+
+[Kullanıcı yanıtı bekleme kuralı](../../USER-EVIDENCE-POLICY.md#sorunun-yanıtına-bağlı-bekleme) zorunludur. Yalnız sorunun cevabına bağlı ajan ve işler durur; soru anında çalışan bağımsız ajanlar devam eder. Bekleyen ajan cevap gelene kadar araç/model çağrısı, okuma, hesap, yazma, rapor veya kontrol yapmaz; süre sınırı ve periyodik sorgulama yoktur. Soru kimliği/kapsamı ve bağımlı görev/ajan kimliklerini gösterimden önce kaydet. Yalnız ilgili yeterli yanıt bu bağımlılığı açar; “devam”, sessizlik veya seçili varsayılan cevap/onay değildir. Cevaplanmış soruyu sebepsiz tekrarlama.
+
 ## Durum ve sınır
 
 `BUILD.json` sürümün yayın ve kabul durumunu gösterir. `VERSION` kaynak sürümdür;
@@ -116,4 +120,4 @@ bağlantıyı ertelenmiş göster. Kapalı istemcide ayrı açık bağlama iste�
 
 Program ayrıntıları: [program-kurulumu.md](references/program-kurulumu.md).
 Tasarım değişiklikleri ve ertelenen işler: [degisiklik-haritasi.md](references/degisiklik-haritasi.md).
-Harici teknik kaynaklar: [kaynaklar.md](references/kaynaklar.md).
+Harici teknik kaynaklar: [kaynaklar.md](references/kaynaklar.md).Ana ajan, güncelleyici görevinde ortak bekleme kaydının `state.json` yolunu `KILIC_USER_WAIT_STATE`, gerçek ajan kimliğini `KILIC_AGENT_ID`, varsa görev kimliğini `KILIC_TASK_ID` ile o göreve aktarır. Bu görev ortamı global istemci ayarı değildir. Soru kaydı yapılmadan veya bekleyen ajan durmadan soru gösterilmez. PowerShell ve Python girişleri yalnız eşleşen ajan/görev için sonraki işi engeller; bağımsız aktörler devam eder. Bekleyen ajan kontrolü periyodik çağırmaz.

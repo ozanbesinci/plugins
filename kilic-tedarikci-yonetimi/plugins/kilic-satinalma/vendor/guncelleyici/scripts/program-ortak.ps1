@@ -11,6 +11,26 @@ function Read-Field($Object, [string]$Name, $Default = $null) {
     if ($p) { return ,$p.Value }
     return $Default
 }
+function Assert-UserAnswerDependencies {
+    # A coordinator supplies this job's control path and exact actor identity.
+    # No global stop and no timeout: unrelated actors continue normally.
+    $statePath=[string]$env:KILIC_USER_WAIT_STATE
+    if(-not $statePath){return}
+    if(-not (Test-Path -LiteralPath $statePath -PathType Leaf)){
+        if(Test-Path -LiteralPath (Split-Path $statePath -Parent)){throw 'Kullanıcı yanıtı bekleme kaydı eksik; bağlı iş başlatılmadı.'}
+        return
+    }
+    $state=Get-Content -LiteralPath $statePath -Raw -Encoding UTF8 | ConvertFrom-Json
+    if((Read-Field $state 'schema') -ne 'kilic-question-waits/v1'){throw 'Kullanıcı yanıtı bekleme kaydı geçersiz.'}
+    foreach($question in @($state.questions)){
+        $agents=@($question.dependency.agent_ids)
+        $tasks=@($question.dependency.task_ids)
+        if(($env:KILIC_AGENT_ID -and $agents -ccontains $env:KILIC_AGENT_ID) -or
+           ($env:KILIC_TASK_ID -and $tasks -ccontains $env:KILIC_TASK_ID)){
+            throw 'NEEDS_USER_INPUT: yalnız bu sorunun cevabını bekleyen ajan/görev durduruldu.'
+        }
+    }
+}
 function Assert-SupportedPlatform {
     if ([Environment]::OSVersion.Platform -ne [PlatformID]::Win32NT) { throw 'Yalnız Windows desteklenir.' }
     if (-not [Environment]::Is64BitOperatingSystem -or -not [Environment]::Is64BitProcess) { throw '64-bit Windows ve 64-bit Windows PowerShell gerekli.' }
@@ -27,6 +47,7 @@ function Quote-NativeArgument([string]$Argument) {
     return '"' + $escaped + '"'
 }
 function Invoke-Native([string]$Exe, [string[]]$Arguments, [int]$TimeoutSeconds = 120, [hashtable]$Environment = @{}) {
+    Assert-UserAnswerDependencies
     $info = New-Object Diagnostics.ProcessStartInfo
     $info.FileName = $Exe
     $info.Arguments = (@($Arguments | ForEach-Object { Quote-NativeArgument $_ }) -join ' ')

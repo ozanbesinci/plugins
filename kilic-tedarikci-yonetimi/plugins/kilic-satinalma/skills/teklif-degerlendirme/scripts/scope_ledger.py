@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+from question_waits import guard_run_operation
 import argparse, hashlib, json, re
 from pathlib import Path
 from typing import Any
@@ -97,6 +99,7 @@ def buyer_authority(con, offer_id: str, field: str) -> dict[str, Any] | None:
 def buyer_currency_authority(con, offer_id: str) -> dict[str, Any] | None:
     return buyer_authority(con,offer_id,'currency')
 
+@guard_run_operation
 def build(run_root:Path, final:bool=False)->dict[str,Any]:
     con=connect(run_root)
     try:
@@ -200,4 +203,6 @@ def build(run_root:Path, final:bool=False)->dict[str,Any]:
 
 def main():
     ap=argparse.ArgumentParser(description='Build no-silent-omission run scope ledger'); ap.add_argument('--run',required=True); ap.add_argument('--final',action='store_true'); a=ap.parse_args(); print(json.dumps(build(Path(a.run),a.final),ensure_ascii=False,indent=2))
-if __name__=='__main__': main()
+if __name__ == "__main__":
+    from question_waits import run_guarded_main
+    raise SystemExit(run_guarded_main(main))

@@ -1,6 +1,8 @@
 """Explicit, auditable review of one previously failed PDF page."""
 from __future__ import annotations
 
+from question_waits import guard_run_operation
+
 import argparse
 import hashlib
 import json
@@ -46,6 +48,7 @@ def _recheck_images(payload: dict, row: dict) -> None:
             raise ValueError("Recheck supplementary image/hash changed")
 
 
+@guard_run_operation
 def create_recheck(run_root: Path, previous_task_id: str, finding_id: str, render_key: str, reason: str,
                    supplementary_images: list[Path] | None = None) -> dict:
     from run_compatibility import assert_compatible
@@ -112,6 +115,7 @@ def create_recheck(run_root: Path, previous_task_id: str, finding_id: str, rende
         con.close()
 
 
+@guard_run_operation
 def adopt_recheck(run_root: Path, recheck_id: str, reason: str) -> dict:
     from run_compatibility import assert_dispatch
     reason = reason.strip()
@@ -179,4 +183,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    from question_waits import run_guarded_main
+    raise SystemExit(run_guarded_main(main))

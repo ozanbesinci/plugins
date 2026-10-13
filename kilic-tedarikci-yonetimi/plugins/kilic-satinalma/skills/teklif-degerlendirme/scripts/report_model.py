@@ -1,5 +1,7 @@
 """WP-047/048 conservative projection; never creates a reviewed decision snapshot."""
 from __future__ import annotations
+
+from question_waits import guard_run_operation
 import hashlib
 import json
 from pathlib import Path
@@ -106,6 +108,7 @@ def current_excluded_offers(model):
     return excluded
 
 
+@guard_run_operation
 def build_preliminary(run_root: Path, reason: str):
     # Do not create a DB merely to emit a safety notice.
     model = {"schema":"teklif-report-model/v1","profile":"standart",

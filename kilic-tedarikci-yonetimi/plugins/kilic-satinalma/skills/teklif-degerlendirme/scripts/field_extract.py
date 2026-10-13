@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from question_waits import guard_run_operation
+
 import argparse
 import json
 import re
@@ -549,6 +551,7 @@ def _mark_conflicting(con, offer_id: str, field: str, candidates: list[dict[str,
     )
 
 
+@guard_run_operation
 def extract(run_root: Path) -> dict[str, Any]:
     con = connect(run_root)
     offer_count = 0
@@ -613,4 +616,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    from question_waits import run_guarded_main
+    raise SystemExit(run_guarded_main(main))

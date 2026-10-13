@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from question_waits import guard_run_operation
+
 import argparse
 import json
 from pathlib import Path
@@ -198,6 +200,7 @@ def _visual_and_classification_tasks(con, counts: dict[str, int]) -> None:
         counts["document_classification"] = counts.get("document_classification", 0) + 1
 
 
+@guard_run_operation
 def generate_initial_tasks(run_root: Path, profile: str) -> dict[str, int]:
     con = connect(run_root)
     counts: dict[str, int] = {}
@@ -229,6 +232,7 @@ def _secondary_pdf_maps(run_root: Path) -> tuple[set[tuple[str, int]], set[str]]
 
 
 
+@guard_run_operation
 def generate_specialist_tasks(run_root: Path) -> dict[str, int]:
     """Create bounded high-assurance specialist tasks only when source signals justify them."""
     con = connect(run_root)
@@ -275,6 +279,7 @@ def generate_specialist_tasks(run_root: Path) -> dict[str, int]:
         con.close()
     return counts
 
+@guard_run_operation
 def generate_review_tasks(run_root: Path, profile: str, chunk_size: int = 20) -> dict[str, int]:
     if profile == "hizli":
         return {}
@@ -344,6 +349,7 @@ def generate_review_tasks(run_root: Path, profile: str, chunk_size: int = 20) ->
         con.close()
     return counts
 
+@guard_run_operation
 def generate_decision_summary_task(run_root: Path) -> str:
     con = connect(run_root)
     try:
@@ -363,6 +369,7 @@ def generate_decision_summary_task(run_root: Path) -> str:
         con.close()
 
 
+@guard_run_operation
 def retry_decision_summary(run_root: Path) -> dict[str, Any]:
     """Create a bounded replacement task; retain the completed invalid result."""
     from claim_registry import rebuild
@@ -437,4 +444,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    from question_waits import run_guarded_main
+    raise SystemExit(run_guarded_main(main))

@@ -1,4 +1,6 @@
 """Explicit source relationships; neither filenames nor equal prices authorize one."""
+
+from question_waits import guard_run_operation
 import argparse
 import json
 from pathlib import Path
@@ -7,6 +9,7 @@ from db import connect, one_as_dict
 from run_compatibility import assert_compatible
 
 
+@guard_run_operation
 def declare(run_root: Path, source_id: str, target_id: str, relation_type: str, declaration: dict) -> str:
     assert_compatible(run_root, Path(__file__).resolve().parents[1])
     if relation_type not in {'corroborates', 'supersedes', 'independent_alternative'}:
@@ -64,9 +67,6 @@ def declare(run_root: Path, source_id: str, target_id: str, relation_type: str, 
         con.close()
 
 
-if __name__ == '__main__':
-    p = argparse.ArgumentParser(description='Declare a trusted explicit source relationship before extraction')
-    p.add_argument('--run', required=True); p.add_argument('--source-document', required=True); p.add_argument('--target-document', required=True)
-    p.add_argument('--relation', required=True, choices=['corroborates','supersedes','independent_alternative']); p.add_argument('--declaration', required=True)
-    a = p.parse_args()
-    print(declare(Path(a.run), a.source_document, a.target_document, a.relation, json.loads(Path(a.declaration).read_text(encoding='utf-8-sig'))))
+if __name__ == "__main__":
+    from question_waits import run_guarded_main
+    raise SystemExit(run_guarded_main(main))

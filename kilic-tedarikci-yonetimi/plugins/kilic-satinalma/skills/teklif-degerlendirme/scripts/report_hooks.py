@@ -25,6 +25,10 @@ def terminal_reports(run_arg=0):
                 result={"status":"BLOCKED", "reason":"Fiziksel çalışma arızası: " + str(exc),
                         "physical_error_type":type(exc).__name__}
             if not isinstance(result,dict) or result.get("status") not in TERMINALS: return result
+            from question_waits import active
+            if result.get('status') == 'NEEDS_USER_INPUT' or active(run_root):
+                return {**result, 'deliverable_artifacts':False,
+                        'report_delivery_status':'WAITING_FOR_USER_ANSWER'}
             if result.get("preliminary_report"): return result
             reason=result.get("reason") or (
                 "Kritik iş bilgisi teyit bekliyor; kesin karar ve etkilenen hesaplar bekletildi."

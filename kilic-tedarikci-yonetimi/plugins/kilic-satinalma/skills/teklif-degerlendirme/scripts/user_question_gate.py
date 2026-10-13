@@ -81,7 +81,8 @@ def _question(row: dict, documents: list[dict], comparison_dimension: str | None
     return f'{owner} için {label} hangi kaynak ve değerle doğrulanmaktadır? Belge konumunu ve karar üzerindeki etkisini belirtiniz.'
 
 
-def questions(run_root: Path, *, limit: int = 3, include_medium: bool = False, include_low: bool = False) -> dict:
+def _question_candidates(run_root: Path, *, limit: int = 3, include_medium: bool = False,
+                         include_low: bool = False, include_answered_for_audit: bool = False) -> dict:
     """Return a bounded group; never convert an issue into verified evidence."""
     con = connect(run_root)
     try:
@@ -100,9 +101,17 @@ def questions(run_root: Path, *, limit: int = 3, include_medium: bool = False, i
                  (r['owner'] in {'IDARE','TUM_FIRMALAR'} or str(r['owner']).startswith('FIRMA:')))]
         if extraction_pending:
             rows = [r for r in rows if r['issue_type'] != 'comparability_contract']
-        selected = rows[:limit]
+        # A complete user answer can explicitly leave the commercial value
+        # unknown. Keep the issue for sufficiency/QA, but do not re-present its
+        # exact answered scope. Filter before bounding the question group.
+        from question_waits import _table_exists
+        answered_scopes = set()
+        if _table_exists(con):
+            answered_scopes = set(con.execute("""SELECT issue_id,scope_sha256
+                FROM user_question_waits WHERE state IN ('answered','new_run_required')""").fetchall())
         result = []
-        for row in selected:
+        open_question_count = 0
+        for row in rows:
             ownership = registry.get(row['issue_id']) or {}
             dimension = ownership.get('key') if ownership.get('component') == 'comparison_contract' else None
             owner = str(row.get('owner') or '')
@@ -134,6 +143,11 @@ def questions(run_root: Path, *, limit: int = 3, include_medium: bool = False, i
                 locations.append({k:d.get(k) for k in ('document_id','filename','sha256','revision_label','offer_id','locator_json')})
             signature = hashlib.sha256(json_text([row['issue_id'],owner,row['severity'],row['issue_type'],row['question'],
                 fact_ids,evidence_ids,fact_scope,[(d['document_id'],d['sha256']) for d in docs]]).encode('utf-8')).hexdigest()
+            if not include_answered_for_audit and (row['issue_id'], signature) in answered_scopes:
+                continue
+            open_question_count += 1
+            if len(result) >= limit:
+                continue
             rate_match=re.search(r'\bfor\s+([A-Z]{3}(?:,\s*[A-Z]{3})*)\s+to compare',str(row.get('question') or ''))
             required_currencies=[x.strip() for x in rate_match.group(1).split(',')] if rate_match else []
             state=con.execute("SELECT value FROM run_meta WHERE key=?",['question_fields:'+row['issue_id']]).fetchone()
@@ -149,17 +163,29 @@ def questions(run_root: Path, *, limit: int = 3, include_medium: bool = False, i
                 'answered_fields':partial.get('answered_fields',[]),'remaining_fields':partial.get('remaining_fields',fact_ids),
                 'sources':locations,'required_currencies':required_currencies,
                 'decision_effect':'İlgili hesap, karşılaştırma ve karar çıktısı yanıt ile yeniden doğrulama tamamlanana kadar bekler.'})
-        return {'questions':result,'open_question_count':len(rows),'remaining_question_count':max(0,len(rows)-len(result))}
+        return {'questions':result,'open_question_count':open_question_count,
+                'remaining_question_count':max(0,open_question_count-len(result))}
     finally:
         con.close()
+
+
+def questions(run_root: Path, *, limit: int = 3, include_medium: bool = False,
+              include_low: bool = False) -> dict:
+    """The presentation API never exposes completed question scopes."""
+    return _question_candidates(run_root, limit=limit, include_medium=include_medium,
+                                include_low=include_low)
 
 
 def waiting(run_root: Path) -> dict | None:
     state = questions(run_root)
     if not state['questions']:
         return None
+    from question_waits import register
+    for question in state['questions']:
+        register(run_root, question)
     return {'status':'NEEDS_USER_INPUT',**state,'deliverable_artifacts':False,
-            'next_action':'Soruların kaynak ve kapsamı teyit edilmelidir; yanıt kayıt altına alındıktan sonra bağlı değerlendirme yeni girdiyle yeniden yürütülür.'}
+            'wait_policy':'dependent_tasks_only_no_timeout',
+            'next_action':'Yalnız bu yanıtları bekleyen ajan ve işler durur. Çalışan bağımsız işler devam eder; bağlı değerlendirme gerçek yanıt ve yeniden doğrulama sonrasında yürütülür.'}
 
 
 def source_manifest(source: Path) -> dict[str,str]:
@@ -441,12 +467,24 @@ def record_response(run_root: Path, response: dict, next_run: Path) -> dict:
     kind = str(response.get('answer_kind') or '')
     if not answer or len(answer) > 6000 or kind not in {'financial_rate','new_source','clarification'}:
         raise ValueError('Yanıt metni ve desteklenen answer_kind zorunludur')
-    active = {q['issue_id']:q for q in questions(run_root, limit=10000, include_medium=True)['questions']}
+    # Audit replay validates the exact completed scope while presentation keeps
+    # hiding it. The existing event/payload checks still reject altered replay.
+    active = {q['issue_id']:q for q in _question_candidates(run_root, limit=10000,
+              include_medium=True, include_answered_for_audit=True)['questions']}
     question = active.get(issue_id)
     if not question or question['scope_sha256'] != scope:
         raise ValueError('Soru veya kaynak kapsamı değişti; yanıt eski bağlama yazılamaz')
     con=connect(run_root)
     try:
+        from question_waits import _table_exists
+        if _table_exists(con):
+            completed = con.execute("""SELECT state FROM user_question_waits
+                WHERE issue_id=? AND scope_sha256=? AND state IN ('answered','new_run_required')""",
+                [issue_id,scope]).fetchone()
+            replay_event = stable_id('user-response',issue_id,scope,answer,kind,length=30)
+            if completed and not con.execute("SELECT 1 FROM workflow_events WHERE event_id=? AND event_type='user_response_recorded'",
+                                             [replay_event]).fetchone():
+                raise ValueError('Cevaplanmış soru yeni yanıtla değiştirilemez; yeni kaynak/soru kapsamı gerekir')
         source_rows=rows_as_dict(con,"SELECT document_id,sha256,metadata_json FROM documents WHERE active=true")
         for row in source_rows:
             try:
@@ -562,6 +600,11 @@ def record_response(run_root: Path, response: dict, next_run: Path) -> dict:
                 'issue_resolved':False,'old_artifacts_deliverable':False}
     request_path=folder/f'{event_id}.resume.json'
     request_path.write_text(json.dumps(request,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+    # Authorize the existing new-run path, never in-place facts or global resume.
+    from question_waits import register, record_answer
+    register(run_root, question)
+    record_answer(run_root, issue_id, scope, answer, sufficient=True,
+                  response_sha256=sha256_file(record_path), new_run_required=True)
     return {'status':'RECORDED_NEW_RUN_REQUIRED','event_id':event_id,'response_sha256':sha256_file(record_path),
             'resume_request':str(request_path),'issue_resolved':False,'old_artifacts_deliverable':False}
 

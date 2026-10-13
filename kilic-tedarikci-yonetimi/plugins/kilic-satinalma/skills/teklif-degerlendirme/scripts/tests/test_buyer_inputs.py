@@ -111,6 +111,26 @@ class BuyerInputsTests(WorkflowIntegrationTests):
         with self.assertRaisesRegex(ValueError,'teklif hedefi'):
             record_response(self.run,self._response(q,[{'kind':'currency','offer_id':'not-offer','value':'EUR'}]),self.root/'next')
 
+    def test_completed_response_replay_does_not_reask_or_write_altered_reply(self):
+        offer,q=self._issue()
+        answer=self._response(q,[{'kind':'currency','offer_id':offer,'value':'EUR'}])
+        self.assertEqual(record_response(self.run,answer,self.root/'next')['status'],'RECORDED_NEW_RUN_REQUIRED')
+        self.assertFalse(any(x['issue_id']==q['issue_id'] for x in questions(self.run,limit=10000)['questions']))
+        con=connect(self.run)
+        try:
+            before=con.execute('SELECT event_id,payload_json FROM workflow_events ORDER BY event_id').fetchall()
+        finally:con.close()
+        files={p.name:sha256_file(p) for p in (self.run/'user_responses').iterdir()}
+        self.assertEqual(record_response(self.run,answer,self.root/'next')['status'],'ALREADY_RECORDED')
+        with self.assertRaisesRegex(ValueError,'Cevaplanmış'):
+            record_response(self.run,{**answer,'answer_text':'Farklı yanıt'},self.root/'next')
+        with self.assertRaises(ValueError):
+            record_response(self.run,self._response(q,[{'kind':'currency','offer_id':offer,'value':'USD'}]),self.root/'next')
+        con=connect(self.run)
+        try:self.assertEqual(before,con.execute('SELECT event_id,payload_json FROM workflow_events ORDER BY event_id').fetchall())
+        finally:con.close()
+        self.assertEqual(files,{p.name:sha256_file(p) for p in (self.run/'user_responses').iterdir()})
+
     def test_numeric_validation(self):
         offer,q = self._issue('scope_basis')
         con=connect(self.run)

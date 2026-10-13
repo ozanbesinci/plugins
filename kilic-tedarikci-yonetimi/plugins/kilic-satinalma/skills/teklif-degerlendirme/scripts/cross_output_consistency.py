@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+from question_waits import guard_run_operation
 from artifact_values import comparison_fact_value, evidence_label, offer_display_status, pending_offer_fields, ranking_visible
 from effective_report_values import buyer_term, weighted_score_display
 import argparse, json, math
@@ -20,6 +22,7 @@ def _j(v,default=None):
     try: return v if isinstance(v,(dict,list)) else json.loads(v) if v is not None else default
     except Exception: return default
 
+@guard_run_operation
 def check(run_root:Path)->dict[str,Any]:
     from openpyxl import load_workbook
     snap,srow=load_latest(run_root); snapshot_sha=srow['sha256']; meta=snap.get('meta',{})
@@ -136,4 +139,6 @@ def check(run_root:Path)->dict[str,Any]:
 
 def main():
     ap=argparse.ArgumentParser(description='Reconcile frozen reviewed procurement snapshot to generated outputs'); ap.add_argument('--run',required=True); a=ap.parse_args(); print(json.dumps(check(Path(a.run)),ensure_ascii=False,indent=2,default=str))
-if __name__=='__main__': main()
+if __name__ == "__main__":
+    from question_waits import run_guarded_main
+    raise SystemExit(run_guarded_main(main))

@@ -219,6 +219,8 @@ def _security_envelope(task_kind: str) -> dict[str, Any]:
 
 
 def task_packet(run_root: Path, task_id: str, max_units: int, max_chars: int) -> dict[str, Any]:
+    from question_waits import assert_task_allowed
+    assert_task_allowed(run_root, task_id)
     con = connect(run_root)
     try:
         task = one_as_dict(
@@ -480,6 +482,8 @@ def decision_packet_from_connection(con, max_chars: int) -> dict[str, Any]:
 
 
 def decision_packet(run_root: Path, max_chars: int) -> dict[str, Any]:
+    from question_waits import assert_operation_allowed
+    assert_operation_allowed(run_root, 'context_packet.decision_packet')
     con = connect(run_root)
     try:
         return _hard_bound_packet({"schema": "teklif-decision/v5", **decision_packet_from_connection(con, max_chars)}, max_chars)
@@ -494,6 +498,11 @@ def main() -> None:
     ap.add_argument("--kind", choices=["decision"])
     ap.add_argument("--output")
     args = ap.parse_args()
+    from question_waits import assert_task_allowed, assert_operation_allowed
+    if args.task_id:
+        assert_task_allowed(Path(args.run), args.task_id)
+    else:
+        assert_operation_allowed(Path(args.run), 'context_packet.decision')
     skill_root = Path(__file__).resolve().parents[1]
     cfg = _policy(skill_root)["context_packet"]
     max_chars = int(cfg["max_chars"])
@@ -511,4 +520,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    from question_waits import run_guarded_main
+    raise SystemExit(run_guarded_main(main))

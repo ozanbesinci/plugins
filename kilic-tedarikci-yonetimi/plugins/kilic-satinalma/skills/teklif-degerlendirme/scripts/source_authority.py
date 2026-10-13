@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from question_waits import guard_run_operation
+
 import argparse
 import json
 import re
@@ -60,9 +62,12 @@ def _filename_revision_root(filename: str) -> tuple[str | None, bool]:
     return (root or None), True
 
 
+@guard_run_operation
 def refresh(run_root: Path) -> dict[str, Any]:
     con = connect(run_root)
     try:
+        from source_selection import verified_document_ids
+        selected_source_ids = verified_document_ids(con, run_root)
         _close_old_issues(con)
         docs = rows_as_dict(
             con,
@@ -146,6 +151,13 @@ def refresh(run_root: Path) -> dict[str, Any]:
         }
         for d in unresolved_revision_docs:
             if d["document_id"] not in paired_revision_ids:
+                if d["document_id"] in selected_source_ids:
+                    records[d["document_id"]].update(
+                        authority_status="controlling", precedence_rank=100,
+                        rationale="Exact standalone offer bytes explicitly selected by the user; USER_INPUT receipt verified.",
+                        assessed_by="user_source_selection/v1",
+                    )
+                    continue
                 owner = f"FIRMA:{d['supplier_id']}" if d.get("supplier_id") else "IDARE"
                 _issue(con, owner, "critical", "source_authority_conflict",
                        f"Confirm whether revision-tagged source {d['filename']} is the controlling offer; no matching revision source is identified.",
@@ -160,7 +172,7 @@ def refresh(run_root: Path) -> dict[str, Any]:
             con.execute(
                 """INSERT OR REPLACE INTO source_authority(document_id,authority_scope,authority_class,authority_status,precedence_rank,rationale,assessed_by,assessed_at)
                    VALUES (?,?,?,?,?,?,?,?)""",
-                [r["document_id"], r["authority_scope"], r["authority_class"], r["authority_status"], r["precedence_rank"], r["rationale"], "deterministic_rule/v5.0.4", utc_now()],
+                [r["document_id"], r["authority_scope"], r["authority_class"], r["authority_status"], r["precedence_rank"], r["rationale"], r.get("assessed_by", "deterministic_rule/v5.0.4"), utc_now()],
             )
         if hasattr(con, "commit"):
             con.commit()
@@ -179,4 +191,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    from question_waits import run_guarded_main
+    raise SystemExit(run_guarded_main(main))
