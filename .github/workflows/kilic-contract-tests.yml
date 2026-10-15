@@ -43,7 +43,16 @@ jobs:
         shell: pwsh
         run: |
           # Native startup tests expect the signed community PDF extension where a configured workstation keeps it.
-          python -B -c "import duckdb; c = duckdb.connect(config={'allow_unsigned_extensions': False, 'autoinstall_known_extensions': False, 'autoload_known_extensions': False}); c.execute('INSTALL pdf FROM community'); c.execute('LOAD pdf'); names = {r[0] for r in c.execute(\"SELECT DISTINCT function_name FROM duckdb_functions() WHERE function_name IN ('read_pdf','read_pdf_tables','pdf_info')\").fetchall()}; assert names == {'read_pdf','read_pdf_tables','pdf_info'}, names; print(c.execute(\"SELECT install_path, installed_from FROM duckdb_extensions() WHERE extension_name='pdf'\").fetchall())"
+          $code = @'
+          import duckdb
+          c = duckdb.connect(config={"allow_unsigned_extensions": False, "autoinstall_known_extensions": False, "autoload_known_extensions": False})
+          c.execute("INSTALL pdf FROM community")
+          c.execute("LOAD pdf")
+          names = {r[0] for r in c.execute("SELECT DISTINCT function_name FROM duckdb_functions() WHERE function_name IN ('read_pdf','read_pdf_tables','pdf_info')").fetchall()}
+          assert names == {"read_pdf", "read_pdf_tables", "pdf_info"}, names
+          print(c.execute("SELECT install_path, installed_from FROM duckdb_extensions() WHERE extension_name='pdf'").fetchall())
+          '@
+          $code | python -B -
           exit $LASTEXITCODE
       - name: Sürüm aracının kanıt ve kapsam kontrolleri
         shell: pwsh
