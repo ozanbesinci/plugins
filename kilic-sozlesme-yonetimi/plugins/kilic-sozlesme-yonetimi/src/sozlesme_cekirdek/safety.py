@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import stat
 import time
+from contextlib import contextmanager
 from uuid import UUID, uuid4
 
 from .errors import CoreError
@@ -27,8 +28,96 @@ def hash_value(value):
 
 
 def hash_file(path):
-    with native_path(path).open("rb") as stream:
+    with open_verified_source(path) as stream:
         return hashlib.file_digest(stream, "sha256").hexdigest()
+
+
+def _windows_source_handle(path):
+    import ctypes
+    from ctypes import wintypes
+    kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel.CreateFileW.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD, ctypes.c_void_p,
+                                  wintypes.DWORD, wintypes.DWORD, wintypes.HANDLE]
+    kernel.CreateFileW.restype = wintypes.HANDLE
+    kernel.CloseHandle.argtypes = [wintypes.HANDLE]
+    kernel.CloseHandle.restype = wintypes.BOOL
+    handle = kernel.CreateFileW(str(native_path(path)), 0x80000000, 1, None, 3, 0x00200000, None)
+    if handle == ctypes.c_void_p(-1).value:
+        error = ctypes.get_last_error()
+        # Only a sharing/lock violation means another writer; a moved or denied
+        # source is access loss and must not tell the user to close a file.
+        if error in (32, 33):
+            raise CoreError("KAYNAK_MESGUL", "Kaynak başka bir uygulamada yazma/silme için açık; dosyayı kapatıp yeniden dene")
+        if error in (2, 3, 53, 67):
+            raise CoreError("ERISIM_YOK", "Kaynak dosya bulunamadı veya yolu erişilemiyor; taşındıysa yeni yolu yeni sürüm olarak al")
+        if error == 5:
+            raise CoreError("ERISIM_YOK", "Kaynak dosyaya Windows erişimi reddedildi")
+        raise CoreError("ERISIM_YOK", f"Kaynak sabit salt-okunur nesne olarak açılamadı (Windows hata {error})")
+    return kernel, handle
+
+
+def _validate_windows_source(kernel, handle, path):
+    import ctypes
+    from ctypes import wintypes
+    class Information(ctypes.Structure):
+        _fields_ = [("attributes", wintypes.DWORD), ("created", wintypes.FILETIME),
+                    ("accessed", wintypes.FILETIME), ("written", wintypes.FILETIME),
+                    ("volume", wintypes.DWORD), ("size_high", wintypes.DWORD), ("size_low", wintypes.DWORD),
+                    ("links", wintypes.DWORD), ("index_high", wintypes.DWORD), ("index_low", wintypes.DWORD)]
+    kernel.GetFileInformationByHandle.argtypes = [wintypes.HANDLE, ctypes.POINTER(Information)]
+    kernel.GetFileInformationByHandle.restype = wintypes.BOOL
+    kernel.GetFinalPathNameByHandleW.argtypes = [wintypes.HANDLE, wintypes.LPWSTR, wintypes.DWORD, wintypes.DWORD]
+    kernel.GetFinalPathNameByHandleW.restype = wintypes.DWORD
+    kernel.GetLongPathNameW.argtypes = [wintypes.LPCWSTR, wintypes.LPWSTR, wintypes.DWORD]
+    kernel.GetLongPathNameW.restype = wintypes.DWORD
+    info, buffer = Information(), ctypes.create_unicode_buffer(32768)
+    size = kernel.GetFinalPathNameByHandleW(handle, buffer, len(buffer), 0)
+    if (not kernel.GetFileInformationByHandle(handle, ctypes.byref(info)) or not 0 < size < len(buffer)
+            or info.attributes & (0x400 | 0x10) or info.links != 1):
+        raise CoreError("ERISIM_YOK", "Kaynak nesnesi reparse/dizin/çoklu link veya doğrulanamayan nesne")
+    expanded = ctypes.create_unicode_buffer(32768)
+    expanded_size = kernel.GetLongPathNameW(str(native_path(path)), expanded, len(expanded))
+    if not 0 < expanded_size < len(expanded):
+        raise CoreError("ERISIM_YOK", "Windows uzun kaynak adı doğrulanamadı")
+    expected = os.path.normcase(os.path.abspath(ordinary_path(expanded.value)))
+    observed = os.path.normcase(os.path.abspath(ordinary_path(buffer.value)))
+    if expected != observed:
+        raise CoreError("ERISIM_YOK", "Açılan kaynak nesnesi istenen yolla eşleşmiyor")
+
+
+@contextmanager
+def open_verified_source(path):
+    """Bind a read to one ordinary file; deny concurrent write/delete on Windows."""
+    # This local parent check does not grant a root; callers still pass their own
+    # authorized roots. It rejects reparse ancestors even for direct helper use.
+    confined(path, [Path(path).absolute().parent])
+    if os.name != "nt":
+        with native_path(path).open("rb") as stream:
+            if os.fstat(stream.fileno()).st_nlink != 1:
+                raise CoreError("ERISIM_YOK", "Çoklu link kaynak olarak kullanılamaz")
+            yield stream
+        return
+    import msvcrt
+    kernel, handle = _windows_source_handle(path)
+    transferred = False
+    try:
+        _validate_windows_source(kernel, handle, path)
+        fd = msvcrt.open_osfhandle(int(handle), os.O_RDONLY | os.O_BINARY)
+        transferred = True
+        with os.fdopen(fd, "rb") as stream:
+            yield stream
+            _validate_windows_source(kernel, handle, path)
+    finally:
+        if not transferred:
+            kernel.CloseHandle(handle)
+
+
+def read_verified_bytes(path, limit=100 * 1024 * 1024):
+    with open_verified_source(path) as stream:
+        data = stream.read(limit + 1)
+        if len(data) > limit:
+            raise CoreError("BOYUT_SINIRI", "Kaynak nesnesi okuma bütçesini aştı")
+        return data
 
 
 def ordinary_path(path):
@@ -60,20 +149,66 @@ def confined(path, roots):
             info = probe.lstat()
             if stat.S_ISLNK(info.st_mode) or getattr(info, "st_file_attributes", 0) & 0x400:
                 raise CoreError("ERISIM_YOK", "Symlink/junction kaynak veya hedef olarak kullanılamaz")
+            if stat.S_ISREG(info.st_mode) and info.st_nlink != 1:
+                raise CoreError("ERISIM_YOK", "Çoklu hardlink kaynak veya hedef olarak kullanılamaz")
     resolved = ordinary_path(native_path(path).resolve())
     if not any(resolved.is_relative_to(ordinary_path(native_path(root).resolve())) for root in roots):
         raise CoreError("ERISIM_YOK", "Çözülmüş yol izinli kökün dışında")
     return path
 
 
+REPLACE_RETRY_SECONDS = (0.05, 0.1, 0.2, 0.4, 0.8)
+
+
+def replace_owned(source, target):
+    """Move our own closed temp file into place.
+
+    Windows scanners/indexers briefly open a just-closed file without delete
+    sharing, which makes MoveFileEx report access denied. Only that error is
+    retried, boundedly; every other failure surfaces at once.
+    """
+    for delay in REPLACE_RETRY_SECONDS + (None,):
+        try:
+            return os.replace(native_path(source), native_path(target))
+        except PermissionError:
+            if delay is None:
+                raise
+            time.sleep(delay)
+
+
+def rename_owned(source, target):
+    """No-overwrite rename of our own just-built staging directory.
+
+    Same transient scanner hold as replace_owned (e.g. a just-closed DuckDB file
+    inside the folder). An existing target still fails at once.
+    """
+    for delay in REPLACE_RETRY_SECONDS + (None,):
+        try:
+            return os.rename(native_path(source), native_path(target))
+        except FileExistsError:
+            raise
+        except PermissionError:
+            if delay is None:
+                raise
+            time.sleep(delay)
+
+
 def atomic_json(path, value):
     path = Path(path)
+    content = canonical(value)
     temp = path.with_name(path.name + "." + str(uuid4()) + ".tmp")
-    with native_path(temp).open("x", encoding="utf-8", newline="\n") as stream:
-        stream.write(canonical(value))
-        stream.flush()
-        os.fsync(stream.fileno())
-    os.replace(native_path(temp), native_path(path))
+    created = False
+    try:
+        with native_path(temp).open("x", encoding="utf-8", newline="\n") as stream:
+            created = True
+            stream.write(content)
+            stream.flush()
+            os.fsync(stream.fileno())
+        replace_owned(temp, path)
+        created = False
+    finally:
+        if created:
+            native_path(temp).unlink(missing_ok=True)
 
 
 class FileLock:

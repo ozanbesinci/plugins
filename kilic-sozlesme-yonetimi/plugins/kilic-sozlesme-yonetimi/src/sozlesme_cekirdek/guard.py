@@ -15,8 +15,9 @@ from uuid import uuid4
 
 from jsonschema import Draft202012Validator, FormatChecker
 from .errors import CoreError
-from .safety import canonical, confined, hash_file, hash_value, native_path, uuid_text
+from .safety import canonical, confined, hash_file, hash_value, native_path, uuid_text, atomic_json, read_verified_bytes
 from .verification import reading_profile
+from .runtime_identity import component_identity
 
 VERSION = "p4-1.1"
 ROOT = Path(__file__).resolve().parents[2]
@@ -412,9 +413,24 @@ class SyntheticGuardRuntime:
                 writer.write(data)
                 writer.flush()
                 os.fsync(writer.fileno())
+            exporter = getattr(self.backend, "export_recovery_payload", None)
+            capsule = checked("p4_recovery_capsule", {
+                "schema_version":"p4-recovery-capsule-1.0","case_id":case,"operation_id":operation,
+                "request_digest":hash_value(frozen),"artifact_sha256":digest,"backend_version":self.backend.version,
+                "build_digest":component_identity()["source_digest"],
+                "backend_payload":exporter(frozen,data) if exporter else None,
+                "execution_scope":"SYNTHETIC_TEST_ONLY","production_ready":False})
+            if len(canonical(capsule).encode("utf-8"))>1024*1024:
+                raise CoreError("QA_FAILED","Recovery capsule bütçesi aşıldı")
+            capsule_path=confined(quarantine.with_name("capsule.json"),[self.store.root])
+            atomic_json(capsule_path,capsule)
             key = quarantine.relative_to(self.store.system).as_posix()
             with self.store._db() as db:
                 self._stage(db, case, operation, {"EXECUTING"}, "QUARANTINED", artifact_sha256=digest, quarantine_key=key)
+                self.store._event(db,case,"ARTIFACT_RECOVERY_CAPSULE_REGISTERED",{
+                    "operation_id":operation,"request_digest":hash_value(frozen),"artifact_sha256":digest,
+                    "capsule_sha256":hash_file(capsule_path),"backend_version":self.backend.version,
+                    "build_digest":capsule["build_digest"]})
             qa = self.backend.verify_document(frozen, data)
             if type(qa) is not TestQA or qa.passed is not True or qa.digest != digest or hash_file(quarantine) != digest:
                 raise CoreError("QA_FAILED", "Çıktı QA/hash doğrulaması geçmedi")
@@ -429,8 +445,19 @@ class SyntheticGuardRuntime:
                 if hash_file(quarantine) != digest:
                     raise CoreError("QA_FAILED", "QA sonrası karantina değişmiş")
                 native_path(target.parent).mkdir(parents=True, exist_ok=True)
-                # Atomic exclusive publication on this same NTFS workspace; never replace().
-                os.link(native_path(quarantine), native_path(target))
+                # Preserve the quarantine as a separate single-link object. On
+                # Windows rename is atomic and rejects an existing destination.
+                # No publication path is enabled on other platforms.
+                if os.name != "nt":
+                    raise CoreError("PLATFORM_PUBLICATION", "Yalnız Windows atomik yayın desteklenir")
+                ready = confined(target.with_name(target.name + "." + operation + ".ready"), [self.store.root])
+                with native_path(ready).open("xb") as writer:
+                    writer.write(data)
+                    writer.flush()
+                    os.fsync(writer.fileno())
+                if hash_file(ready) != digest:
+                    raise CoreError("QA_FAILED", "Yayın öncesi ready hash'i farklı")
+                os.rename(native_path(ready), native_path(target))
                 published = True
                 if hash_file(target) != digest:
                     raise CoreError("QA_FAILED", "Final çıktı hash'i farklı")
@@ -453,6 +480,10 @@ class SyntheticGuardRuntime:
                 proof = self._blocked(request, code, stage=stage)
                 return {"state": state, "decision": proof, "delivery_confirmed": False, "production_ready": False}
             return {"state": "BLOCKED", "decision": self._blocked(request, code), "delivery_confirmed": False, "production_ready": False}
+
+    def recover_document(self, *, spec):
+        from .recovery import recover_document
+        return recover_document(self,spec)
 
     def completion_gate(self, case_id, operation_id):
         case, operation = uuid_text(case_id), uuid_text(operation_id)

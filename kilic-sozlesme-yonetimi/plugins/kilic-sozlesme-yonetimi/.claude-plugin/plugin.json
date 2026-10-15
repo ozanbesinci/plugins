@@ -1,8 +1,8 @@
 {
   "name": "kilic-sozlesme-yonetimi",
   "displayName": "Kılıç Sözleşme Yönetimi",
-  "version": "0.1.0-dev.5",
-  "description": "Satınalma sözleşmeleri için kaynak koruma ve yerel kayıt çekirdeği; geliştirme sürümü.",
+  "version": "0.1.0",
+  "description": "Satınalma sözleşmeleri için kaynaklı ön inceleme, kaynak koruma ve yerel kayıt çekirdeği.",
   "author": {
     "name": "Ozan Beşinci"
   },

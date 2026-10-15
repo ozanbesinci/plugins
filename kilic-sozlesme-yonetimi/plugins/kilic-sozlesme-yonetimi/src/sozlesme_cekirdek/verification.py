@@ -13,7 +13,7 @@ from uuid import uuid4
 
 from jsonschema import Draft202012Validator, FormatChecker
 from .errors import CoreError
-from .safety import canonical, confined, hash_file, hash_value, native_path, uuid_text
+from .safety import canonical, confined, hash_file, hash_value, native_path, uuid_text, read_verified_bytes
 
 ROOT = Path(__file__).resolve().parents[2]
 VERSION = "1.0"
@@ -51,8 +51,9 @@ def validate_policy(policy):
 
 def reading_profile(kind, policy):
     from .readers import dependency_profile
+    from .runtime_identity import reader_build_identity
     validate_policy(policy)
-    settings = {"format": kind, "dependencies": dependency_profile(kind),
+    settings = {"format": kind, "dependencies": dependency_profile(kind), "reader_build_digest": reader_build_identity(kind=kind),
                 "reader_version": "1.0", "worker_timeout_seconds": 30,
                 "read_only": True, "ocr": "NEVER_IMPLICIT"}
     return settings, hash_value({"tool": "p2-" + kind.lower(), "tool_version": "1.0",
@@ -91,13 +92,17 @@ def png_info(png):
 
 
 def bounded_render(data, page):
+    from .readers.process_budget import run_bounded_worker
+    if not isinstance(data, bytes) or len(data) > 16 * 1024 * 1024:
+        raise CoreError("BELGE_SINIRI", "PDF render kaynak sınırı")
     environment = dict(os.environ, PYTHONPATH=str(ROOT / "src"), PYTHONUTF8="1", PYTHONDONTWRITEBYTECODE="1")
     try:
-        completed = subprocess.run([sys.executable, "-m", "sozlesme_cekirdek.verification_worker", str(page)],
-                                   input=data, capture_output=True, timeout=30, env=environment,
-                                   creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
-    except subprocess.TimeoutExpired as exc:
-        raise CoreError("RENDER_ZAMAN_SINIRI", "Hedefli render 30 saniyede sonlandırıldı") from exc
+        completed = run_bounded_worker([sys.executable, "-m", "sozlesme_cekirdek.verification_worker", str(page)],
+                                       data, environment, stdout_limit=16 * 1024 * 1024)
+    except CoreError as exc:
+        if exc.code == "OKUMA_ZAMAN_SINIRI":
+            raise CoreError("RENDER_ZAMAN_SINIRI", "Hedefli render süre bütçesinde sonlandırıldı") from exc
+        raise
     if completed.returncode:
         raise CoreError("RENDER_HATASI", "Hedefli PDF render başarısız")
     png_info(completed.stdout)
@@ -111,7 +116,7 @@ class VerificationMixin:
         sha, key, original, document = db.execute(
             "SELECT sha256,storage_key,original_path,document_id FROM belge_surumu WHERE case_id=? AND record_id=?",
             [case_id, version_id]).fetchone()
-        data = native_path(confined(self.system / key, [self.output_root])).read_bytes()
+        data = read_verified_bytes(confined(self.system / key, [self.output_root]))
         if hashlib.sha256(data).hexdigest() != sha:
             raise CoreError("KAYNAK_BOZUK", "Kontrol kaynağı snapshot hash'i farklı")
         source_current = hash_file(confined(original, self.source_roots)) == sha

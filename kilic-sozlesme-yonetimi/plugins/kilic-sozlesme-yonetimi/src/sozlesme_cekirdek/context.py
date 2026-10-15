@@ -1,5 +1,6 @@
 """Source-bound, registered dependency closure. No semantic/authority approval."""
 from functools import lru_cache
+import copy
 import json
 from pathlib import Path
 from jsonschema import Draft202012Validator, FormatChecker
@@ -10,6 +11,7 @@ from .schemas import validate
 from .verification import reading_profile, validate_policy
 
 VERSION = "p3-1.0"
+CACHE_VERSION = "registered-subgraph-revalidation/v1"
 MAX_NODES = 512
 MAX_RELATIONS = 2048
 MAX_PACKS = 512
@@ -255,6 +257,7 @@ class ContextMixin:
             revision = self._case(db, case)
             graph = self._context_graph(db, case)
             required, edges, missing = self._closure(request["root_ids"], graph)
+            considered = dict(edges)
             loaded = {}
             def load(ids):
                 for rid in sorted(ids):
@@ -278,10 +281,12 @@ class ContextMixin:
                 # Each optional neighbour includes its entire required closure as one atomic group.
                 related = sorted([edge for rid in required for edge in graph.get(rid, []) if edge["relation"] == "RELATED"], key=lambda e: e["relation_id"])
                 for edge in related:
+                    considered[edge["relation_id"]] = edge
                     if "to_id" not in edge or edge["invalidated"]:
                         omitted.append({"node_id": edge.get("to_id"), "reason": "OPTIONAL_REFERENCE_UNAVAILABLE", "required": False})
                         continue
                     group, group_edges, absent = self._closure([edge["to_id"]], graph)
+                    considered.update(group_edges)
                     load(group)
                     bad = any(loaded[rid]["state"] == "NEEDS_REVIEW" for rid in group)
                     proposed = dict(links, **group_edges)
@@ -294,9 +299,13 @@ class ContextMixin:
                         links = proposed
             included = sorted(selected)
             context = payload(selected, links) if status == "COMPLETE_REGISTERED_SCOPE" else None
-            dependency_digest = hash_value({"nodes": loaded, "graph": graph, "missing": missing, "stale": stale})
-            cache = hash_value({"case_id": case, "request": request, "revision": revision, "dependency_digest": dependency_digest, "version": VERSION})
-            old = db.execute("SELECT record_id,payload_digest,payload FROM baglam_paketleri WHERE case_id=? AND cache_digest=?", [case, cache]).fetchone()
+            # All graph envelopes were checked above. Only evaluated dependencies
+            # affect this context; unrelated case events do not consume a new pack.
+            dependency_digest = hash_value({"nodes": loaded, "edges": considered, "missing": missing, "stale": stale})
+            selection = {"status": status, "included": included, "omitted": omitted}
+            cache = hash_value({"case_id": case, "request": request, "dependency_digest": dependency_digest,
+                                "selection": selection, "version": VERSION, "cache_version": CACHE_VERSION})
+            old = db.execute("SELECT record_id,payload_digest,payload,semantic_version FROM baglam_paketleri WHERE case_id=? AND cache_digest=?", [case, cache]).fetchone()
             report = {"schema_version": VERSION, "case_id": case, "semantic_version": revision, "request": request,
                       "status": status, "context": context, "included": included, "required_nodes": sorted(required), "omitted": omitted,
                       "missing_dependencies": missing, "stale_dependencies": stale, "dependency_digest": dependency_digest,
@@ -313,18 +322,40 @@ class ContextMixin:
                     self._verification_source(db, case, str(version), current=True)
             if old:
                 stored = validate_pack(json.loads(old[2]))
-                if hash_value(stored) != old[1] or stored != report or self._invalid(db, case, [str(old[0])]):
+                # Compare the complete freshly checked report at the immutable
+                # basis revision. The returned envelope remains at today's revision.
+                historical = copy.deepcopy(report)
+                basis_revision = old[3]
+                historical["semantic_version"] = basis_revision
+                if historical["context"] is not None:
+                    historical["context"]["semantic_version"] = basis_revision
+                historical["budget"]["used_bytes"] = context_bytes(historical["context"])
+                historical["budget"]["required_bytes"] += len(str(basis_revision)) - len(str(revision))
+                validate_pack(historical)
+                if (hash_value(stored) != old[1] or stored != historical or basis_revision > revision
+                        or self._invalid(db, case, [str(old[0])])):
                     raise CoreError("BAGLAM_BOZUK", "Cache bağlam kaydı farklı/geçersiz")
-                return {"pack_id": str(old[0]), "reused": True, "result": stored}
+                if basis_revision != revision:
+                    details = {"pack_id": str(old[0]), "basis_revision": basis_revision, "validated_at_revision": revision,
+                               "basis_payload_digest": old[1], "current_result_digest": hash_value(report),
+                               "request_digest": hash_value(request), "dependency_digest": dependency_digest,
+                               "method": "FRESH_SOURCE_ACCESS_AND_REGISTERED_CLOSURE"}
+                    # One durable receipt per basis/result/revision, not per cache hit.
+                    if not db.execute("SELECT 1 FROM islem_olaylari WHERE case_id=? AND event='CONTEXT_PACK_REVALIDATED' AND details=? LIMIT 1",
+                                      [case, canonical(details)]).fetchone():
+                        self._event(db, case, "CONTEXT_PACK_REVALIDATED", details)
+                return {"pack_id": str(old[0]), "reused": True, "basis_revision": basis_revision,
+                        "validated_at_revision": revision, "result": report}
             if db.execute("SELECT count(*) FROM baglam_paketleri WHERE case_id=?", [case]).fetchone()[0] >= MAX_PACKS:
                 raise CoreError("BAGLAM_SINIRI", "Case bağlam paket sınırı")
             rid = self._record(db, case, "PROCESSING")
             db.execute("INSERT INTO baglam_paketleri VALUES(?,?,?,?,?,?)", [case, rid, revision, cache, hash_value(report), canonical(report)])
-            for source in sorted(set(loaded) | {edge["relation_id"] for values in graph.values() for edge in values}):
+            for source in sorted(set(loaded) | set(considered)):
                 db.execute("INSERT INTO kanit_baglari VALUES(?,?,?,'SUPPORTS',?)", [case, rid, source, canonical({"context_pack": True})])
             self._event(db, case, "CONTEXT_PACK_CREATED", {"pack_id": rid, "status": status})
             # Pack/cache telemetry does not change semantic_version or cause a cache feedback loop.
-            return {"pack_id": rid, "reused": False, "result": report}
+            return {"pack_id": rid, "reused": False, "basis_revision": revision,
+                    "validated_at_revision": revision, "result": report}
 
     def context_pack_history(self, case_id):
         """Metadata only. Historical content is never offered as current context."""

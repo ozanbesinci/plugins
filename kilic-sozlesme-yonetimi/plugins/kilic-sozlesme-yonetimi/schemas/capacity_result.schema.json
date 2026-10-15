@@ -1,0 +1,20 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "type":"object","additionalProperties":false,
+  "properties":{
+    "schema_version":{"const":"capacity-1.0"},"case_id":{"type":"string","format":"uuid"},
+    "context_version":{"type":"integer","minimum":0},
+    "resources":{"type":"array","items":{"type":"object","additionalProperties":false,
+      "properties":{
+        "resource":{"enum":["icerik_birimleri","iliskiler","baglam_paketleri","islemler","eylem_kararlari","is_bilgisi_baglari","yukumlulukler","gerceklesmeler","dogrulamalar","review_observations"]},
+        "scope":{"enum":["CASE","DOCUMENT_VERSION","RENDER_CONTROL"]},"scope_id":{"type":"string","format":"uuid"},
+        "used":{"type":"integer","minimum":0},"limit":{"type":"integer","minimum":0},"remaining":{"type":"integer","minimum":0},
+        "status":{"enum":["AVAILABLE","AT_LIMIT","OVER_LIMIT"]},"quota_basis":{"const":"ALL_RETAINED_ROWS"},
+        "dependency_invalidated_rows":{"type":"integer","minimum":0},"semantic_validity_checked":{"const":false},
+        "current_revision_rows":{"type":"integer","minimum":0},"older_revision_rows":{"type":"integer","minimum":0}
+      },"required":["resource","scope","scope_id","used","limit","remaining","status","quota_basis"]}},
+    "retention_action":{"const":"NONE"},"source_mutation":{"const":false},"limit_mutation":{"const":false},
+    "production_ready":{"const":false},"authority":{"const":"NOT_VERIFIED"},"business_acceptance":{"const":"NOT_GRANTED"},
+    "limitations":{"type":"array","items":{"type":"string"}}
+  },"required":["schema_version","case_id","context_version","resources","retention_action","source_mutation","limit_mutation","production_ready","authority","business_acceptance","limitations"]
+}

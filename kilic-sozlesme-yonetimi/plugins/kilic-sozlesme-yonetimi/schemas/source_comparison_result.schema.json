@@ -1,0 +1,16 @@
+{
+ "$schema":"https://json-schema.org/draft/2020-12/schema","type":"object","additionalProperties":false,
+ "$defs":{"version":{"type":"object","additionalProperties":false,"properties":{
+  "role":{"enum":["REFERENCE_ONLY","SELECTED_CURRENT_TARGET"]},"version_id":{"type":"string","format":"uuid"},
+  "sha256":{"type":"string","pattern":"^[a-f0-9]{64}$"},"size_bytes":{"type":"integer","minimum":0},
+  "original_file_matches_snapshot":{"type":"boolean"},"decision_authority":{"const":"NONE"}},
+  "required":["role","version_id","sha256","size_bytes","original_file_matches_snapshot","decision_authority"]}},
+ "properties":{
+  "schema_version":{"const":"source-comparison-1.0"},"case_id":{"type":"string","format":"uuid"},
+  "document_id":{"type":"string","format":"uuid"},"context_version":{"type":"integer","minimum":0},
+  "reference":{"$ref":"#/$defs/version"},"target":{"$ref":"#/$defs/version"},"same_bytes":{"type":"boolean"},
+  "first_changed_byte":{"type":["integer","null"],"minimum":0},"comparison_scope":{"const":"BYTES_ONLY"},
+  "semantic_comparison":{"const":"NOT_RUN"},"critical_analysis_allowed":{"const":false},"authority":{"const":"NOT_VERIFIED"},
+  "business_acceptance":{"const":"NOT_GRANTED"},"source_mutation":{"const":false},"limitations":{"type":"array","items":{"type":"string"}}},
+ "required":["schema_version","case_id","document_id","context_version","reference","target","same_bytes","first_changed_byte","comparison_scope","semantic_comparison","critical_analysis_allowed","authority","business_acceptance","source_mutation","limitations"]
+}

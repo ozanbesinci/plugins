@@ -11,15 +11,15 @@ metadata:
 <!-- startup-message:start -->
 Her çağrının başında, araçları çalıştırmadan önce, kullanıcı sohbetinde şu satırı aynen göster:
 
-**Yenileme ve Kapanış skilli Kılıç Satınalma Departmanı tarafından geliştirilmiştir. Sürüm: 0.1.0-dev.5**
+**Yenileme ve Kapanış skilli Kılıç Satınalma Departmanı tarafından geliştirilmiştir. Sürüm: 0.1.0**
 
 Bu satır gerçek beceri adı ve sürümünü gösterir. Kurulum sırasında başka beceri çalışırsa onun başlangıç satırını da göster.
 <!-- startup-message:end -->
 
 Önce [ortak çalışma protokolünü](../../references/skill-runtime.md) oku. Bu beceri K26 sözleşmesini uygular; yalnız gerekli kaynakları yükle.
 
-- Yalnız izinli ve güncel case kapsamını, erişilemeyen dosyaları ve eksikleri belirle.
-- Portföy ölçümünün pay/payda ve kapsama sınırını göster; keyfi SQL ya da bütün şirket erişimi yok.
+- Yenileme tercihini, sözleşme süresini ve açık ihbar kuralını kaynaklarıyla ayır; yalnız açık takvim girdileriyle aday tarih hesapla.
+- Kapanışta açık borç, talepler, teminat, sigorta ve garanti yükümlülüklerini kontrol et; devam eden yükümlülüğü kapatma, otomatik yenileme veya fesih yapma.
 
 Girdi: Süre, performans, garanti ve açık talepler. Çıktı: Yenileme/kapanış kontrolü. Varsayılan sohbet yanıtı; aynı izin kapsamını gereksiz tekrar sorma.
 

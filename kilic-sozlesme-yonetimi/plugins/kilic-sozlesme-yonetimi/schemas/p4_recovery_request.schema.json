@@ -1,0 +1,10 @@
+{
+ "$schema":"https://json-schema.org/draft/2020-12/schema","type":"object","additionalProperties":false,
+ "properties":{
+  "schema_version":{"const":"p4-recovery-request-1.0"},"case_id":{"type":"string","format":"uuid"},
+  "operation_id":{"type":"string","format":"uuid"},"permission_id":{"type":"string","format":"uuid"},
+  "recovery_id":{"type":"string","format":"uuid"},"context_version":{"type":"integer","minimum":0},
+  "request_digest":{"type":"string","pattern":"^[a-f0-9]{64}$"},"artifact_sha256":{"type":"string","pattern":"^[a-f0-9]{64}$"},
+  "requested_scope":{"const":"SYNTHETIC_TEST_ONLY"}},
+ "required":["schema_version","case_id","operation_id","permission_id","recovery_id","context_version","request_digest","artifact_sha256","requested_scope"]
+}

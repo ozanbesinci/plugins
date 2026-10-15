@@ -408,6 +408,26 @@ class SyntheticDocxBackend:
             return TestQA(False,artifact.manifest["artifact_sha256"])
         self.proofs[operation]={**proof,"word_qa":"PASS_WITH_TEST_SCOPE","visual_qa":"PASS_WITH_TEST_SCOPE","evidence_digest":evidence.evidence_digest}
         return TestQA(True,artifact.manifest["artifact_sha256"])
+    def export_recovery_payload(self,request,data):
+        operation=request["plan"]["operation_id"]
+        _,artifact,digest=self.prepared[operation]
+        if data!=artifact.data or digest!=hash_value(request):
+            raise CoreError("P5_QA_FAILED","Recovery capsule için hazırlama bağı farklı")
+        return {"schema_version":"p5-recovery-1.0","manifest":artifact.manifest}
+    def restore_recovery_payload(self,request,snapshots,data,payload):
+        if not isinstance(payload,dict) or set(payload)!={"schema_version","manifest"} or payload["schema_version"]!="p5-recovery-1.0":
+            raise CoreError("P5_OUTPUT_CORRUPT","Recovery backend manifesti geçersiz")
+        manifest=validate_manifest(payload["manifest"])
+        operation=request["plan"]["operation_id"]
+        if (manifest["case_id"]!=request["plan"]["case_id"] or manifest["operation_id"]!=operation
+                or manifest["request_digest"]!=hash_value(request)
+                or manifest["artifact_sha256"]!=hashlib.sha256(data).hexdigest()
+                or manifest["source_version_id"] not in snapshots):
+            raise CoreError("P5_OUTPUT_CORRUPT","Recovery artefakt/istek/kaynak bağı farklı")
+        source=snapshots[manifest["source_version_id"]]
+        artifact=RevisionArtifact(data,manifest)
+        structural_qa(source,artifact)
+        self.prepared[operation]=(source,artifact,hash_value(request))
     def persist_document(self, db, store, request, data, target):
         from .outputs import persist_docx
         operation=request["plan"]["operation_id"]

@@ -9,6 +9,7 @@ import subprocess
 import sys
 from jsonschema import Draft202012Validator
 from ..errors import CoreError
+from .process_budget import run_bounded_worker
 
 ROOT = Path(__file__).resolve().parents[3]
 DEPENDENCIES = {"DOCX": ["lxml"], "PDF": ["pypdf", "pypdfium2"], "XLSX": ["lxml", "openpyxl"], "EML": []}
@@ -48,14 +49,8 @@ def read_document(data, kind):
         raise CoreError("BELGE_SINIRI", "P2 kaynak bayt sınırı 64 MiB")
     environment = dict(os.environ, PYTHONPATH=str(ROOT / "src"),
                        PYTHONDONTWRITEBYTECODE="1", PYTHONUTF8="1")
-    try:
-        completed = subprocess.run([sys.executable, "-m", "sozlesme_cekirdek.readers.worker", kind],
-                                   input=data, capture_output=True, timeout=30, env=environment,
-                                   creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
-    except subprocess.TimeoutExpired as exc:
-        raise CoreError("OKUMA_ZAMAN_SINIRI", "Birincil okuma 30 saniyede sonlandırıldı") from exc
-    if len(completed.stdout) > 32 * 1024 * 1024:
-        raise CoreError("BELGE_SINIRI", "Okuma çıktı sınırı aşıldı")
+    completed = run_bounded_worker([sys.executable, "-m", "sozlesme_cekirdek.readers.worker", kind],
+                                  data, environment)
     try:
         report = json.loads(completed.stdout.decode("utf-8"))
     except (ValueError, UnicodeError) as exc:

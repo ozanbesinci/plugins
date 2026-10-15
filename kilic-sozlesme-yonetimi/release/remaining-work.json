@@ -1,0 +1,26 @@
+[
+  {
+    "id": "PRODUCT",
+    "lane": "Ürün ve gerçek kaynak",
+    "next_action": "0.1.1: giriş betiği çekirdeğin somut ret nedenini (error_code/mesaj) host'a iletsin; yama ve testi hazır, ayrı aday kanıtı gerekir. 0.2.0 hedefi (depo sahibi, 2026-10-15): normal üretim Word çıktısını aç. Önce kurum kuralı: onaylayan, şirket kimliği, görsel QA ve iç/dış nüsha. Sonra mevcut P4/P5 Word motorunu üretim kimlik/izin/QA adaptörüne bağla (yaklaşık 1 gün). 0.1.0'da Word kapalı. Ayrıca: eşlenmiş ağ sürücüsü (O:) ve yalnız bulutta duran OneDrive kaynağını gerçek host'ta sına (CR-06); PDF profilindeki gereksiz numpy bağını (CR-12) ve 8.3 kısa yol reddini (CR-18) bir sonraki okuyucu değişikliğiyle ele al.",
+    "done_when": "0.2.0: kurum Word kuralı kayıtlı; gerçek Word çıktı/geri alma ve görsel QA kanıtı. O:/bulut dosyası host sonucu. Mevcut 104 tanımın etkin kapsamı korunur; mail gönderimi kaldırılmış kapsamdır."
+  },
+  {
+    "id": "EXPERT",
+    "lane": "Uzman değerlendirmesi",
+    "next_action": "0.1.0 için seçilmiş iki uzman 10 maddelik inceleme dosyasında bütün maddelere doğru, ön inceleme aracı kullanımına evet dedi (depo sahibi bildirdi, 2026-10-14). İşaretli/imzalı form gelirse özel kanıt kaydına eklenir.",
+    "done_when": "Özel kanıt kaydında USER_REPORTED olarak kayıtlı. İmzalı form ve alan paylaşımı kayıtlı değil."
+  },
+  {
+    "id": "CORPORATE",
+    "lane": "Kurum ve kullanım ortamı",
+    "next_action": "Depo sahibinin kurum kararı (kullanıcılar, yerel çıktı alanı, saklama/silme, salt okunur kaynak, mail ve Word kapalı, kurulum/geri alma sorumlusu) ve BT'nin Python/paket kurulum onayı kaydedildi. BT onayının yazılı kaydı gelirse eklenir.",
+    "done_when": "Özel kanıt kaydında USER_DECISION ve USER_REPORTED olarak kayıtlı."
+  },
+  {
+    "id": "FINAL",
+    "lane": "Son aday",
+    "next_action": "0.1.0 yayımlandı (2026-10-15): aynı baytlarda tam koşu, native kurulum dönüşü, iki Python ortamında gerçek pilot vakada K03, Claude ve Codex host denemesi, uzman ve kurum kayıtları kanıt dizinine bağlandı; yayın kararını depo sahibi verdi. Sonraki ürün değişikliği 0.2.0 adayıdır.",
+    "done_when": "0.2.0 için aynı kurallar: aynı son adayın teknik kanıtı, host denemeleri, uzman ve kurum kayıtları; yayın kararı yetkili tarafından. Araç kendiliğinden kararlı sürüm ilan etmez."
+  }
+]

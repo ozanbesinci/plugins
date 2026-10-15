@@ -11,6 +11,61 @@ param(
 )
 $contractRoot=Split-Path $PSScriptRoot -Parent
 $engineRoot=Join-Path $contractRoot 'vendor\guncelleyici'
+# Some hosts (Codex sandbox) start PowerShell without PROCESSOR_ARCHITECTURE; the vendored platform
+# check then rejects a real amd64 machine. Fill it from the OS only when missing; never override.
+if(-not $env:PROCESSOR_ARCHITECTURE){
+    $osArch=$null
+    try{$osArch=[string](Get-ItemProperty -LiteralPath 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Environment' -Name PROCESSOR_ARCHITECTURE -ErrorAction Stop).PROCESSOR_ARCHITECTURE}catch{}
+    if(-not $osArch){
+        try{$osArch=switch([string][Runtime.InteropServices.RuntimeInformation]::OSArchitecture){'X64'{'AMD64'}'Arm64'{'ARM64'}'X86'{'x86'}default{$_}}}catch{}
+    }
+    if($osArch){$env:PROCESSOR_ARCHITECTURE=$osArch}
+}
+function Get-ContractBootstrapSha([string]$Path) {
+    $algorithm=[Security.Cryptography.SHA256]::Create()
+    $stream=[IO.File]::Open($Path,[IO.FileMode]::Open,[IO.FileAccess]::Read,[IO.FileShare]::Read)
+    try { return ([BitConverter]::ToString($algorithm.ComputeHash($stream))).Replace('-','').ToLowerInvariant() }
+    finally { $stream.Dispose();$algorithm.Dispose() }
+}
+function Assert-ContractVendorIntegrity {
+    # Built-in PowerShell/IO/crypto only; no vendor function is loaded yet.
+    $ErrorActionPreference='Stop'
+    $root=[IO.Path]::GetFullPath($engineRoot)
+    $rootItem=Get-Item -LiteralPath $root -Force
+    if($rootItem.Attributes -band [IO.FileAttributes]::ReparsePoint){throw 'Vendor reparse root rejected'}
+    $manifestPath=Join-Path $root 'MANIFEST.sha256.json'
+    if((Get-Item -LiteralPath $manifestPath).Length -gt 65536){throw 'Vendor manifest exceeds bound'}
+    $manifestHash=Get-ContractBootstrapSha $manifestPath
+    if($env:SOZLESME_VENDOR_MANIFEST_SHA256 -and $manifestHash -cne $env:SOZLESME_VENDOR_MANIFEST_SHA256){throw 'External vendor manifest digest mismatch'}
+    $manifest=Get-Content -LiteralPath $manifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
+    if($manifest.schema -cne 'guncelleyici-source-manifest/v1' -or $manifest.version -cne '2.3.0'){throw 'Vendor schema/version mismatch'}
+    $entries=@($manifest.files.PSObject.Properties)
+    if($entries.Count -ne 42){throw 'Closed vendor manifest requires 42 files'}
+    $expected=New-Object 'System.Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
+    foreach($entry in $entries){
+        $name=[string]$entry.Name
+        if(-not $name -or $name.Contains('\') -or $name.Contains(':') -or $name.StartsWith('/') -or @($name.Split('/')|Where-Object {$_ -eq '.' -or $_ -eq '..' -or $_ -eq ''}).Count){throw 'Invalid vendor manifest path'}
+        if(-not $expected.Add($name)){throw 'Vendor path collision'}
+        if([string]$entry.Value -cnotmatch '^[a-f0-9]{64}$'){throw 'Invalid vendor digest'}
+        $path=[IO.Path]::GetFullPath((Join-Path $root $name))
+        if(-not $path.StartsWith($root.TrimEnd('\')+'\',[StringComparison]::OrdinalIgnoreCase)){throw 'Vendor path outside root'}
+        $node=$path
+        while($node -and $node.Length -ge $root.Length){
+            $item=Get-Item -LiteralPath $node -Force
+            if($item.Attributes -band [IO.FileAttributes]::ReparsePoint){throw 'Vendor reparse path rejected'}
+            if($node -eq $root){break};$node=Split-Path $node -Parent
+        }
+        if((Get-ContractBootstrapSha $path) -cne [string]$entry.Value){throw 'Vendor bytes mismatch'}
+    }
+    $actual=@(Get-ChildItem -LiteralPath $root -Recurse -File -Force | Where-Object {$_.Name -ne 'MANIFEST.sha256.json' -and $_.FullName -notmatch '[\\/]__pycache__[\\/]'})
+    if($actual.Count -ne 42){throw 'Extra or missing vendor file'}
+    foreach($file in $actual){$relative=$file.FullName.Substring($root.Length+1).Replace('\','/');if(-not $expected.Contains($relative)){throw 'Unexpected vendor file'}}
+}
+try { Assert-ContractVendorIntegrity }
+catch {
+    '@@SONUC '+(@{status='ERROR';error='PAKET_BUTUNLUK';message=$_.Exception.Message;resume_allowed=$false}|ConvertTo-Json -Compress)
+    exit 2
+}
 . (Join-Path $engineRoot 'scripts\core.ps1')
 [Console]::OutputEncoding=New-Object Text.UTF8Encoding $false
 $OutputEncoding=New-Object Text.UTF8Encoding $false
@@ -42,6 +97,80 @@ function Get-ContractRequest([string]$File,[string[]]$Roots,[string]$Id) {
 function Test-ContractRequestCurrent($Frozen) {
     Assert-PlainPath $Frozen.path
     if((File-Sha256 $Frozen.path) -cne $Frozen.sha256){throw 'Original request changed during dependency installation'}
+}
+function Write-ContractReceiptBytes([IO.FileStream]$Stream,[byte[]]$Bytes) {
+    $Stream.Write($Bytes,0,$Bytes.Length)
+}
+function Flush-ContractReceiptStream([IO.FileStream]$Stream) {
+    $Stream.Flush($true)
+}
+function Move-ContractFinalReceipt([string]$Temporary,[string]$Path) {
+    [IO.File]::Move($Temporary,$Path) # Same directory, atomic publication, no overwrite.
+}
+function New-ContractRequestClaim([string]$Path,$Claim) {
+    Assert-PlainPath $Path
+    $bytes=[Text.Encoding]::UTF8.GetBytes(($Claim|ConvertTo-Json -Depth 20 -Compress))
+    $stream=New-Object IO.FileStream($Path,[IO.FileMode]::CreateNew,[IO.FileAccess]::Write,[IO.FileShare]::None)
+    try {Write-ContractReceiptBytes $stream $bytes;Flush-ContractReceiptStream $stream;return $stream}
+    catch {$stream.Dispose();throw}
+}
+function Write-ContractFinalReceipt([string]$Path,$Final) {
+    Assert-PlainPath $Path
+    $bytes=[Text.Encoding]::UTF8.GetBytes(($Final|ConvertTo-Json -Depth 40 -Compress))
+    $temporary=$Path+'.'+[guid]::NewGuid().ToString('N')+'.tmp'
+    $created=$false
+    try {
+        $stream=New-Object IO.FileStream($temporary,[IO.FileMode]::CreateNew,[IO.FileAccess]::Write,[IO.FileShare]::None)
+        $created=$true
+        try {Write-ContractReceiptBytes $stream $bytes;Flush-ContractReceiptStream $stream}finally{$stream.Dispose()}
+        Move-ContractFinalReceipt $temporary $Path
+    }finally{if($created -and [IO.File]::Exists($temporary)){[IO.File]::Delete($temporary)}}
+}
+function Read-ContractReceiptRecord([string]$Path) {
+    Assert-PlainPath $Path
+    $stream=[IO.File]::Open($Path,[IO.FileMode]::Open,[IO.FileAccess]::Read,[IO.FileShare]::Read)
+    $reader=$null
+    try {
+        if($stream.Length -gt 16777216){throw 'Receipt exceeds read budget'}
+        $reader=[IO.StreamReader]::new($stream,[Text.UTF8Encoding]::new($false,$true),$false,4096,$true)
+        return ($reader.ReadToEnd() | ConvertFrom-Json -ErrorAction Stop)
+    }finally{if($reader){$reader.Dispose()};$stream.Dispose()}
+}
+function Get-ContractRequestReceiptState([string]$Root,[string]$RequestId,[string]$Sha256,[string]$SkillId) {
+    # Read-only record correlation. No HMAC, host identity, QA or business approval.
+    $result=@{state='RECOVERY_REQUIRED';reason='UNVERIFIED_RECORD';record_format='UNKNOWN';resume_allowed=$false;
+        repair_performed=$false;authority='NOT_VERIFIED';business_acceptance='NOT_GRANTED';scope='REQUEST_RECORD_CORRELATION_ONLY'}
+    try {
+        Assert-PlainPath $Root
+        $id=[Guid]::Empty
+        if(-not [Guid]::TryParse($RequestId,[ref]$id) -or $Sha256 -cnotmatch '^[a-f0-9]{64}$' -or -not $SkillId){throw 'Explicit request binding required'}
+        $claimPath=Join-Path $Root ($id.ToString('D')+'.json')
+        $finalPath=Join-Path $Root ($id.ToString('D')+'.final.json')
+        Assert-PlainPath $claimPath;Assert-PlainPath $finalPath
+        if(-not [IO.File]::Exists($claimPath)){
+            $result.state=if([IO.File]::Exists($finalPath)){'ORPHAN_FINAL_UNVERIFIED'}else{'UNCLAIMED'}
+            $result.reason='NO_CLAIM';return $result
+        }
+        $claim=Read-ContractReceiptRecord $claimPath
+        if((Read-Field $claim 'request_id') -cne $RequestId -or (Read-Field $claim 'request_sha256') -cne $Sha256 -or (Read-Field $claim 'skill_id') -cne $SkillId){throw 'Claim binding differs'}
+        $schema=Read-Field $claim 'schema' ''
+        if(-not $schema){
+            $result.record_format='LEGACY_SINGLE_FILE'
+            $status=Read-Field $claim 'status'
+            if($status -notin @('STARTED','COMPLETED','FAILED')){throw 'Legacy state unknown'}
+            if([IO.File]::Exists($finalPath)){throw 'Legacy/new record mixture'}
+            $result.state=if($status -eq 'STARTED'){'RECOVERY_REQUIRED'}else{'LEGACY_TERMINAL_RECORD'}
+            $result.reason=[string]$status;return $result
+        }
+        if($schema -cne 'contract-request-claim/v1' -or (Read-Field $claim 'status') -cne 'STARTED'){throw 'Claim schema/state unknown'}
+        $result.record_format='IMMUTABLE_CLAIM_SEPARATE_FINAL'
+        if(-not [IO.File]::Exists($finalPath)){$result.reason='FINAL_MISSING';return $result}
+        $final=Read-ContractReceiptRecord $finalPath
+        if((Read-Field $final 'schema') -cne 'contract-request-final/v1' -or (Read-Field $final 'request_id') -cne $RequestId -or (Read-Field $final 'request_sha256') -cne $Sha256){throw 'Final binding differs'}
+        if((Read-Field $final 'status') -notin @('COMPLETED','FAILED') -or (Read-Field $final 'business_acceptance') -cne 'NOT_GRANTED'){throw 'Final state/authority differs'}
+        $result.state='TERMINAL_RECORD';$result.reason=[string]$final.status
+        return $result
+    }catch{$result.reason='CORRUPT_OR_MISMATCHED_RECORD';return $result}
 }
 function Invoke-ContractProbe([string]$Python) {
     $result=Invoke-Json $Python @('-B','-X','utf8',(Join-Path $PSScriptRoot 'runtime_kontrol.py'),'--action','probe') 240
@@ -154,20 +283,26 @@ try{
     $requests=Join-Path $RuntimeStateRoot 'requests';Assert-PlainPath $requests
     [void][IO.Directory]::CreateDirectory($requests)
     $receipt=Join-Path $requests ($frozen.request_id+'.json')
-    $lock=New-Object IO.FileStream($receipt,[IO.FileMode]::CreateNew,[IO.FileAccess]::Write,[IO.FileShare]::None)
+    $claim=@{schema='contract-request-claim/v1';status='STARTED';request_sha256=$frozen.sha256;request_id=$frozen.request_id;skill_id=$SkillId;workspace=$Workspace;output_root=$OutputRoot;source_roots=$SourceRoot;started_utc=[DateTime]::UtcNow.ToString('o');retry_safety='NO_BLIND_RETRY'}
+    $lock=New-ContractRequestClaim $receipt $claim
+    $finalReceipt=Join-Path $requests ($frozen.request_id+'.final.json')
     try{
-        $claim=@{status='STARTED';request_sha256=$frozen.sha256;request_id=$frozen.request_id;skill_id=$SkillId;workspace=$Workspace;output_root=$OutputRoot;source_roots=$SourceRoot}
-        $bytes=[Text.Encoding]::UTF8.GetBytes(($claim|ConvertTo-Json -Depth 10 -Compress));$lock.Write($bytes,0,$bytes.Length);$lock.Flush($true)
         Test-ContractRequestCurrent $frozen
-        $args=@('-B','-X','utf8','-m','sozlesme_cekirdek','--workspace',$Workspace,'--output-root',$OutputRoot)
+        $args=@('-B','-X','utf8',(Join-Path $PSScriptRoot 'contract_cli.py'),'--workspace',$Workspace,'--output-root',$OutputRoot)
         foreach($root in $SourceRoot){$args+=@('--source-root',$root)}
         $args+=@('skill-evaluate','--request',$frozen.path)
         $run=Invoke-Native $python $args 240 @{PYTHONPATH=(Join-Path $contractRoot 'src')}
         $result=$run.Output.Trim()|ConvertFrom-Json
         if($run.ExitCode -ne 0 -or $result.status -ne 'SUCCEEDED'){throw 'Original skill blocked after dependency check; no automatic replay'}
-        $claim.status='COMPLETED';$claim.result=$result
-        $lock.SetLength(0);$lock.Position=0;$bytes=[Text.Encoding]::UTF8.GetBytes(($claim|ConvertTo-Json -Depth 30 -Compress));$lock.Write($bytes,0,$bytes.Length);$lock.Flush($true)
-        '@@SONUC '+(@{status='COMPLETED';resume_allowed=$false;request_sha256=$frozen.sha256;result=$result;startup_message=$meta.startup_message}|ConvertTo-Json -Depth 30 -Compress)
+        $final=@{schema='contract-request-final/v1';status='COMPLETED';technical_status='SUCCEEDED';business_status=[string]$result.result.status;business_acceptance='NOT_GRANTED';request_id=$frozen.request_id;request_sha256=$frozen.sha256;ended_utc=[DateTime]::UtcNow.ToString('o');result=$result;retry_safety='NO_BLIND_RETRY'}
+        Write-ContractFinalReceipt $finalReceipt $final
+        '@@SONUC '+(@{status='COMPLETED';technical_status='SUCCEEDED';business_status=$final.business_status;business_acceptance='NOT_GRANTED';resume_allowed=$false;request_sha256=$frozen.sha256;result=$result;startup_message=$meta.startup_message}|ConvertTo-Json -Depth 40 -Compress)
+    }catch{
+        $failure=$_
+        if(-not [IO.File]::Exists($finalReceipt)){
+            try{Write-ContractFinalReceipt $finalReceipt @{schema='contract-request-final/v1';status='FAILED';technical_status='BLOCKED';business_status='NOT_RUN';business_acceptance='NOT_GRANTED';request_id=$frozen.request_id;request_sha256=$frozen.sha256;ended_utc=[DateTime]::UtcNow.ToString('o');retry_safety='NO_BLIND_RETRY'}}catch{}
+        }
+        throw $failure
     }finally{$lock.Dispose()}
     exit 0
 }catch{

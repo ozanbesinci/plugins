@@ -6,7 +6,7 @@ Alternative bodies and quoted text remain separate; no network or active HTML ru
 import hashlib
 import re
 from email import policy
-from email.parser import BytesParser
+from email.feedparser import BytesFeedParser
 from html.parser import HTMLParser
 
 from ..errors import CoreError
@@ -15,6 +15,22 @@ from .common import feature, issue, locator, result_base, unit
 MAX_PARTS = 128
 MAX_DEPTH = 16
 MAX_PART_BYTES = 8 * 1024 * 1024
+
+
+class BoundedMIMEParser(BytesFeedParser):
+    """CPython 3.14 adapter: refuse a new part before creating/attaching it.
+
+    The private hook is covered by depth/width boundary tests in the pinned ABI.
+    """
+    def __init__(self):
+        super().__init__(policy=policy.default)
+        self.part_count = 0
+
+    def _new_message(self):
+        if self.part_count >= MAX_PARTS or len(self._msgstack) > MAX_DEPTH:
+            raise CoreError('BELGE_SINIRI', 'MIME parça/derinlik bütçesi ayrıştırma sırasında aşıldı')
+        self.part_count += 1
+        super()._new_message()
 
 
 class InertHTML(HTMLParser):
@@ -75,7 +91,10 @@ def read_eml(data):
     if b'\x00' in data:
         raise CoreError('BELGE_BOZUK', 'EML kaynağında NUL baytı')
     report = result_base(data, 'EML', 'bounded-mime', [])
-    message = BytesParser(policy=policy.default).parsebytes(data)
+    parser = BoundedMIMEParser()
+    for offset in range(0, len(data), 16384):
+        parser.feed(data[offset:offset + 16384])
+    message = parser.close()
     if not any(message.get(name) for name in ('From', 'To', 'Date', 'Subject', 'Message-ID')):
         raise CoreError('DOSYA_TURU', 'E-posta başlığı içeren EML gerekli')
     report['parts'].append({'name': 'message.eml', 'sha256': report['sha256'], 'size_bytes': len(data)})

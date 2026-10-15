@@ -104,8 +104,8 @@
     "Hukuka dosya ve seçenek üret; ihtar/fesih/yaptırım kendiliğinden yürütülmez."
   ],
   "K26": [
-    "Yalnız izinli ve güncel case kapsamını, erişilemeyen dosyaları ve eksikleri belirle.",
-    "Portföy ölçümünün pay/payda ve kapsama sınırını göster; keyfi SQL ya da bütün şirket erişimi yok."
+    "Yenileme tercihini, sözleşme süresini ve açık ihbar kuralını kaynaklarıyla ayır; yalnız açık takvim girdileriyle aday tarih hesapla.",
+    "Kapanışta açık borç, talepler, teminat, sigorta ve garanti yükümlülüklerini kontrol et; devam eden yükümlülüğü kapatma, otomatik yenileme veya fesih yapma."
   ],
   "K27": [
     "İzinli örneklemde ortak riskleri ve veri kalitesini kaynaklarıyla çıkar.",

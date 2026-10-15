@@ -1,0 +1,174 @@
+{
+  "schema": "contract-product-tests/v1",
+  "scope": "SYNTHETIC_CORE_READERS_STORE_GUARD_DOCX_BUSINESS_RUNTIME_POLICY_AND_P6",
+  "classes": [
+    "test_core.CoreTests",
+    "test_readers.ReaderTests",
+    "test_readers.ReaderStoreTests",
+    "test_verification.VerificationTests",
+    "test_context.ContextTests",
+    "test_rebind.RebindTests",
+    "test_guard.GuardTests",
+    "test_docx.RevisionTests",
+    "test_docx.DocxStoreTests",
+    "test_copies.CopyTests",
+    "test_copies.CopyStoreTests",
+    "test_workflows.CalculationTests",
+    "test_workflows.WorkflowTests",
+    "test_portfolio.PortfolioTests",
+    "test_scenario_conformance.ScenarioConformanceTests",
+    "test_business.BusinessTests",
+    "test_runtime.RuntimePolicyTests",
+    "test_eml.MailReaderTests",
+    "test_eml.MailStoreTests",
+    "test_no_email_send.RemovedEmailTests",
+    "test_p6_result_contract.P6ResultContractTests",
+    "test_audit_business.RenewalScopeTests",
+    "test_atomic_json_failures.AtomicJSONTests",
+    "test_runtime_identity.BuildIdentityTests",
+    "test_runtime_identity.ReaderNamespaceTests",
+    "test_quality_inventory.QualityInventoryTests",
+    "test_quality_inventory.NativeSchemaInventoryTests",
+    "test_bootstrap_integrity.BootstrapIntegrityTests",
+    "test_reader_budget.ReaderBudgetTests",
+    "test_request_receipts.RequestReceiptTests",
+    "test_evaluation_audit.EvaluationAuditTests",
+    "test_statement_cli.StatementCLITests",
+    "test_runtime.NativeStartupTests",
+    "test_windows_source_handles.WindowsSourceHandleTests",
+    "test_atomic_publication.AtomicPublicationTests",
+    "test_processing_phases.ProcessingPhaseTests",
+    "test_cli_startup_contract.CLIStartupContractTests",
+    "test_cli_startup_contract.CLIBusinessStatusTests",
+    "test_capacity.CapacityTests",
+    "test_source_roles.SourceRoleTests",
+    "test_output_inspector.OutputInspectorTests",
+    "test_operational_readonly_cli.OperationalReadOnlyCLITests",
+    "test_recovery.RecoveryTests",
+    "test_receipt_fault_matrix.ReceiptFaultMatrixTests",
+    "test_migration_acceptance.MigrationAcceptanceTests",
+    "test_migration_acceptance.LegacyCompatibilityTests",
+    "test_request_receipt_inspector.RequestReceiptInspectorTests",
+    "test_test_receipt_interruptions.TestReceiptInterruptionTests",
+    "test_process_fixtures.ProcessFixtureTests"
+  ],
+  "suites": {
+    "bootstrap": [
+      "test_bootstrap_integrity.BootstrapIntegrityTests"
+    ],
+    "quality": [
+      "test_quality_inventory.QualityInventoryTests",
+      "test_quality_inventory.NativeSchemaInventoryTests"
+    ],
+    "identity": [
+      "test_runtime_identity.BuildIdentityTests",
+      "test_runtime_identity.ReaderNamespaceTests"
+    ],
+    "a0": [
+      "test_workflows.CalculationTests",
+      "test_workflows.WorkflowTests",
+      "test_portfolio.PortfolioTests",
+      "test_scenario_conformance.ScenarioConformanceTests",
+      "test_no_email_send.RemovedEmailTests",
+      "test_p6_result_contract.P6ResultContractTests",
+      "test_audit_business.RenewalScopeTests",
+      "test_atomic_json_failures.AtomicJSONTests"
+    ],
+    "core": [
+      "test_core.CoreTests",
+      "test_readers.ReaderTests",
+      "test_readers.ReaderStoreTests",
+      "test_verification.VerificationTests",
+      "test_context.ContextTests",
+      "test_rebind.RebindTests",
+      "test_guard.GuardTests",
+      "test_docx.RevisionTests",
+      "test_docx.DocxStoreTests",
+      "test_copies.CopyTests",
+      "test_copies.CopyStoreTests",
+      "test_business.BusinessTests",
+      "test_runtime.RuntimePolicyTests",
+      "test_eml.MailReaderTests",
+      "test_eml.MailStoreTests"
+    ],
+    "budget": [
+      "test_reader_budget.ReaderBudgetTests"
+    ],
+    "readers": [
+      "test_readers.ReaderTests",
+      "test_readers.ReaderStoreTests",
+      "test_eml.MailReaderTests",
+      "test_eml.MailStoreTests",
+      "test_verification.VerificationTests",
+      "test_reader_budget.ReaderBudgetTests"
+    ],
+    "lifecycle": [
+      "test_request_receipts.RequestReceiptTests",
+      "test_evaluation_audit.EvaluationAuditTests",
+      "test_statement_cli.StatementCLITests",
+      "test_runtime.NativeStartupTests",
+      "test_receipt_fault_matrix.ReceiptFaultMatrixTests",
+      "test_request_receipt_inspector.RequestReceiptInspectorTests",
+      "test_test_receipt_interruptions.TestReceiptInterruptionTests",
+      "test_process_fixtures.ProcessFixtureTests"
+    ],
+    "objects": [
+      "test_windows_source_handles.WindowsSourceHandleTests"
+    ],
+    "publication": [
+      "test_atomic_publication.AtomicPublicationTests",
+      "test_guard.GuardTests",
+      "test_docx.DocxStoreTests",
+      "test_copies.CopyStoreTests"
+    ],
+    "processing": [
+      "test_processing_phases.ProcessingPhaseTests",
+      "test_core.CoreTests",
+      "test_readers.ReaderStoreTests"
+    ],
+    "startup": [
+      "test_cli_startup_contract.CLIStartupContractTests",
+      "test_cli_startup_contract.CLIBusinessStatusTests",
+      "test_runtime.NativeStartupTests"
+    ],
+    "capacity": [
+      "test_capacity.CapacityTests",
+      "test_operational_readonly_cli.OperationalReadOnlyCLITests"
+    ],
+    "source_roles": [
+      "test_source_roles.SourceRoleTests"
+    ],
+    "inspector": [
+      "test_output_inspector.OutputInspectorTests"
+    ],
+    "recovery": [
+      "test_recovery.RecoveryTests"
+    ],
+    "receipt_faults": [
+      "test_receipt_fault_matrix.ReceiptFaultMatrixTests",
+      "test_request_receipt_inspector.RequestReceiptInspectorTests",
+      "test_test_receipt_interruptions.TestReceiptInterruptionTests"
+    ],
+    "migration": [
+      "test_migration_acceptance.MigrationAcceptanceTests",
+      "test_migration_acceptance.LegacyCompatibilityTests"
+    ]
+  },
+  "excluded": {
+    "test_no_email_send.RemovedEmailTests.test_original_catalog_is_preserved_and_current_k29_overrides_it": "NOT_RUN: historical p0-environment.json is outside shipped source; effective scope receives an independent fixture in A0 scope work"
+  },
+  "acceptance_not_run": [
+    "NATIVE_WORD_VISUAL",
+    "NATIVE_BOOTSTRAP_INSTALLATION",
+    "REAL_CHATGPT_HOST",
+    "REAL_CLAUDE_HOST",
+    "INDEPENDENT_BUSINESS_ACCEPTANCE",
+    "TEAM_REAL_WORK_PILOT"
+  ],
+  "classes_not_run": {},
+  "immutable_audit_reference": {
+    "commit": "f5f739d867a0de701ee4adf20854941a7d3c331c",
+    "tree": "daa04a6867242ea558fe2847335e9daaab1fb4ed",
+    "package": "kilic-sozlesme-yonetimi/plugins/kilic-sozlesme-yonetimi"
+  }
+}

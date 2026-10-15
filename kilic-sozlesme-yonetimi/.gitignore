@@ -3,4 +3,5 @@ __pycache__/
 .sistem/
 *.duckdb*
 *.lock
+!plugins/kilic-sozlesme-yonetimi/requirements-win-cp314.lock
 .venv/
