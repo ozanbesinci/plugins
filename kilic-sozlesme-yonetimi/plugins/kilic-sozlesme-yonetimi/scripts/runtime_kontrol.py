@@ -23,6 +23,13 @@ from urllib.parse import urlsplit
 
 ROOT=Path(__file__).resolve().parents[1]
 UPDATER=ROOT/'vendor/guncelleyici'
+sys.path.insert(0,str(ROOT/'scripts'))
+from bootstrap_integrity import verify_vendor, BootstrapIntegrityError
+try:
+    verify_vendor(UPDATER, os.environ.get('SOZLESME_VENDOR_MANIFEST_SHA256'))
+except (BootstrapIntegrityError, OSError, ValueError, TypeError, KeyError):
+    print('@@SONUC '+json.dumps({'status':'ERROR','error':'PAKET_BUTUNLUK','resume_allowed':False},ensure_ascii=False))
+    raise SystemExit(2)
 sys.path.insert(0,str(UPDATER/'scripts'))
 from islem_guvencesi import SafetyError, atomic_json, exclusive_lock, reject_links, redact
 
@@ -58,12 +65,14 @@ def pin_hash():
     return hashlib.sha256(json.dumps(requirements(),sort_keys=True).encode()).hexdigest()
 
 def load_updater(name):
+    verify_vendor(UPDATER, os.environ.get('SOZLESME_VENDOR_MANIFEST_SHA256'))
     path=UPDATER/'scripts'/name
     spec=importlib.util.spec_from_file_location('updater_'+path.stem.replace('-','_'),path)
     module=importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
     return module
 
 def verify_upstream():
+    verify_vendor(UPDATER, os.environ.get('SOZLESME_VENDOR_MANIFEST_SHA256'))
     manifest=json.loads((UPDATER/'MANIFEST.sha256.json').read_text(encoding='utf-8'))
     if manifest['version']!='2.3.0' or (UPDATER/'VERSION').read_text().strip()!='2.3.0':
         raise SafetyError('Güncelleyici 2.3.0 gerekli')

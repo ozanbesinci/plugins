@@ -13,7 +13,7 @@ from uuid import uuid4
 import duckdb
 
 from .errors import CoreError
-from .safety import FileLock, confined, hash_file, hash_value, canonical, atomic_json, uuid_text, native_path, ordinary_path
+from .safety import FileLock, confined, hash_file, hash_value, canonical, atomic_json, uuid_text, native_path, ordinary_path, open_verified_source, read_verified_bytes, rename_owned
 from .schemas import validate
 from .verification import VerificationMixin, reading_profile
 from .context import ContextMixin
@@ -165,7 +165,7 @@ class Store(BusinessMixin, OutputMixin, GuardMixin, ContextMixin, VerificationMi
             self._source(db, case_id, document_id, {"DOCUMENT"})
             before = native_path(path).stat()
             sha = hashlib.sha256()
-            with native_path(path).open("rb") as reader, native_path(staging).open("xb") as writer:
+            with open_verified_source(path) as reader, native_path(staging).open("xb") as writer:
                 for block in iter(lambda: reader.read(1024 * 1024), b""):
                     sha.update(block)
                     writer.write(block)
@@ -216,7 +216,7 @@ class Store(BusinessMixin, OutputMixin, GuardMixin, ContextMixin, VerificationMi
 
     @staticmethod
     def _media_type(path, suffix):
-        with native_path(path).open("rb") as stream:
+        with open_verified_source(path) as stream:
             start = stream.read(8)
         if start.startswith(b"%PDF-"):
             return "application/pdf"
@@ -224,7 +224,7 @@ class Store(BusinessMixin, OutputMixin, GuardMixin, ContextMixin, VerificationMi
             return "application/zip;uninspected"
         if suffix.lower() == ".txt":
             try:
-                native_path(path).read_text(encoding="utf-8-sig")
+                read_verified_bytes(path).decode("utf-8-sig")
                 return "text/plain;charset=utf-8"
             except UnicodeError:
                 return "application/octet-stream"
@@ -237,7 +237,7 @@ class Store(BusinessMixin, OutputMixin, GuardMixin, ContextMixin, VerificationMi
             self._check_version_access(db,case_id,version_id)
             sha, key = db.execute("SELECT sha256,storage_key FROM belge_surumu WHERE case_id=? AND record_id=?", [case_id, version_id]).fetchone()
             path = confined(self.system / key, [self.output_root])
-            content = native_path(path).read_bytes()
+            content = read_verified_bytes(path)
             if hashlib.sha256(content).hexdigest() != sha:
                 raise CoreError("KAYNAK_BOZUK", "Snapshot hash doğrulaması başarısız")
             return content
@@ -251,6 +251,10 @@ class Store(BusinessMixin, OutputMixin, GuardMixin, ContextMixin, VerificationMi
                 "old_sha256":hashlib.sha256(old).hexdigest(),"new_sha256":hashlib.sha256(new).hexdigest(),
                 "same_bytes":old==new,"old_size":len(old),"new_size":len(new),"first_changed_byte":first,
                 "comparison_scope":"BYTES_ONLY","semantic_comparison":"NOT_RUN"}
+
+    def compare_source_roles(self,case_id,reference_version_id,current_target_version_id):
+        from .source_roles import compare_source_roles
+        return compare_source_roles(self,case_id,reference_version_id,current_target_version_id)
 
     def add_parent(self, case_id, child, parent, *, expected_revision):
         case_id, child, parent = map(uuid_text, (case_id, child, parent))
@@ -281,8 +285,18 @@ class Store(BusinessMixin, OutputMixin, GuardMixin, ContextMixin, VerificationMi
         case_id = uuid_text(case_id)
         if not isinstance(text, str) or not text.strip():
             raise CoreError("GECERSIZ_GIRDI", "Beyan metni gerekli")
+        if any(value is not None and (not isinstance(value, str) or len(value) > 500)
+               for value in (session_ref, message_ref)):
+            raise CoreError("GECERSIZ_GIRDI", "Beyan referansları kısa metin veya null olmalı")
         with self._db() as db:
             self._case(db, case_id, expected_revision)
+            if session_ref and message_ref:
+                existing = db.execute("SELECT record_id,excerpt FROM beyanlar WHERE case_id=? AND session_ref=? AND message_ref=?",
+                                      [case_id, session_ref, message_ref]).fetchall()
+                if existing:
+                    if len(existing) != 1 or existing[0][1] != text:
+                        raise CoreError("BEYAN_CAKISMASI", "Aynı case/oturum/mesaj referansı farklı beyana bağlanamaz")
+                    return str(existing[0][0])
             rid = self._record(db, case_id, "STATEMENT")
             db.execute("INSERT INTO beyanlar VALUES(?,?,?,?,?,?,'UNVERIFIED_LOCAL_STATEMENT')", [case_id, rid, text, NOW(), session_ref, message_ref])
             self._event(db, case_id, "STATEMENT_RECORDED", {"statement_id": rid})
@@ -385,6 +399,18 @@ class Store(BusinessMixin, OutputMixin, GuardMixin, ContextMixin, VerificationMi
         return dict(proof, case_id=uuid_text(case_id), version_id=uuid_text(version_id),
                     processing_id=processed["processing_id"])
 
+    def capacity(self, case_id):
+        from .capacity import capacity_snapshot
+        return capacity_snapshot(self, case_id)
+
+    def portfolio_overview(self, request):
+        from .portfolio import portfolio_overview
+        return portfolio_overview(self, request)
+
+    def rebind_context(self, case_id, *, expected_revision, policy_version="1"):
+        from .rebind import rebind_context
+        return rebind_context(self, case_id, expected_revision=expected_revision, policy_version=policy_version)
+
     def _process(self, case_id, version_id, *, tool, tool_version, settings, validation_version,
                  policy_version, extractor, result_schema):
         case_id, version_id = map(uuid_text, (case_id, version_id))
@@ -392,40 +418,58 @@ class Store(BusinessMixin, OutputMixin, GuardMixin, ContextMixin, VerificationMi
                               "validation_version": validation_version, "policy_version": policy_version,
                               "result_schema": result_schema})
         with self._db() as db:
+            revision = self._case(db, case_id)
             self._source(db, case_id, version_id, {"VERSION"})
             row = db.execute("SELECT sha256,storage_key,original_path FROM belge_surumu WHERE case_id=? AND record_id=?", [case_id, version_id]).fetchone()
             original = confined(row[2], self.source_roots)
             if not native_path(original).is_file():
                 raise CoreError("ERISIM_YOK", "Kaynak erişimi yok; cache üzerinden okunmadı")
+            original_digest = hash_file(original)
             snapshot = confined(self.system / row[1], [self.output_root])
-            data = native_path(snapshot).read_bytes()
+            data = read_verified_bytes(snapshot)
             if hashlib.sha256(data).hexdigest() != row[0]:
                 raise CoreError("KAYNAK_BOZUK", "Snapshot değişmiş")
             invalid = db.execute("SELECT count(*) FROM gecersizlestirmeler WHERE case_id=? AND target_id=?", [case_id, version_id]).fetchone()[0]
             old = db.execute("SELECT record_id,result FROM isleme_calismalari WHERE case_id=? AND document_version_id=? AND profile_digest=?", [case_id, version_id, profile]).fetchone()
-            if old and not invalid:
-                cached = json.loads(old[1])
-                if result_schema == "P2":
-                    from .readers import validate_reading
-                    validate_reading(cached, data)
-                return {"processing_id": str(old[0]), "result": cached, "reused": True,
+            if old and invalid:
+                raise CoreError("YENIDEN_INCELE", "Bağımlılığı değişen profil yeniden değerlendirme gerektiriyor")
+
+        # Native parsing and large JSON validation do not hold the DB lock.
+        result = json.loads(old[1]) if old else extractor(data)
+        if result_schema == "P2":
+            from .readers import validate_reading
+            from .runtime_identity import reader_build_identity
+            validate_reading(result, data)
+            if settings.get("reader_build_digest") != reader_build_identity(kind=settings["format"]):
+                raise CoreError("PAKET_DEGISTI", "Ayrıştırma sırasında reader build profili değişti")
+        else:
+            from jsonschema import Draft202012Validator
+            schema = json.loads((Path(__file__).resolve().parents[2] / "schemas" / "p1_inventory.schema.json").read_text(encoding="utf-8"))
+            if not Draft202012Validator(schema).is_valid(result):
+                raise CoreError("SEMA_HATASI", "P1 işleme çıktısı envanter şemasına uymuyor")
+        if result["sha256"] != row[0] or result["size_bytes"] != len(data):
+            raise CoreError("KAYNAK_BOZUK", "İşleme envanteri kaynak baytlarıyla eşleşmiyor")
+        result_body = canonical(result)
+        with self._db() as db:
+            self._case(db, case_id, revision)
+            self._source(db, case_id, version_id, {"VERSION"})
+            self._check_version_access(db, case_id, version_id)
+            current = db.execute("SELECT sha256,storage_key,original_path FROM belge_surumu WHERE case_id=? AND record_id=?", [case_id, version_id]).fetchone()
+            if current != row or hash_file(snapshot) != row[0] or hash_file(original) != original_digest:
+                raise CoreError("KAYNAK_DEGISTI", "Ayrıştırma sırasında kaynak bağı değişti")
+            if db.execute("SELECT count(*) FROM gecersizlestirmeler WHERE case_id=? AND target_id=?", [case_id, version_id]).fetchone()[0]:
+                raise CoreError("YENIDEN_INCELE", "Ayrıştırma sırasında bağımlılık geçersizleştirildi")
+            existing = db.execute("SELECT record_id,result FROM isleme_calismalari WHERE case_id=? AND document_version_id=? AND profile_digest=?", [case_id, version_id, profile]).fetchone()
+            if existing:
+                if existing[1] != result_body:
+                    raise CoreError("KAYNAK_BOZUK", "Aynı profil için kayıtlı işleme sonucu farklı")
+                return {"processing_id": str(existing[0]), "result": result, "reused": True,
                         "verification_status": "PARTIAL" if result_schema == "P2" else "UNVERIFIED"}
             if old:
-                raise CoreError("YENIDEN_INCELE", "Bağımlılığı değişen profil yeniden değerlendirme gerektiriyor")
-            result = extractor(data)
-            if result_schema == "P2":
-                from .readers import validate_reading
-                validate_reading(result, data)
-            else:
-                from jsonschema import Draft202012Validator
-                schema = json.loads((Path(__file__).resolve().parents[2] / "schemas" / "p1_inventory.schema.json").read_text(encoding="utf-8"))
-                if not Draft202012Validator(schema).is_valid(result):
-                    raise CoreError("SEMA_HATASI", "P1 işleme çıktısı envanter şemasına uymuyor")
-            if result["sha256"] != row[0] or result["size_bytes"] != len(data):
-                raise CoreError("KAYNAK_BOZUK", "İşleme envanteri kaynak baytlarıyla eşleşmiyor")
+                raise CoreError("KAYNAK_BOZUK", "Ayrıştırma sırasında önceki işleme kaydı kayboldu")
             rid = self._record(db, case_id, "PROCESSING")
             status = "PARTIAL" if result_schema == "P2" else "STRUCTURED_UNVERIFIED"
-            db.execute("INSERT INTO isleme_calismalari VALUES(?,?,?,?,?,?,?,?,?,?,?,?)", [case_id,rid,version_id,profile,tool,tool_version,hash_value(settings),validation_version,policy_version,canonical(result),status,NOW()])
+            db.execute("INSERT INTO isleme_calismalari VALUES(?,?,?,?,?,?,?,?,?,?,?,?)", [case_id,rid,version_id,profile,tool,tool_version,hash_value(settings),validation_version,policy_version,result_body,status,NOW()])
             self._event(db, case_id, "SOURCE_READING_PARTIAL" if result_schema == "P2" else "SOURCE_STRUCTURED_UNVERIFIED", {"processing_id": rid})
             return {"processing_id": rid, "result": result, "reused": False,
                     "verification_status": "PARTIAL" if result_schema == "P2" else "UNVERIFIED"}
@@ -492,7 +536,7 @@ class Store(BusinessMixin, OutputMixin, GuardMixin, ContextMixin, VerificationMi
                 shutil.copyfile(native_path(source),native_path(dest))
                 files.append({"path": relative,"sha256": sha})
             atomic_json(stage / "snapshot.json", {"format": "kilic-local-snapshot-1", "created_at": NOW().isoformat(), "files": files})
-            os.rename(native_path(stage),native_path(target))
+            rename_owned(stage, target)
         return target
 
     @classmethod
@@ -535,5 +579,5 @@ class Store(BusinessMixin, OutputMixin, GuardMixin, ContextMixin, VerificationMi
             for key,sha in rows:
                 if hash_file(confined(candidate.system / key,[output_root])) != sha:
                     raise CoreError("SNAPSHOT_BOZUK", "DB/kaynak snapshot ilişkisi başarısız")
-        os.rename(native_path(stage),native_path(target))
+        rename_owned(stage, target)
         return cls(target,source_roots=source_roots,output_root=output_root)

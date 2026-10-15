@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "K27 explicit-case portfolio measurement",
+  "type": "object",
+  "additionalProperties": false,
+  "$defs": {
+    "count": {"type": "integer", "minimum": 0},
+    "measures": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "facts": {"$ref": "#/$defs/count"},
+        "facts_current": {"$ref": "#/$defs/count"},
+        "facts_needs_review": {"$ref": "#/$defs/count"},
+        "comparisons": {"$ref": "#/$defs/count"},
+        "value_mismatches": {"$ref": "#/$defs/count"},
+        "incomparable_comparisons": {"$ref": "#/$defs/count"},
+        "obligations": {"$ref": "#/$defs/count"},
+        "obligations_current": {"$ref": "#/$defs/count"},
+        "obligations_past_due_candidate": {"$ref": "#/$defs/count"},
+        "obligations_due_today_candidate": {"$ref": "#/$defs/count"},
+        "obligations_upcoming_candidate": {"$ref": "#/$defs/count"},
+        "obligations_unresolved_due": {"$ref": "#/$defs/count"},
+        "obligations_unknown_party": {"$ref": "#/$defs/count"},
+        "obligations_with_completion_claim": {"$ref": "#/$defs/count"},
+        "events": {"$ref": "#/$defs/count"},
+        "all_selected_sources_current": {"type": "boolean"}
+      },
+      "required": ["facts", "facts_current", "facts_needs_review", "comparisons", "value_mismatches",
+                   "incomparable_comparisons", "obligations", "obligations_current",
+                   "obligations_past_due_candidate", "obligations_due_today_candidate",
+                   "obligations_upcoming_candidate", "obligations_unresolved_due",
+                   "obligations_unknown_party", "obligations_with_completion_claim", "events",
+                   "all_selected_sources_current"]
+    },
+    "attention": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {"enum": ["PAST_DUE_CANDIDATE", "UNRESOLVED_DUE", "VALUE_MISMATCH", "NEEDS_REVIEW"]},
+        "record_id": {"type": "string"},
+        "description": {"type": ["string", "null"]},
+        "due_date": {"type": ["string", "null"]},
+        "source_version_id": {"type": ["string", "null"]}
+      },
+      "required": ["kind", "record_id", "description", "due_date", "source_version_id"]
+    }
+  },
+  "properties": {
+    "schema_version": {"const": "portfolio-1.0"},
+    "request_id": {"type": "string", "format": "uuid"},
+    "request_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "purpose": {"type": "string"},
+    "as_of": {"type": "string"},
+    "scope_keys": {"type": "array", "items": {"type": "string"}},
+    "status": {"enum": ["COMPLETE_LISTED_SCOPE", "PARTIAL_LISTED_SCOPE", "NO_INCLUDED_CASE"]},
+    "coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "method": {"const": "EXPLICIT_CASE_LIST_ONLY"},
+        "requested_cases": {"$ref": "#/$defs/count"},
+        "included_cases": {"$ref": "#/$defs/count"},
+        "excluded_cases": {"$ref": "#/$defs/count"},
+        "company_wide": {"const": false},
+        "sampling_inference": {"const": "NOT_RUN"}
+      },
+      "required": ["method", "requested_cases", "included_cases", "excluded_cases", "company_wide", "sampling_inference"]
+    },
+    "cases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "case_id": {"type": "string", "format": "uuid"},
+          "status": {"enum": ["INCLUDED", "EXCLUDED"]},
+          "context_version": {"type": ["integer", "null"]},
+          "selected_versions": {"type": "array", "items": {"type": "string"}},
+          "error_code": {"type": ["string", "null"]},
+          "reason": {"type": ["string", "null"]},
+          "measures": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/measures"}]},
+          "attention": {"type": "array", "maxItems": 16, "items": {"$ref": "#/$defs/attention"}},
+          "attention_truncated": {"$ref": "#/$defs/count"}
+        },
+        "required": ["case_id", "status", "context_version", "selected_versions", "error_code", "reason",
+                     "measures", "attention", "attention_truncated"]
+      }
+    },
+    "metrics": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {"type": "string"},
+          "numerator": {"$ref": "#/$defs/count"},
+          "denominator": {"$ref": "#/$defs/count"},
+          "numerator_basis": {"type": "string"},
+          "denominator_basis": {"type": "string"}
+        },
+        "required": ["id", "numerator", "denominator", "numerator_basis", "denominator_basis"]
+      }
+    },
+    "cross_case_source_mixing": {"const": false},
+    "interpretation": {"const": "NOT_RUN"},
+    "business_acceptance": {"const": "NOT_GRANTED"},
+    "authority": {"const": "NOT_VERIFIED"},
+    "critical_analysis_allowed": {"const": false},
+    "limitations": {"type": "array", "items": {"type": "string"}}
+  },
+  "required": ["schema_version", "request_id", "request_digest", "purpose", "as_of", "scope_keys", "status",
+               "coverage", "cases", "metrics", "cross_case_source_mixing", "interpretation",
+               "business_acceptance", "authority", "critical_analysis_allowed", "limitations"]
+}

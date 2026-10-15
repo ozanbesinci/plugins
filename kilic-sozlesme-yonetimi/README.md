@@ -1,45 +1,42 @@
 # Kılıç Sözleşme Yönetimi
 
-**Geliştirici: Ozan Beşinci · Sürüm: 0.1.0-dev.5**
+Kaynaklı Türkçe sözleşme desteği için 30 iş becerisi ve Güncelleyici 2.3.0. **Kararlı sürüm 0.1.0** (2026-10-15): satınalma ve ithalat personelinin sözleşme ön incelemesi için yayımlandı. Mail gönderimi yok; Word çıktısı 0.1.0'da kapalı, cevaplar sohbette verilir.
 
-Dev.5 ile31 becerinin başlangıç satırında Kılıç Satınalma Departmanı geliştirici bildirimi görünür.30 sözleşme becerisi0.1.0-dev.5, Güncelleyici2.3.0 sürümündedir. Güncelleyici motoru değişmedi.
+Kurulum notları:
 
-Türkçe kaynaklı sözleşme desteği için30 iş becerisi ve Güncelleyici2.3.0 içerir. Her beceri başlarken gerçek adı, sürümü ve geliştirici bildirimi görünür. K29 **Yazışma Hazırlama** yalnız sohbet taslağı hazırlar; e-posta gönderimi ve mailbox taslağı oluşturma yoktur.
+- Claude Code yerel katalogdan kurulan eklentiyi kapalı başlatır; kurulumdan sonra `claude plugin enable kilic-sozlesme-yonetimi@<katalog>` gerekir.
+- Codex'te aynı adlı eski bir deneme adayı kuruluysa, eski sürümün becerisi seçilmesin diye önce o kaldırılır.
+- Codex korumalı alanda vaka klasörüne erişim için bir kez kullanıcı onayı isteyebilir.
 
-## Kurulum
+Güncel sürüm hazırlığı için tek giriş: [kararlı sürüme geçiş yapısı](release/README.md).
+`tools/release.py status` ürünün mevcut baytlarına bağlı makbuzları doğrular;
+`tools/release.py test` aynı test manifestini çakışmasız gruplarla yürütür.
+Geliştirme/kabul aracı ürün paketinin dışında, özel kanıtlar deponun dışında kalır.
+Tarihsel faz raporları güncel durumun yerine kullanılmaz.
 
-ChatGPT Business/Work yöneticisi bu GitHub deposunu çalışma alanının **Pazar yerleri** bölümüne ekleyebilir. Codex ve Claude pazar yeri tanımları aynı depoda bulunur.
+Plugin ve30 beceri0.1.0, çekirdek0.2.0, ortak sonuç şemasıp6-1.2; Güncelleyici2.3.0 değişmedi. Bileşen/build kimlikleri ayrı tutulur. Beceri başlangıcında gerçek ad, sürüm ve Kılıç Satınalma Departmanı geliştirici bildirimi görünür. Depo sahibi Ozan Beşinci'dir.
 
-Codex:
+## Kaynak ve kurulum kaydı
 
-```text
-codex plugin marketplace add ozanbesinci/kilic-sozlesme-yonetimi-plugin --ref main
-codex plugin add kilic-sozlesme-yonetimi@kilic-sozlesme
-```
+Güncel depo [ozanbesinci/plugins](https://github.com/ozanbesinci/plugins), proje alt dizini `kilic-sozlesme-yonetimi/`, ürün paketi `plugins/kilic-sozlesme-yonetimi/`. Proje pazar yeri tanımı `.claude-plugin/marketplace.json` dosyasında bulunur. Eski bağımsız depo adı ve hareketli `main` ref'i bu adayın kurulum kanıtı değildir.
 
-Claude Code:
+Kurulum/kabul kaydı, onaylanmış40 karakterli commit SHA'sını veya hash'i doğrulanmış değişmez paket kimliğini, gerçek host/sürümü ve test makbuzunu taşımalıdır. Bu çalışma ağacında değişiklikler commit/release/host kurulumuna bağlanmadı; kurulu kaynak commit'i bilinmiyorsa kimlikte null/UNVERIFIED kalır. Bu README kurulum veya yayın başarısı iddia etmez.
 
-```text
-/plugin marketplace add ozanbesinci/kilic-sozlesme-yonetimi-plugin
-/plugin install kilic-sozlesme-yonetimi@kilic-sozlesme
-```
+Yerel motor Windows ve izinli native Python yürütümü gerektirir. Shell bulunmayan cloud host'ta bağımlılık/kurulum veya Windows motoru çalıştı sayılmaz. Eksik kaynak ve yapılandırmada kapalı ret verilir. Gerçek ChatGPT/Claude host kabulü ayrı ve henüz NOT_RUN'dır.
 
-Windows yerel yürütümünde eksik Python, sabit kütüphaneler, DuckDB ve imzalı PDF eklentisi için Güncelleyici devreye girer; işlev kontrolünden sonra aynı talep devam eder. Yerel shell bulunmayan cloud hostlarda kurulum yapılamaz.
+## Ürün sınırları
 
-## Doğrulanan kapsam
+- K29 yalnız sohbet içinde yazışma taslağıdır. E-posta gönderimi, mailbox taslağı veya başka connector ile gönderim yoktur.
+- Normal üretim Word yazıcı/kimlik/QA kapıları CONFIG_REQUIRED ile kapalıdır. Sentetik Word testleri üretim yetkisi değildir.
+- Kaynak baytları korunur; case/sürüm/CAS, erişim, locator ve son hash kontrolleri yeniden uygulanır. Tarihsel kaynak güncel karar kanıtına yükseltilmez.
+- Teknik SUCCEEDED/COMPLETED, iş tamamlanması veya şirket onayı değildir. İş durumu ve NOT_GRANTED kabulü ayrı gösterilir.
 
-345/345 kod testi,90/90 paket/kaynak kontrolü,214/214 beceri yapılandırma kontrolü,120 senaryo protokolü/296 kontrol ve ZIP'ten çıkarılan gerçek kodla17/17 entegrasyon kontrolü geçti.31 becerinin VERSION ve başlangıç mesajları pakette bulunur. EML okuyucusu gövde, eski alıntı, alternatif içerik ve ekleri ayırır; bu veriler gönderenin kimliği veya şirket kabulü oluşturmaz.
+## Güncel test ve kabul
 
-## Geliştirme sürümünün sınırları
+Ürün testleri gerçek Windows/DuckDB/OS kilidiyle, kurulum yapmadan izole sentetik staging'de yürütülür. Her koşu kaynak/manifest SHA, ortam, test kimliği ve gerçek terminal sonucu taşır. Kaynak değişince eski PASS yeni kabul değildir. Çalıştırılmayan testler NOT_RUN; yarım/timeout koşusu tam PASS değildir.
 
-Bu bir **geliştirme sürümüdür**. Üretim Word/kimlik/QA adaptörleri, genel belge sadakati, tam iş senaryoları ve bağımsız Hukuk/teknik/host kabulü tamamlanmadı. Normal üretim belge eylemleri kapalıdır. Teknik testler uzman iş kabulü veya şirket yetkisi yerine geçmez. Ayrıntı: [bilinen sınırlar](plugins/kilic-sozlesme-yonetimi/KNOWN_LIMITATIONS.md).
+Önceki345/345 kod testi,90/90 paket kontrolü,214/214 beceri kontrolü ve120/296 senaryo sayıları **tarihsel faz kayıtlarıdır**. Bu adayın güncel test başarısı veya gerçek ekip kabulü olarak kullanılmaz. Eski219 dosyalı ZIP/hash de bu değişmiş kaynak için paket kabulü değildir.
 
-## Paket
+Test koşucusu ve kapsam: [ürün test stratejisi](plugins/kilic-sozlesme-yonetimi/references/product-test-strategy.md). Bileşenler: [kimlik sözleşmesi](plugins/kilic-sozlesme-yonetimi/references/component-identity.md). Sınırlar: [KNOWN_LIMITATIONS](plugins/kilic-sozlesme-yonetimi/KNOWN_LIMITATIONS.md).
 
-GitHub prerelease ZIP'i219 dosya içerir. SHA-256:
-
-```text
-2ea99e29a6d3bdc6e3ff8c8c29f671c2a1088aef3bd1a887dac1a52eb684d55f
-```
-
-Depo ve ZIP gerçek şirket belgeleri, özel araştırma çıktısı veya erişim anahtarı içermez.
+Kararlı kabul; aynı aday üzerinde güncel teknik kanıtların yanı sıra gerçek iş denemesi ve ilgili bağımsız uzman kabulü tamamlandığında verilir. 0.1.0 için bu kayıtlar yayın kararından önce aynı ürün baytlarına bağlandı. Gerçek şirket belgeleri, kişisel kayıtlar ve erişim anahtarları açık kaynak test/release paketine konulmaz.

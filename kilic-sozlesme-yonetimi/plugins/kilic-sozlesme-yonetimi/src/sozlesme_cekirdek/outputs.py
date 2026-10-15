@@ -27,6 +27,68 @@ def persist_docx(db,store,request,artifact,target,proof):
 
 
 class OutputMixin:
+    def inspect_outputs(self,case_id):
+        """Read-only operation-lineage diagnostics; never repair or deliver."""
+        from .guard import action_request,MAX_ARTIFACT
+        from .workflows import checked
+        case=uuid_text(case_id)
+        records=[]
+        def file_state(path,expected):
+            path=confined(path,[self.root])
+            if not native_path(path).exists():return {'state':'ABSENT','sha256':None,'size_bytes':0}
+            if not native_path(path).is_file():raise CoreError('ERISIM_YOK','Çıktı kalıntısı normal dosya değil')
+            size=native_path(path).stat().st_size
+            if size>MAX_ARTIFACT:return {'state':'SIZE_LIMIT','sha256':None,'size_bytes':size}
+            actual=hash_file(path)
+            return {'state':'PRESENT_NO_BOUND_HASH' if not expected else 'MATCH' if actual==expected else 'HASH_MISMATCH',
+                    'sha256':actual,'size_bytes':size}
+        with self._db() as db:
+            revision=self._case(db,case)
+            rows=db.execute('SELECT record_id,request_digest,payload,state,artifact_sha256,quarantine_key,output_key FROM islemler WHERE case_id=? ORDER BY record_id',[case]).fetchall()
+            for identifier,request_digest,body,state,sha,quarantine_key,output_key in rows:
+                operation=str(identifier);payload=json.loads(body)
+                if (set(payload)!={'request','binding','fingerprint'} or hash_value(payload)!=request_digest
+                        or hash_value(payload['binding'])!=payload['fingerprint'] or payload['binding']['request']!=payload['request']
+                        or action_request(payload['request'])!=payload['request']
+                        or payload['request']['plan']['case_id']!=case or payload['request']['plan']['operation_id']!=operation):
+                    raise CoreError('ISLEM_BOZUK','Çıktı inceleme işlem/kapsam digest bağı farklı')
+                plan=payload['request']['plan']
+                if plan['action_type'] not in {'BUILD_DOCUMENT','APPLY_TRACK_CHANGES','CREATE_CLEAN_COPY'}:
+                    raise CoreError('EPOSTA_GONDERIM_KALDIRILDI','Kaldırılmış eylem kaydı dosya onarımına alınamaz')
+                expected_quarantine='eylem-karantina/'+operation+'/artifact.bin'
+                target=confined(self.root/plan['parameters']['target_relative_path'],[self.root])
+                if ((quarantine_key is not None and quarantine_key!=expected_quarantine)
+                        or (output_key is not None and output_key!=target.relative_to(self.root).as_posix())):
+                    raise CoreError('ISLEM_BOZUK','Çıktı/karantina yolu işlem lineage ile eşleşmiyor')
+                files={'quarantine':file_state(self.system/expected_quarantine,sha),
+                       'ready':file_state(target.with_name(target.name+'.'+operation+'.ready'),sha),
+                       'final':file_state(target,sha)}
+                permissions=[]
+                for rid,column_state,column_fingerprint,raw in db.execute('SELECT record_id,state,fingerprint,payload FROM islem_izinleri WHERE case_id=? AND operation_id=?',[case,operation]).fetchall():
+                    permission=json.loads(raw)
+                    consistent=(permission.get('permission_id')==str(rid) and permission.get('operation_id')==operation
+                                and permission.get('case_id')==case and permission.get('state')==column_state
+                                and permission.get('fingerprint')==column_fingerprint==payload['fingerprint'])
+                    permissions.append({'permission_id':str(rid),'state':column_state,'column_payload_consistent':consistent,
+                                        'signature_verification':'NOT_RUN'})
+                if files['final']['state'] in {'HASH_MISMATCH','SIZE_LIMIT'}:diagnostic='FINAL_MISMATCH'
+                elif files['final']['state']=='MATCH' and state=='SIMULATION_COMMITTED':diagnostic='COMMITTED_PRESENT_SYNTHETIC_ONLY'
+                elif files['final']['state']!='ABSENT':diagnostic='FINAL_PRESENT_UNCOMMITTED_OR_UNBOUND'
+                elif state=='SIMULATION_COMMITTED':diagnostic='FINAL_UNAVAILABLE'
+                elif files['ready']['state']!='ABSENT':diagnostic='READY_ONLY_UNCOMMITTED'
+                elif files['quarantine']['state']!='ABSENT':diagnostic='QUARANTINE_ONLY'
+                elif state=='AUTHORIZED':diagnostic='NOT_STARTED'
+                elif state=='FAILED':diagnostic='FAILED_NO_PUBLISHED_ARTIFACT'
+                else:diagnostic='INCOMPLETE_NO_ARTIFACT_EVIDENCE'
+                records.append({'operation_id':operation,'database_state':state,'artifact_sha256':sha,
+                                'diagnostic':diagnostic,'files':files,'permissions':permissions,
+                                'delivery_confirmed':False,'recovery_action':'NONE'})
+        result={'schema_version':'output-inspect-1.0','case_id':case,'context_version':revision,'operations':records,
+                'inspection_scope':'KNOWN_CASE_OPERATION_LINEAGE_ONLY','orphan_without_db_scan':'NOT_RUN',
+                'source_freshness':'NOT_RUN','identity_qa_acceptance':'NOT_RUN','recovery_action':'NONE',
+                'production_ready':False,'authority':'NOT_VERIFIED','business_acceptance':'NOT_GRANTED'}
+        return checked('output_inspect_result',result)
+
     def docx_output_history(self,case_id):
         from .docx_revisions import validate_manifest
         case=uuid_text(case_id)

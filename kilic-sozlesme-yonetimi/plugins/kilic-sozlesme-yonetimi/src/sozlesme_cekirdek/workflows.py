@@ -5,6 +5,7 @@ All K00–K29 use this layer. Direct invocation has the same context/source/outp
 from functools import lru_cache
 import json
 from pathlib import Path
+from uuid import uuid4
 from jsonschema import Draft202012Validator,FormatChecker
 from .errors import CoreError
 from .safety import hash_value,canonical
@@ -13,7 +14,42 @@ from .skill_metadata import skill_metadata
 from .catalog import load_catalog
 
 ROOT=Path(__file__).resolve().parents[2]
-VERSION='p6-1.1'
+VERSION='p6-1.2'
+MAX_CONTEXT_BYTES=1048576
+MAX_BLOCKER_QUESTIONS=10
+STALE_REASON_TEXT={'SOURCE_FILE_CHANGED':'kaynak dosya kayıttan sonra değişti','SOURCE_VERSION_HAS_CHILD':'kaynağın daha yeni sürümü kaydedildi',
+    'DEPENDENCY_INVALIDATED':'bağlı kayıt geçersizleştirildi','READING_PROFILE_CHANGED':'okuyucu profili değişti; belge yeniden okunmalı',
+    'POLICY_VERSION_CHANGED':'politika sürümü değişti','VERIFIER_VERSION_CHANGED':'doğrulayıcı sürümü değişti',
+    'RENDERER_PROFILE_CHANGED':'görsel kontrol profili değişti'}
+
+
+def blocked_context(data,pack_id):
+    """Explain the concrete closed P3 gate; missing sources are named, never assumed."""
+    status=data['status'];budget=data['budget'];needed=budget['required_bytes'];maximum=budget['max_context_bytes']
+    questions=[]
+    for item in data['missing_dependencies']:
+        if item['reason']=='UNRESOLVED_REQUIRED_REFERENCE':
+            questions.append(f"Zorunlu kaynak eksik: “{item['reference']}”. Belgeyi/eki seçilmiş kaynaklara ekle veya erişilemediğini bildir; içeriği varsayılmaz.")
+        else:
+            questions.append(f"Zorunlu bağlantı geçersizleşti ({item['relation_id']}); güncel kaynağa yeniden bağla.")
+    for item in data['stale_dependencies']:
+        reasons=', '.join(STALE_REASON_TEXT.get(reason,reason) for reason in item['reasons']) or 'neden kaydı yok'
+        questions.append(f"Zorunlu bağlam düğümü {item['node_id']} yeniden incelenmeli: {reasons}.")
+    if len(questions)>MAX_BLOCKER_QUESTIONS:
+        extra=len(questions)-MAX_BLOCKER_QUESTIONS
+        questions=questions[:MAX_BLOCKER_QUESTIONS]+[f'{extra} benzer engel daha var; tam liste {pack_id} bağlam paketinde.']
+    not_budget=' Bağlam bütçesi bu engelin nedeni değil.' if needed<=maximum else ''
+    if status=='INCOMPLETE_DEPENDENCIES':
+        response=f"Zorunlu bağlam kanıtı eksik: {len(data['missing_dependencies'])} kayıtlı ek/atıf bulunamadı veya geçersiz. Eksik içerik varsayılmadı; bulgu üretilmedi."+not_budget
+    elif status=='NEEDS_REVIEW':
+        response=f"Zorunlu bağlam kanıtı güncel değil: {len(data['stale_dependencies'])} düğüm yeniden inceleme gerektiriyor. Eski içerik kullanılmadı; bulgu üretilmedi."+not_budget
+    elif status=='BUDGET_EXCEEDED':
+        response=f'Gerekli kanıt kapanımı {needed} bayt, seçilen bağlam bütçesi {maximum} bayt. Kanıt kırpılmadı; bulgu üretilmedi.'
+        questions.append(f'Bağlam bütçesini en az {needed} bayta çıkar veya kanıtı koruyarak kök düğümleri daralt.' if needed<=MAX_CONTEXT_BYTES
+                         else f'Gerekli kapanım {MAX_CONTEXT_BYTES} bayt üst sınırını aşıyor; kanıtı koruyarak kök düğümleri daralt.')
+    else:
+        raise CoreError('BAGLAM_BOZUK','Bilinmeyen kapalı bağlam durumu')
+    return response,questions
 
 
 @lru_cache
@@ -31,7 +67,39 @@ def checked(name,value):
     return value
 
 
-def evaluate(store,request):
+def evaluate(store, request, *, operation_id=None):
+    """Append one start and terminal event per attempt, without semantic revision.
+
+    A native crash may leave STARTED only. That is incomplete, never acceptance.
+    Request text and source content are not duplicated into this audit record.
+    """
+    if isinstance(request, dict) and request.get('requested_output') == 'EMAIL_SEND':
+        raise CoreError('EPOSTA_GONDERIM_KALDIRILDI', 'E-posta gönderimi kullanıcı kararıyla kaldırıldı')
+    checked('p6_skill_request', request)
+    from .runtime_identity import component_identity
+    identity = component_identity()
+    attempt = operation_id or str(uuid4())
+    details = {'operation_id': attempt, 'request_id': request['request_id'],
+               'request_digest': hash_value(request), 'context_version': request['context_version'],
+               'skill_id': request['skill_id'], 'selected_versions': request['selected_versions'],
+               'components': identity, 'business_acceptance': 'NOT_GRANTED', 'authority': 'NOT_VERIFIED'}
+    def event(name, extra):
+        with store._db() as db:
+            store._case(db, request['case_id'])
+            store._event(db, request['case_id'], name, dict(details, **extra))
+    event('SKILL_EVALUATION_STARTED', {'technical_status': 'STARTED', 'business_status': 'NOT_RUN'})
+    try:
+        result = _evaluate(store, request)
+    except BaseException as exc:
+        event('SKILL_EVALUATION_TERMINAL', {'technical_status': 'BLOCKED', 'business_status': 'NOT_RUN',
+              'error_code': exc.code if isinstance(exc, CoreError) else 'TEKNIK_HATA'})
+        raise
+    event('SKILL_EVALUATION_TERMINAL', {'technical_status': 'SUCCEEDED', 'business_status': result['status'],
+          'result_digest': hash_value(result), 'error_code': None})
+    return result
+
+
+def _evaluate(store,request):
     if isinstance(request, dict) and request.get("requested_output") == "EMAIL_SEND":
         raise CoreError("EPOSTA_GONDERIM_KALDIRILDI", "E-posta gönderimi kullanıcı kararıyla kaldırıldı; sohbet taslağı hazırlanabilir")
     request=checked('p6_skill_request',request)
@@ -59,8 +127,7 @@ def evaluate(store,request):
             'max_context_bytes':request['max_context_bytes'],'policy_version':request['policy_version'],'include_related':False})
         data=pack['result'];result['context_pack_id']=pack['pack_id'];result['context_budget']=data['budget']
         if data['context'] is None:
-            result['chat_response']='Gerekli kanıt kapanımı güncel ve bütçeye uygun değil.'
-            result['open_questions']=['Eksik/eski zorunlu kanıtı gider veya kanıtı koruyan daha büyük bütçe seç.']
+            result['chat_response'],result['open_questions']=blocked_context(data,pack['pack_id'])
             result['limitations'].append(data['status'])
         else:
             allowed=set(request['selected_versions'])
@@ -101,7 +168,12 @@ def evaluate(store,request):
                 result['status']='BILGI_GEREKLI'
                 result['open_questions'].append('İş kayıtları gerekli bağlamla birlikte bütçeye sığmıyor; kanıtı koruyarak kapsamı küçült veya bütçeyi artır.')
     if request.get('calculation') is not None:
-        if skill not in {'K05','K06','K08','K09','K10','K11','K12','K14','K15','K16','K23','K24','K27'}:raise CoreError('HESAP_KAPSAMI','Bu skill para/tarih hesabı istemez')
+        allowed = {'K05','K06','K08','K09','K10','K11','K12','K14','K15','K16','K23','K24','K27'}
+        if skill == 'K26':
+            if request['calculation'].get('kind') != 'DATE':
+                raise CoreError('HESAP_KAPSAMI','K26 yalnız açık süre/takvim girdileriyle tarih hesabı yapar')
+        elif skill not in allowed:
+            raise CoreError('HESAP_KAPSAMI','Bu skill para/tarih hesabı istemez')
         result['calculation']=calculate(request['calculation'])
         if result['status']=='BILGI_GEREKLI':result['status']='KISMI'
         if not result['chat_response']:result['chat_response']='Açık kullanıcı girdileriyle deterministik hesap yapıldı; sözleşme/olay doğrulaması ve değerlendirme ayrıca gerekir.'

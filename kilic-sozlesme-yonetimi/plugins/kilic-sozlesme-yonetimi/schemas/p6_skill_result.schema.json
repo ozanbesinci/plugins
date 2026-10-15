@@ -5,12 +5,12 @@
   "properties": {
     "skill_name": {"type": "string", "minLength": 1},
     "skill_version": {"type": "string", "minLength": 1},
-    "developer": {"const": "Ozan Beşinci"},
+    "developer": {"const": "Kılıç Satınalma Departmanı"},
     "startup_message": {"type": "string", "minLength": 1},
     "business_overview": {"type": ["object", "null"]},
     "business_budget": {"type": ["object", "null"]},
     "schema_version": {
-      "const": "p6-1.1"
+      "const": "p6-1.2"
     },
     "request_id": {
       "type": "string",
@@ -215,6 +215,10 @@
     }
   },
   "required": [
+    "skill_name",
+    "skill_version",
+    "developer",
+    "startup_message",
     "schema_version",
     "request_id",
     "case_id",

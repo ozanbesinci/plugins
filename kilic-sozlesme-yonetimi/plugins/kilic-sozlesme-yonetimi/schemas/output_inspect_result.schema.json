@@ -1,0 +1,17 @@
+{
+ "$schema":"https://json-schema.org/draft/2020-12/schema","type":"object","additionalProperties":false,
+ "$defs":{
+  "file":{"type":"object","additionalProperties":false,"properties":{"state":{"enum":["ABSENT","SIZE_LIMIT","PRESENT_NO_BOUND_HASH","MATCH","HASH_MISMATCH"]},"sha256":{"type":["string","null"],"pattern":"^[a-f0-9]{64}$"},"size_bytes":{"type":"integer","minimum":0}},"required":["state","sha256","size_bytes"]},
+  "permission":{"type":"object","additionalProperties":false,"properties":{"permission_id":{"type":"string","format":"uuid"},"state":{"enum":["ISSUED","CONSUMED","REVOKED"]},"column_payload_consistent":{"type":"boolean"},"signature_verification":{"const":"NOT_RUN"}},"required":["permission_id","state","column_payload_consistent","signature_verification"]}},
+ "properties":{
+  "schema_version":{"const":"output-inspect-1.0"},"case_id":{"type":"string","format":"uuid"},"context_version":{"type":"integer","minimum":0},
+  "operations":{"type":"array","items":{"type":"object","additionalProperties":false,"properties":{
+   "operation_id":{"type":"string","format":"uuid"},"database_state":{"type":"string"},"artifact_sha256":{"type":["string","null"],"pattern":"^[a-f0-9]{64}$"},
+   "diagnostic":{"enum":["FINAL_MISMATCH","COMMITTED_PRESENT_SYNTHETIC_ONLY","FINAL_PRESENT_UNCOMMITTED_OR_UNBOUND","FINAL_UNAVAILABLE","READY_ONLY_UNCOMMITTED","QUARANTINE_ONLY","NOT_STARTED","FAILED_NO_PUBLISHED_ARTIFACT","INCOMPLETE_NO_ARTIFACT_EVIDENCE"]},
+   "files":{"type":"object","additionalProperties":false,"properties":{"quarantine":{"$ref":"#/$defs/file"},"ready":{"$ref":"#/$defs/file"},"final":{"$ref":"#/$defs/file"}},"required":["quarantine","ready","final"]},
+   "permissions":{"type":"array","items":{"$ref":"#/$defs/permission"}},"delivery_confirmed":{"const":false},"recovery_action":{"const":"NONE"}},
+   "required":["operation_id","database_state","artifact_sha256","diagnostic","files","permissions","delivery_confirmed","recovery_action"]}},
+  "inspection_scope":{"const":"KNOWN_CASE_OPERATION_LINEAGE_ONLY"},"orphan_without_db_scan":{"const":"NOT_RUN"},"source_freshness":{"const":"NOT_RUN"},"identity_qa_acceptance":{"const":"NOT_RUN"},
+  "recovery_action":{"const":"NONE"},"production_ready":{"const":false},"authority":{"const":"NOT_VERIFIED"},"business_acceptance":{"const":"NOT_GRANTED"}},
+ "required":["schema_version","case_id","context_version","operations","inspection_scope","orphan_without_db_scan","source_freshness","identity_qa_acceptance","recovery_action","production_ready","authority","business_acceptance"]
+}

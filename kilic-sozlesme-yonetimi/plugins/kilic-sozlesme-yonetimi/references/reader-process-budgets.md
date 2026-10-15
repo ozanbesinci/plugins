@@ -1,0 +1,7 @@
+# Okuyucu kaynak bütçeleri
+
+Birincil okuyucu Windows Job Object'e bağlanmadan belge baytları beslenmez. Kurulum hatası PLATFORM_BUTCE ile durur. Süre30s, kaynak64MiB, süreç commit belleği512MiB, eşzamanlı süreç1, stdout32MiB, stderr64KiB sınırları uygulanır. stdout/stderr4096bayt bloklarla tüketilir; sınırda iş sonlandırılır. Bu kontrol dosya/ağ sandbox'ı değildir; CONS-022 ayrı açıktır.
+
+Okuma birimi20.000 ve RAW/BEFORE/AFTER/DISPLAY toplam UTF-8 metni8MiB bütçesi yeni birim eklenmeden denetlenir. MIME128parça/16derinlik bütçesi CPython3.14 BytesFeedParser'ın yeni parça oluşturma kancasında denetlenir; yerel sürüm ve ABI build kimliğine bağlıdır. PDF/XLSX karşı okuyucuları birincil worker içinde aynı süreç bütçesine dahildir. PDF renderer da kaynak16MiB/stdout16MiB ile aynı sınırı kullanır. İsteğe bağlı numpy/defusedxml/cryptography sürümleri veya yokluğu reader fingerprint'ine eklenir. Sayısal iş parçacıkları1 ile sınırlanır; normal XLSX512MiB bütçesinde doğrulanır. Tam güncel regresyon ve kurumsal host kabulü ayrıca gerekir.
+
+Süreç limitlerinin anlamı: [Microsoft Job Objects](https://learn.microsoft.com/en-us/windows/win32/procthread/job-objects) ve [EXTENDED_LIMIT_INFORMATION](https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-jobobject_extended_limit_information). Ayrı native çocuk süreç testleri bellek reddi, süre sonlandırması ve iki çıktı kanalının büyümesini sınar. Üretim Word ve K29 kapıları değişmez.

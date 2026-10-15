@@ -13,6 +13,8 @@ REL = "http://schemas.openxmlformats.org/package/2006/relationships"
 MAX_BYTES = 64 * 1024 * 1024
 MAX_PART = 8 * 1024 * 1024
 MAX_NODES = 200_000
+MAX_UNITS = 20_000
+MAX_TEXT_BYTES = 8 * 1024 * 1024
 
 
 def locator(part="", path="", *, page=None, sheet=None, cell=None):
@@ -45,13 +47,32 @@ def result_base(data, kind, name, dependencies):
 
 
 def unit(report, kind, location, raw, before=None, after=None, display=None, attributes=None):
+    # Check before constructing/retaining the next unit, including repeated views.
+    if len(report["units"]) >= MAX_UNITS:
+        raise CoreError("BELGE_SINIRI", "Okuma birimi sınırı aşıldı")
+    text_bytes = sum(len(value.encode("utf-8")) for value in (raw, before, after, display) if value is not None)
+    used = getattr(report["units"], "text_bytes", None)
+    if used is None:
+        report["units"] = BoundedUnits(report["units"])
+        used = report["units"].text_bytes
+    if used + text_bytes > MAX_TEXT_BYTES:
+        raise CoreError("BELGE_SINIRI", "Okuma metni bütçesi aşıldı")
     identity = repr(sorted(location.items())).encode("utf-8")
     uid = hashlib.sha256(report["sha256"].encode("ascii") + identity).hexdigest()
     row = {"unit_id": uid, "kind": kind, "locator": location,
            "views": {"RAW": raw, "BEFORE": before, "AFTER": after, "DISPLAY": display},
            "attributes": [{"key": str(k), "value": str(v)} for k, v in (attributes or {}).items()]}
     report["units"].append(row)
+    report["units"].text_bytes += text_bytes
     return row
+
+
+class BoundedUnits(list):
+    """Internal counter only; serializes as a normal JSON array."""
+    def __init__(self, items=()):
+        super().__init__(items)
+        self.text_bytes = sum(len(value.encode("utf-8")) for item in items
+                              for value in item["views"].values() if value is not None)
 
 
 def xml(data):

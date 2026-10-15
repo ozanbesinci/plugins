@@ -1,0 +1,64 @@
+name: Kılıç Sözleşme ürün testleri
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'kilic-sozlesme-yonetimi/**'
+      - '.github/workflows/kilic-contract-tests.yml'
+  push:
+    branches: [main, 'codex/**']
+    paths:
+      - 'kilic-sozlesme-yonetimi/**'
+      - '.github/workflows/kilic-contract-tests.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  windows-product:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    env:
+      PYTHONUTF8: '1'
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 0 # Immutable f5f739 audit code is required for compatibility probes.
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.14'
+          architecture: x64
+      - name: Hash bağlı sabit binary set
+        shell: pwsh
+        run: |
+          $package = 'kilic-sozlesme-yonetimi/plugins/kilic-sozlesme-yonetimi'
+          python -m pip install --index-url https://pypi.org/simple --only-binary=:all: --require-hashes --no-deps -r "$package/requirements-win-cp314.lock"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -m pip check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Sürüm aracının kanıt ve kapsam kontrolleri
+        shell: pwsh
+        run: |
+          python -B -X utf8 kilic-sozlesme-yonetimi/tools/test_release.py
+          exit $LASTEXITCODE
+      - name: Tek kurulum, çakışmasız dört test grubu, tam kapsam birleşimi
+        shell: pwsh
+        run: |
+          $evidence = Join-Path $env:RUNNER_TEMP 'contract-tests'
+          python -B -X utf8 kilic-sozlesme-yonetimi/tools/release.py test --output-root $evidence --shards 4 --workers 2 --timeout-seconds 1800
+          exit $LASTEXITCODE
+      - name: Güncel test makbuzları
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: contract-full-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/contract-tests/**/*.json
+            ${{ runner.temp }}/contract-tests/**/*.jsonl
+            ${{ runner.temp }}/contract-tests/**/*.log
+            ${{ runner.temp }}/contract-tests/**/DURUM.md
+          if-no-files-found: error
+          retention-days: 14

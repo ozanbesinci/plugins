@@ -1,0 +1,10 @@
+{
+  "schema": "contract-component-policy/v1",
+  "plugin_version": "0.1.0",
+  "core_version": "0.2.0",
+  "result_schema_version": "p6-1.2",
+  "vendor_version": "2.3.0",
+  "source_commit": null,
+  "source_commit_attestation": "UNVERIFIED",
+  "compatibility": "Distinct component versions; immutable behavior fingerprint binds actual code, schema, ABI and dependencies; normal production actions remain closed"
+}
