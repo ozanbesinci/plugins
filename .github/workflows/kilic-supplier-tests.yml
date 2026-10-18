@@ -5,11 +5,13 @@ on:
     paths:
       - 'kilic-tedarikci-yonetimi/**'
       - '.github/workflows/kilic-supplier-tests.yml'
+      - '.github/scripts/run_supplier_ci.py'
   push:
     branches: [main]
     paths:
       - 'kilic-tedarikci-yonetimi/**'
       - '.github/workflows/kilic-supplier-tests.yml'
+      - '.github/scripts/run_supplier_ci.py'
   workflow_dispatch:
 
 permissions:
@@ -41,21 +43,9 @@ jobs:
           python -X utf8 -I -B ../../../../kurulum/calculation_install.py --prepared-environment
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python -X utf8 -B scripts/environment_check.py --strict --output test-results/ci-environment.json
-      - name: Run the real engine with current-source evidence
+      - name: Run the real engine with exact parallel coverage
         run: |
-          $monitor = @'
-          import os,pathlib,subprocess,sys,time
-          engine=os.environ['TEST_ENGINE']
-          child=subprocess.Popen([sys.executable,'-u','scripts/run_tests.py','--engine',engine,'--output-dir','test-results','--timeout','3600'])
-          log=pathlib.Path('test-results',engine+'.log')
-          while child.poll() is None:
-              time.sleep(30)
-              if log.exists():
-                  lines=log.read_text(encoding='utf-8',errors='replace').splitlines()
-                  if lines: print(engine+' progress: '+lines[-1][:300],flush=True)
-          raise SystemExit(child.returncode)
-          '@
-          $monitor | python -u -
+          python -X utf8 -B ../../../../../.github/scripts/run_supplier_ci.py --engine $env:TEST_ENGINE --output-dir test-results
       - name: Require complete nonempty current-source evidence
         run: |
           python -c "import json,os,pathlib,sys; sys.path.insert(0,'scripts'); from run_tests import validate_child_report,source_fingerprint; engine=os.environ['TEST_ENGINE']; path=pathlib.Path('test-results',engine+'.json'); r=json.loads(path.read_text(encoding='utf-8')); expected=source_fingerprint(); assert expected; assert validate_child_report(path,engine,r['run_id'],0,expected_source=expected)==0; print(engine, r['passed'], 'PASS, actual connection and source verified', r['source_sha256'])"
