@@ -36,6 +36,11 @@ jobs:
       - name: Install test dependencies in isolated CI runner
         run: |
           python -m pip install --require-hashes --only-binary=:all: -r ../../../../kurulum/requirements-win-cp314.lock
+      - name: Prepare pinned local calculation engine in isolated CI runner
+        run: |
+          python -X utf8 -I -B ../../../../kurulum/calculation_install.py --prepared-environment
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -X utf8 -B scripts/environment_check.py --strict --output test-results/ci-environment.json
       - name: Run the real engine with current-source evidence
         run: |
           $monitor = @'
