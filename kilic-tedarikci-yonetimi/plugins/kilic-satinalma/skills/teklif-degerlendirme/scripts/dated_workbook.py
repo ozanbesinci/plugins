@@ -72,8 +72,12 @@ def add_dated_ledgers(wb,scenarios,contract):
             active=f'AND({count},{slot}<={v("E")})'
             dates=f'AND({policy},{active},{excel_date_guard("G"+str(yr))},{excel_date_guard("H"+str(yr))},G{yr}=H{yr})'
             origin=excel_date_serial(v('B'));when=excel_date_serial('G'+str(yr))
-            # Excel's fictitious 1900-02-29 must not add a day to actual dates.
-            difference=f'({when}-{origin}-IF(AND({origin}<DATE(1900,3,1),{when}>=DATE(1900,3,1)),1,0))'
+            # Excel includes a fictitious 1900-02-29; LibreOffice does not.
+            # Derive the engine's extra day from two real dates, then remove it
+            # only when the interval crosses the boundary. Both engines must
+            # equal Gregorian date subtraction, including pre-March 1900.
+            extra_day='(DATE(1900,3,1)-DATE(1900,1,1)-59)'
+            difference=f'({when}-{origin}-IF(AND({origin}<DATE(1900,3,1),{when}>=DATE(1900,3,1)),{extra_day},0))'
             formula(detail,'K'+str(yr),difference,f'AND({dates},{difference}>=0,{difference}<=36500)')
             known=f'AND({active},ISNUMBER(K{yr}),LEN(TRIM(C{yr}))>0,LEN(C{yr})<=100,SUMPRODUCT(--EXACT({detail_range("C")},C{yr}))=1,OR('+','.join(f'D{yr}="{kind}"' for kind in CATEGORIES)+f'),ISNUMBER(E{yr}),E{yr}>=0,LEN(F{yr})=3,{codes("F"+str(yr))},ISNUMBER(I{yr}),I{yr}>0,OR(F{yr}<>{v("C")},I{yr}=1),LEN(TRIM(J{yr}))>0,LEN(J{yr})<=200)'
             formula(detail,'L'+str(yr),f'E{yr}*I{yr}*IF(OR(D{yr}="VAT_REFUND",D{yr}="RESIDUAL"),-1,1)',known)

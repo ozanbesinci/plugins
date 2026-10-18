@@ -1,28 +1,52 @@
 {
   "schema": "kilic-satinalma-stable-release/v2",
   "package_channel": "stable",
-  "plugin_version": "1.3.3",
+  "plugin_version": "1.4.0",
   "skill_versions": {
-    "guncelleyici": "2.3.1",
-    "teklif-bagimsiz-kontrol": "5.1.3",
-    "teklif-belge-kaynak": "5.1.3",
-    "teklif-degerlendirme": "5.1.3",
-    "teklif-kapsam-ticari": "5.1.3",
-    "teklif-karar-rapor": "5.1.3",
-    "teklif-maliyet": "5.1.3"
+    "teklif-bagimsiz-kontrol": "5.2.0",
+    "teklif-belge-kaynak": "5.2.0",
+    "teklif-degerlendirme": "5.2.0",
+    "teklif-kapsam-ticari": "5.2.0",
+    "teklif-karar-rapor": "5.2.0",
+    "teklif-maliyet": "5.2.0"
   },
-  "implementation_and_configuration_unchanged": false,
-  "base_commit": "6fa484da81ab16ca15111b423709343f666ae33f",
-  "change_scope": "Persistent answer-dependent task/agent guards; exact-scope answered question suppression; audited standalone offer source selection; VAT negation evidence validation",
-  "acceptance_report": "skills/teklif-degerlendirme/references/RELEASE_ACCEPTANCE_5.1.3.md",
-  "acceptance_evidence": "Release assets: sqlite.json/sqlite.log, duckdb.json/duckdb.log, updater-python.json and source/package hash proof",
-  "updater_unchanged": false,
-  "updater_change_scope": "Actor wait guards only; installer algorithms and configuration unchanged",
-  "production_installation_performed": false,
+  "updater_removed": true,
+  "separate_installer": "../../kurulum",
+  "change_scope": "Separate per-user hashed runtime; explicit local launcher; verified Excel scenario seeds; price unit/VAT/sequential discounts; multi-criterion scoring and weight sensitivity; Explicit host telemetry unavailability; safe paired-report CLI; runtime versus command error routing; Conservative CSV header/value extraction and stable semantic delivery on re-extract; Payment event timing before cash/advance shortcuts; reject unresolved invoice/delivery dates; expose source-total scenario basis in both PDF renderers; Resolve CSV delivery-day units from source header and row with current owner/hash evidence, including same-payload evidence aliases; Source-evidence-bound item pricing, sequential discount/VAT/net/gross chain, independent arithmetic and stated-total reconciliation; Source CSV start_column/end_column delivery ranges supported consistently with scalar column; conflicting aliases rejected; Currency labels only on monetary source-price rows, never quantities/rates/basis labels; Separate pinned LibreOffice runtime and MSI file-only user installation; owned bounded process tree; cold formula cache validation and cache-only OOXML transfer; engine provenance and independent cached-result checks; portable Gregorian 1900 date interval correction; Disable OpenCL self-test only in owned calculation processes to keep installation immutable during concurrency; report stages inherit existing destination access without changing ACLs; Wait owned process handles for completed teardown before publishing cleanup success; display the human-readable recommendation in PDF",
+  "acceptance_report": "skills/teklif-degerlendirme/references/RELEASE_ACCEPTANCE_5.2.0.md",
+  "work_web_desktop_acceptance": "PASS_ACTUAL_WORK_LOCAL_ANALYSIS_AUTOMATIC_CALC_NATIVE_EXCEL_SAME_CHAT_WEB_AND_ORIGINAL_ZIP_DOWNLOAD",
   "previous_release": {
-    "plugin_version": "1.3.2",
-    "offer_skill_version": "5.1.2",
-    "updater_version": "2.3.0"
+    "plugin_version": "1.3.3",
+    "offer_skill_version": "5.1.3",
+    "updater_version": "2.3.1"
   },
-  "historical_acceptance_is_not_current_acceptance": true
+  "historical_acceptance_is_not_current_acceptance": true,
+  "previous_candidate_acceptance": {
+    "plugin_version": "1.4.0-dev.8",
+    "skill_version": "5.2.0-dev.8",
+    "source_sha256": "e2fc481e655d2b407d56ab075730254e9aec83c9f07feca42c2bd6ede1ce2ad0",
+    "sqlite_tests": "657/657 PASS",
+    "duckdb_tests": "657/657 PASS",
+    "native_entry": "13checks/6skills PASS",
+    "actual_work": "MANAGED_DEV8_PRICE_CHAIN_AND_AUTOMATIC_PAYMENT20_15_PASS_ENGINE_VERIFIED_PARTIAL_COM_AND_FORMAL_VISUAL_LIMIT",
+    "snapshot_sha256": "46328b8fddb47085aecbf7fffccdbc6fdce56a53997517527c83f2d8e3082a44",
+    "output_review": "Currency tag appeared on quantity and percentage rows; dev9 changes display only"
+  },
+  "calculation_runtime_profile": "config/calculation-profile.json",
+  "current_acceptance_claim": "Stable 1.4.0; executable code identical to accepted dev12; original ZIP browser save confirmed by user and independent local archive/member SHA256 verification",
+  "accepted_executable_baseline": {
+    "plugin_version": "1.4.0-dev.12",
+    "source_sha256": "0fc5eb44f6760d1cbcd5c6ddaa766d76323f8f4d104c3fd18d3564d8666b399e",
+    "sqlite_tests": 669,
+    "duckdb_tests": 669,
+    "native_excel_reference_formulas": 16136,
+    "actual_work_native_excel_formulas": 2288
+  },
+  "stable_release_accepted": true,
+  "distribution_scope": "GitHub release and Business workspace plugin distribution; Python and calculation runtime installed separately per Windows user",
+  "browser_delivery": {
+    "status": "PASS_USER_SAVE_AND_LOCAL_BYTE_VERIFICATION",
+    "archive_sha256": "c8209d5e9d39556bafbde2a8a09e8a82d13265585c6f7c4254b1ca20cfb2f162",
+    "member_count": 3
+  }
 }

@@ -1,5 +1,5 @@
 {
-  "schema_version": "5.0.23",
+  "schema_version": "5.0.24",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$defs": {
     "evidence": {
@@ -189,15 +189,35 @@
               "items": {
                 "type": "object",
                 "additionalProperties": false,
-                "required": ["days"],
+                "required": [
+                  "days"
+                ],
                 "anyOf": [
-                  {"required": ["ratio"]},
-                  {"required": ["amount"]}
+                  {
+                    "required": [
+                      "ratio"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "amount"
+                    ]
+                  }
                 ],
                 "properties": {
-                  "days": {"type": "integer", "minimum": 0},
-                  "ratio": {"type": "number", "minimum": 0, "maximum": 1},
-                  "amount": {"type": "number", "minimum": 0}
+                  "days": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "ratio": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "amount": {
+                    "type": "number",
+                    "minimum": 0
+                  }
                 }
               }
             }
@@ -825,6 +845,9 @@
             "assumption",
             "requires_confirmation"
           ]
+        },
+        "pricing": {
+          "$ref": "#/$defs/source_item_pricing"
         }
       },
       "allOf": [
@@ -844,8 +867,225 @@
               "amount_basis"
             ]
           }
+        },
+        {
+          "if": {
+            "required": [
+              "pricing"
+            ]
+          },
+          "then": {
+            "required": [
+              "amount",
+              "quantity",
+              "currency",
+              "amount_basis"
+            ],
+            "properties": {
+              "amount": {
+                "type": "number",
+                "minimum": 0
+              },
+              "quantity": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "currency": {
+                "type": "string",
+                "minLength": 1
+              },
+              "amount_basis": {
+                "const": "unit_price"
+              }
+            }
+          }
         }
       ]
+    },
+    "source_item_pricing": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "discounts": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "percentages": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 16,
+              "items": {
+                "type": "number",
+                "minimum": 0,
+                "exclusiveMaximum": 100
+              }
+            },
+            "evidence_refs": {
+              "description": "Use actual source evidence for this item. Where available, cover unit, quantity, unit price and line amount cells or their source range; do not fabricate missing cells.",
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 100,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "required": [
+            "percentages",
+            "evidence_refs"
+          ]
+        },
+        "vat": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "percent": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "basis": {
+              "enum": [
+                "excluded",
+                "included"
+              ]
+            },
+            "evidence_refs": {
+              "description": "Use actual source evidence for this item. Where available, cover unit, quantity, unit price and line amount cells or their source range; do not fabricate missing cells.",
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 100,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "required": [
+            "percent",
+            "basis",
+            "evidence_refs"
+          ]
+        },
+        "price_unit": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "evidence_refs": {
+              "description": "Use actual source evidence for this item. Where available, cover unit, quantity, unit price and line amount cells or their source range; do not fabricate missing cells.",
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 100,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "required": [
+            "value",
+            "evidence_refs"
+          ]
+        },
+        "stated_amounts": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "scope": {
+              "enum": [
+                "line",
+                "offer"
+              ]
+            },
+            "net": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "amount": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "evidence_refs": {
+                  "description": "Use actual source evidence for this item. Where available, cover unit, quantity, unit price and line amount cells or their source range; do not fabricate missing cells.",
+                  "type": "array",
+                  "minItems": 1,
+                  "maxItems": 100,
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              },
+              "required": [
+                "amount",
+                "evidence_refs"
+              ]
+            },
+            "vat": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "amount": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "evidence_refs": {
+                  "description": "Use actual source evidence for this item. Where available, cover unit, quantity, unit price and line amount cells or their source range; do not fabricate missing cells.",
+                  "type": "array",
+                  "minItems": 1,
+                  "maxItems": 100,
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              },
+              "required": [
+                "amount",
+                "evidence_refs"
+              ]
+            },
+            "gross": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "amount": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "evidence_refs": {
+                  "description": "Use actual source evidence for this item. Where available, cover unit, quantity, unit price and line amount cells or their source range; do not fabricate missing cells.",
+                  "type": "array",
+                  "minItems": 1,
+                  "maxItems": 100,
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              },
+              "required": [
+                "amount",
+                "evidence_refs"
+              ]
+            }
+          },
+          "required": [
+            "scope"
+          ],
+          "minProperties": 2
+        }
+      },
+      "required": [
+        "discounts",
+        "vat"
+      ],
+      "description": "Verified source price chain only. Percentages are source percent values (10 means10%), not fractions. Keep ordered discount stages and their own evidence; unknown values are never0. VAT deductibility/cost assumptions are separate. Omit pricing if complete source terms cannot be supported. A stated offer total is compared once and is never an additive item."
     }
   },
   "tasks": {

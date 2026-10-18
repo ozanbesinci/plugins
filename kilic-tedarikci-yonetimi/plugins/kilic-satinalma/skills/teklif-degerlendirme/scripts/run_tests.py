@@ -24,7 +24,7 @@ def source_fingerprint(source_root=None):
     return {str(p.relative_to(source_root)): hashlib.sha256(p.read_bytes()).hexdigest()
             for p in sorted(source_root.rglob("*")) if p.is_file()
             and not {"__pycache__", "test-results", ".git"}.intersection(p.relative_to(source_root).parts)
-            and (p.suffix in {".py", ".json", ".sql", ".md", ".txt", ".toml", ".yaml", ".yml"} or p.name == "VERSION")}
+            and (p.suffix in {".py", ".json", ".sql", ".md", ".txt", ".toml", ".yaml", ".yml", ".ps1", ".cmd", ".lock"} or p.name == "VERSION")}
 
 def connection_engine(con):
     if isinstance(con, sqlite3.Connection):
@@ -51,6 +51,7 @@ class EvidenceResult(unittest.TextTestResult):
 def child(engine, pattern, output, source_head=None, run_id=None, duckdb_threads=1):
     # expected is a CLI value captured by the closure, never derived from env.
     os.environ["TEKLIF_TEST_SQLITE"] = "1" if engine == "sqlite" else "0"
+    os.environ['TEKLIF_TEST_MANAGED_RUNTIME_BYPASS']='1'
     import test_engine_support
     test_engine_support.EXPECTED_ENGINE = engine
     import db

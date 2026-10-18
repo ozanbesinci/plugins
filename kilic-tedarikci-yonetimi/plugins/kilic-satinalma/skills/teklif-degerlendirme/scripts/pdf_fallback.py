@@ -4,7 +4,7 @@ import json
 from pdf_renderer import label, scenario_rows, assumption_rows
 
 def render_safety_pdf(model,path: Path,primary_error: str):
-    import fitz
+    import pymupdf as fitz
     font_path=Path("C:/Windows/Fonts/segoeui.ttf")
     if not font_path.is_file(): font_path=Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf")
     if not font_path.is_file(): raise RuntimeError("Alternatif PDF fontu bulunamadı")
@@ -50,6 +50,12 @@ def render_safety_pdf(model,path: Path,primary_error: str):
         write(header(names.get(offer["supplier_id"],offer["supplier_id"]),offer["offer_id"]))
         for title, value, currency in fields(model,offer["offer_id"]):
             write(title + ": " + display_amount(value) + " " + str(currency or "Para birimi belirtilmedi") + ";")
+    from source_price_display import pdf_rows as source_price_rows
+    source_prices=source_price_rows(model)
+    if source_prices:
+        write("Kaynak fiyat zinciri ve beyan mutabakatı")
+        write("Beyan toplamıyla ayrıca toplanmaz; KDV indirilebilirliği, ödeme finansmanı veya tam maliyet varsayılmaz.")
+        for row in source_prices: write(' | '.join(row))
     write("Kaynak olguları — kullanıcı varsayımlarından ayrı")
     for fact in model.get("facts", []):
         value = next((fact[key] for key in ("value_text", "value_number", "value_date") if fact.get(key) is not None), "Bilinmiyor")
@@ -82,7 +88,9 @@ def render_safety_pdf(model,path: Path,primary_error: str):
     for sid,ref in model.get("scenario_reference",{}).items():
         assumptions=model.get('scenario_assumptions',{}).get(sid)
         if assumptions:
-            write("Senaryo kullanıcı varsayımları — " + str(assumptions['id']))
+            write("Senaryo dayanağı ve varsayımları — " + str(assumptions['id']))
+            if assumptions.get('basis'):
+                write("Senaryo dayanağı: " + str(assumptions['basis']))
             for title,value in assumption_rows(assumptions):write(title+": "+value)
         write("Senaryo satırı " + sid + " — Python referans hesabı")
         for title, value in scenario_rows(ref): write(title + ": " + value)

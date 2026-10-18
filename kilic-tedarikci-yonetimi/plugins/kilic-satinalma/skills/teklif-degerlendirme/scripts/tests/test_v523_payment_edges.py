@@ -190,5 +190,229 @@ class V523PaymentEdgeContracts(unittest.TestCase):
                     self.assertEqual(status_after, "pending")
 
 
+    def test_cash_payment_keeps_explicit_delivery_event(self):
+        from normalize import _payment_schedule
+        for quote, lead, expected_day in [('TESLIM VE FATURA GUNUNDE PESIN', 20, 20),
+                            ('TESLIM VE FATURA GUNUNDE PESIN', 15, 15),
+                            ('Teslimde peşin', 30, 30), ('cash on delivery', 30, 30),
+                            ('Cash at delivery', 30, 30), ('Peşin', 20, 0),
+                            ('%100 advance', 30, 0)]:
+            with self.subTest(quote=quote, lead=lead):
+                self.assertEqual(_payment_schedule(quote, lead), [{'ratio': 1.0, 'days': expected_day}])
+
+    def test_payment_never_invents_unknown_invoice_or_delivery_anchor(self):
+        from normalize import _payment_schedule
+        for quote, lead in [('Teslimde peşin', None), ('cash on delivery', None),
+                            ('Fatura gününde peşin', 30), ('Cash on invoice date', 30),
+                            ('%100 faturadan 60 gün sonra', 30),
+                            ('%100 cash 60 days after invoice', 30),
+                            ('%100 cash before delivery', 30)]:
+            with self.subTest(quote=quote, lead=lead):
+                self.assertIsNone(_payment_schedule(quote, lead))
+
+    def test_cash_word_does_not_erase_installment_event_or_offset(self):
+        from normalize import _payment_schedule
+        cases = [('%30 peşin; %70 teslimde peşin', [{'ratio': .3, 'days': 0}, {'ratio': .7, 'days': 30}]),
+                 ('%100 teslimden 60 gün sonra peşin', [{'ratio': 1.0, 'days': 90}]),
+                 ('100% cash on delivery', [{'ratio': 1.0, 'days': 30}]),
+                 ('100% cash 60 days after delivery', [{'ratio': 1.0, 'days': 90}])]
+        for quote, expected in cases:
+            with self.subTest(quote=quote):
+                self.assertEqual(_payment_schedule(quote, 30), expected)
+
+    def test_recorder_rejects_cash_day_zero_when_source_says_delivery(self):
+        for day, accepted in [(0, False), (30, True)]:
+            run, result = self._payment_run(f'cash-delivery-{day}', day, 100, 'TESLIM VE FATURA GUNUNDE PESIN')
+            before, _ = self._canonical_counts(run)
+            if accepted:
+                saved = record_task_result(run, run.name, result, model_name='unit-test-fixture-no-model-call',
+                                           reasoning_effort='fixture', input_tokens=0, output_tokens=0)
+                self.assertEqual(saved['status'], 'completed')
+            else:
+                with self.assertRaisesRegex(ValueError, 'payment.*source|source.*payment'):
+                    record_task_result(run, run.name, result, model_name='unit-test-fixture-no-model-call',
+                                       reasoning_effort='fixture', input_tokens=0, output_tokens=0)
+                after, status = self._canonical_counts(run)
+                self.assertEqual(after, before)
+                self.assertEqual(status, 'pending')
+
+    def test_normalization_adds_delivery_day_without_changing_source_basis(self):
+        from normalize import normalize
+        run, result = self._payment_run('cash-auto-normalize', 30, 100, 'TESLIM VE FATURA GUNUNDE PESIN')
+        result['facts'][0]['normalized'] = {'payment_date_basis': 'delivery_and_invoice_same_day'}
+        record_task_result(run, run.name, result, model_name='unit-test-fixture-no-model-call',
+                           reasoning_effort='fixture', input_tokens=0, output_tokens=0)
+        normalize(run)
+        con = connect(run)
+        try:
+            value = json.loads(con.execute("SELECT normalized_json FROM facts WHERE field_key='payment'").fetchone()[0])
+            self.assertEqual(value['payment_schedule'], [{'ratio': 1.0, 'days': 30}])
+            self.assertEqual(value['payment_date_basis'], 'delivery_and_invoice_same_day')
+        finally:
+            con.close()
+
+    def test_recorder_cannot_treat_unknown_invoice_cash_as_order_day(self):
+        run, result = self._payment_run('cash-invoice-unknown', 0, 100, 'Fatura gününde peşin')
+        before, _ = self._canonical_counts(run)
+        with self.assertRaises(ValueError):
+            record_task_result(run, run.name, result, model_name='unit-test-fixture-no-model-call',
+                               reasoning_effort='fixture', input_tokens=0, output_tokens=0)
+        after, status = self._canonical_counts(run)
+        self.assertEqual(after, before)
+        self.assertEqual(status, 'pending')
+
+
+    def _csv_day_run(self, name, day=20, header='teslim_gun'):
+        from common import sha256_file
+        run, result = self._payment_run(name, day, 100, 'TESLIM VE FATURA GUNUNDE PESIN')
+        rows = [['firma', header, 'odeme', 'total', 'para_birimi'],
+                ['Supplier A', str(day), 'TESLIM VE FATURA GUNUNDE PESIN', '100 EUR', 'EUR']]
+        text = '\n'.join(','.join(row) for row in rows)
+        source = run/'offer.csv'; source.write_text(text,encoding='utf-8')
+        digest = sha256_file(source)
+        con = connect(run)
+        try:
+            con.execute("UPDATE documents SET relative_path='offer.csv',filename='offer.csv',format_family='csv',sha256=?,size_bytes=?", [digest,len(text.encode('utf-8'))])
+            con.execute("UPDATE document_units SET unit_type='csv_chunk',locator_json=?,text_content=?,structured_json=?,content_sha256=?",[json_text({'start_row':1,'end_row':2}),text,json_text({'rows':rows}),digest])
+            con.execute("UPDATE evidence SET source_sha256=?",[digest])
+            con.execute("UPDATE evidence SET unit_id='unit-A',locator_json=?,quote=? WHERE evidence_id='ev-delivery'",[json_text({'row':2,'column':2}),str(day)])
+            con.execute("UPDATE facts SET value_text=?,normalized_json=? WHERE field_key='delivery'",[str(day),json_text({'days':day,'basis':'order_date'})])
+            con.commit()
+        finally:
+            con.close()
+        result['evidence'][0].update(unit_id='unit-A',locator={'row':2,'column':3})
+        return run, result
+
+    def test_csv_day_header_drives_payment_normalization(self):
+        from normalize import normalize
+        for day in [20,15]:
+            run, result = self._csv_day_run('csv-auto-'+str(day),day)
+            result['facts'][0]['normalized'] = {}
+            record_task_result(run,run.name,result,model_name='unit-test-fixture-no-model-call',reasoning_effort='fixture',input_tokens=0,output_tokens=0)
+            normalize(run)
+            con=connect(run)
+            try:
+                value=json.loads(con.execute("SELECT normalized_json FROM facts WHERE field_key='payment'").fetchone()[0])
+                self.assertEqual(value['payment_schedule'],[{'ratio':1.0,'days':day}])
+            finally:
+                con.close()
+
+    def test_csv_day_header_binds_recorder_to_source_day(self):
+        for day, accepted in [(20,True),(0,False)]:
+            run,result=self._csv_day_run('csv-record-'+str(day))
+            result['facts'][0]['normalized']['payment_schedule'][0]['days']=day
+            before,_=self._canonical_counts(run)
+            if accepted:
+                self.assertEqual(record_task_result(run,run.name,result,model_name='unit-test-fixture-no-model-call',reasoning_effort='fixture',input_tokens=0,output_tokens=0)['status'],'completed')
+            else:
+                with self.assertRaises(ValueError):
+                    record_task_result(run,run.name,result,model_name='unit-test-fixture-no-model-call',reasoning_effort='fixture',input_tokens=0,output_tokens=0)
+                after,status=self._canonical_counts(run)
+                self.assertEqual(after,before);self.assertEqual(status,'pending')
+
+    def test_csv_day_metadata_needs_typed_source_header_and_current_owner_hash(self):
+        from normalize import _delivery_days_from_fact
+        from db import one_as_dict
+        for case in ['unit_missing','stale_hash','foreign_offer','blank_cell','ambiguous_columns','metadata_tamper']:
+            run,_=self._csv_day_run('csv-negative-'+case,header='teslim' if case=='unit_missing' else 'teslim_gun')
+            con=connect(run)
+            try:
+                if case=='stale_hash':con.execute("UPDATE evidence SET source_sha256='stale' WHERE evidence_id='ev-delivery'")
+                if case=='foreign_offer':con.execute("UPDATE documents SET offer_id='foreign'")
+                if case in ['blank_cell','ambiguous_columns']:
+                    obj=json.loads(con.execute('SELECT structured_json FROM document_units').fetchone()[0])
+                    if case=='blank_cell':obj['rows'][1][1]=''
+                    else:
+                        obj['rows'][0][2]='delivery_days';obj['rows'][1][2]='30'
+                        con.execute("UPDATE evidence SET locator_json=? WHERE evidence_id='ev-delivery'",[json_text({'row':2,'column':2,'end_column':3})])
+                    con.execute('UPDATE document_units SET structured_json=?',[json_text(obj)])
+                if case=='metadata_tamper':con.execute("UPDATE facts SET normalized_json=? WHERE field_key='delivery'",[json_text({'days':666})])
+                fact=one_as_dict(con,"SELECT * FROM facts WHERE field_key='delivery'")
+                self.assertEqual(_delivery_days_from_fact(con,fact),20 if case=='metadata_tamper' else None,case)
+            finally:
+                con.close()
+
+    def test_csv_payment_before_delivery_fact_uses_same_payload_evidence(self):
+        run,result=self._csv_day_run('csv-incoming-order')
+        con=connect(run)
+        try:
+            con.execute("DELETE FROM facts WHERE field_key='delivery'")
+            con.execute("UPDATE task_queue SET payload_json=?",[json_text({'offer_id':'A','fields':['payment','delivery'],'document_ids':['doc-A']})])
+            con.commit()
+        finally:
+            con.close()
+        result['facts'].append({'offer_id':'A','field_key':'delivery','value_text':'20','evidence_status':'verified','evidence_client_id':'ev-new-delivery','normalized':{'days':20,'basis':'order_date'}})
+        result['evidence'].append({'client_id':'ev-new-delivery','document_id':'doc-A','unit_id':'unit-A','locator':{'row':2,'column':2},'quote':'20','evidence_status':'verified'})
+        saved=record_task_result(run,run.name,result,model_name='unit-test-fixture-no-model-call',reasoning_effort='fixture',input_tokens=0,output_tokens=0)
+        self.assertEqual(saved['status'],'completed')
+
+
+    def _csv_range_day_run(self,name,day=20):
+        from common import sha256_file
+        run,result=self._csv_day_run(name,day)
+        rows=[['firma','teslim_gun','teslim_baslangici','total','para_birimi','odeme'],
+              ['Supplier A',str(day),'SIPARIS TARIHI','100 EUR','EUR','TESLIM VE FATURA GUNUNDE PESIN']]
+        text='\n'.join(','.join(row) for row in rows);source=run/'offer.csv';source.write_text(text,encoding='utf-8');digest=sha256_file(source)
+        con=connect(run)
+        try:
+            con.execute('UPDATE documents SET sha256=?,size_bytes=?',[digest,len(text.encode('utf-8'))])
+            con.execute('UPDATE document_units SET text_content=?,structured_json=?,content_sha256=?',[text,json_text({'rows':rows}),digest])
+            con.execute('UPDATE evidence SET source_sha256=?',[digest])
+            con.execute("UPDATE evidence SET locator_json=?,quote=? WHERE evidence_id='ev-delivery'",[json_text({'row':2,'start_column':2,'end_column':3}),str(day)+',SIPARIS TARIHI'])
+            con.execute("UPDATE facts SET value_text=? WHERE field_key='delivery'",[str(day)+',SIPARIS TARIHI']);con.commit()
+        finally:con.close()
+        result['evidence'][0]['locator']={'row':2,'column':6}
+        return run,result
+
+    def test_csv_start_column_range_preserves_real_payment_day(self):
+        from normalize import normalize
+        for day in [20,15]:
+            run,result=self._csv_range_day_run('range-auto-'+str(day),day);result['facts'][0]['normalized']={}
+            record_task_result(run,run.name,result,model_name='unit-test-fixture-no-model-call',reasoning_effort='fixture',input_tokens=0,output_tokens=0)
+            normalize(run);con=connect(run)
+            try:
+                value=json.loads(con.execute("SELECT normalized_json FROM facts WHERE field_key='payment'").fetchone()[0])
+                self.assertEqual(value['payment_schedule'],[{'ratio':1.0,'days':day}])
+            finally:con.close()
+
+    def test_csv_start_column_range_binds_recorder_and_rejects_order_day(self):
+        for proposed,accepted in [(20,True),(0,False)]:
+            run,result=self._csv_range_day_run('range-record-'+str(proposed));result['facts'][0]['normalized']['payment_schedule'][0]['days']=proposed
+            before,_=self._canonical_counts(run)
+            if accepted:self.assertEqual(record_task_result(run,run.name,result,model_name='unit-test-fixture-no-model-call',reasoning_effort='fixture',input_tokens=0,output_tokens=0)['status'],'completed')
+            else:
+                with self.assertRaises(ValueError):record_task_result(run,run.name,result,model_name='unit-test-fixture-no-model-call',reasoning_effort='fixture',input_tokens=0,output_tokens=0)
+                after,status=self._canonical_counts(run);self.assertEqual(after,before);self.assertEqual(status,'pending')
+
+    def test_csv_conflicting_column_aliases_and_invalid_ranges_are_not_proof(self):
+        from normalize import _delivery_days_from_fact
+        from db import one_as_dict
+        for index,loc in enumerate([{'row':2,'column':2,'start_column':3,'end_column':3},
+                                    {'row':2,'start_column':3,'end_column':2},
+                                    {'row':2,'start_column':True,'end_column':3},
+                                    {'row':1,'start_column':2,'end_column':3}]):
+            run,_=self._csv_range_day_run('range-invalid-'+str(index));con=connect(run)
+            try:
+                con.execute("UPDATE evidence SET locator_json=? WHERE evidence_id='ev-delivery'",[json_text(loc)])
+                self.assertIsNone(_delivery_days_from_fact(con,one_as_dict(con,"SELECT * FROM facts WHERE field_key='delivery'")))
+            finally:con.close()
+
+    def test_csv_range_still_requires_current_source_owner_and_unique_day_unit(self):
+        from normalize import _delivery_days_from_fact
+        from db import one_as_dict
+        for case in ['stale','foreign','missing_unit','two_units','wrong_quote']:
+            run,_=self._csv_range_day_run('range-source-'+case);con=connect(run)
+            try:
+                if case=='stale':con.execute("UPDATE evidence SET source_sha256='stale' WHERE evidence_id='ev-delivery'")
+                if case=='foreign':con.execute("UPDATE documents SET offer_id='foreign'")
+                if case=='wrong_quote':con.execute("UPDATE evidence SET quote='999,SIPARIS TARIHI' WHERE evidence_id='ev-delivery'")
+                if case in ['missing_unit','two_units']:
+                    obj=json.loads(con.execute('SELECT structured_json FROM document_units').fetchone()[0]);obj['rows'][0][1]='teslim' if case=='missing_unit' else 'teslim_gun'
+                    if case=='two_units':obj['rows'][0][2]='delivery_days'
+                    con.execute('UPDATE document_units SET structured_json=?',[json_text(obj)])
+                self.assertIsNone(_delivery_days_from_fact(con,one_as_dict(con,"SELECT * FROM facts WHERE field_key='delivery'")),case)
+            finally:con.close()
+
+
 if __name__ == "__main__":
     unittest.main()

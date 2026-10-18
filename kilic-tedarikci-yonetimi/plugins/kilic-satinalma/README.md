@@ -1,21 +1,17 @@
-# Kılıç Tedarikçi Yönetimi 1.3.3
+# Kılıç Tedarikçi Yönetimi 1.4.0
 
-Teklif Değerlendirme **5.1.3** ve paket içi Güncelleyici **2.3.1** içerir. Kılıç Satınalma Departmanı tarafından geliştirilmiştir.
+Teklif becerileri 5.2.0. Güncelleyici becerisi ve motoru bu paketten çıkarılmıştır. Kılıç Satınalma Departmanı tarafından geliştirilmiştir.
 
-Teklif akışı bir ana beceri ve beş alt beceriden oluşur: Belge ve Kaynak, Kapsam ve Ticari Koşullar, Maliyet Hesabı, Bağımsız Kontrol, Karar ve Rapor. Tek koşu, kaynak/hash/kanıt, gerçek model makbuzu ve ortak Excel/PDF veri özeti korunur. Her beceri kendi gerçek adı ve VERSION kaynağıyla başlangıç bildirimi gösterir.
+Python kurulumu eklenti dışındaki `kurulum/Kur.cmd` ile kullanıcı profiline yapılır. Kurucu yönetici yetkisi, sistem PATH değişikliği veya başka bir eklenti kurulumu gerektirmez. Eklenti yalnız hazır ortamı doğrular ve kullanır. Çalıştırma ilkeleri engellenirse politika atlatılmaz; engel açıkça bildirilir.
 
-## Bu sürüm
+Başlatıcı: `& "$env:USERPROFILE\KilicPython\teklif-python.exe" "<aktif-paket>/scripts/runtime_launcher.py" workflow prepare --source "<kaynak>" --run "<koşu>" --profile standart`. Diğer Python betik adları aynı başlatıcıyla çağrılır. Ortam kimliği, kilit ve Python yolu korunur; genel python/PATH seçimi yapılmaz.
 
-Yalnız kullanıcı sorusunun cevabına bağlı ajan ve işler durur. Soru anında çalışan bağımsız işler devam eder. Bekleme süresiz ve kalıcıdır; bağlı dispatch, araç/model, sonuç kaydı, hesap, rapor ve güncelleyici girişleri korunur. Aynı kaynak kapsamındaki cevaplanmış soru tekrar gösterilmez. Kısmi veya ilgisiz yanıt işi başlatmaz; “bilinmiyor” yanıtı eksik ticari değer üretmez.
+Doğrulanmış teklif bedelleri ve kaynak kalemleri ayrı Excel senaryolarına aktarılır. Bilinmeyen vergi/kur/gider tamamlanmaz. Fiyat birimi, KDV dahil fiyat ve ardışık iskonto desteklenir. Çok kriterli puanlama, baz ve iki alternatif ağırlık senaryosu kullanıcı hesaplarıdır; resmî karar değişmez. Excel'den içe alma yeni Excel/PDF ön rapor revizyonu üretir.
 
-Kullanıcının seçtiği teklif nüshaları hash bağlı kaynak otoritesi kaydıyla uygulanır. “KDV dahil değildir” ifadesinin doğru sınıflandırılması düzeltilmiştir. Kaynak kanıtı, satınalma onayı, miktar/fiyat doğruluğu, bağımsız kontrol ve gerçek QA kuralları korunmuştur.
+ChatGPT Work web devamı için aynı uygun görevin yerel bilgisayar erişimi bulunmalıdır; bilgisayar ve masaüstü uygulaması bağlı olmalıdır. Web'de her yeni görev için kendiliğinden yerel erişim varsayılmaz. Yerel kancalara veya yeni bir sunucuya dayanılmaz.
 
-## Değerlendirme ve rapor sınırı
+Bu kaynak 1.4.0 kararlı sürümüdür. Gerçek Work analizi, otomatik hesap, Microsoft Excel referansı, aynı sohbet web devamı ve tarayıcıdan özgün rapor ZIP teslimi doğrulandı. GitHub dağıtımı ve ChatGPT Business çalışma alanı için hazırlanmıştır. Kullanıcı bilgisayarındaki Python ve hesap motoru ayrı kurulum paketiyle hazırlanır. Güncel test/kabul durumu `skills/teklif-degerlendirme/references/RELEASE_ACCEPTANCE_5.2.0.md` dosyasındadır. Tarihsel sürüm kabul kayıtları yeni sürüm kanıtı değildir.
 
-Tek çok sekmeli formüllü Excel ve çok sayfalı PDF aynı dondurulmuş inceleme kaydından üretilir. Kullanıcı varsayımları kaynak verisinden ayrıdır. Bilinmeyen maliyet, tarih ve kur sıfır yapılmaz. Dosyanın oluşması VERIFIED veya satınalma onayı değildir. Yıllık gider, çok adımlı ödeme ve ayrı tarihli nakit akışı önceki kapsamıyla korunur.
+Dev.9 kaynak fiyat sayfasında yalnız parasal satırlar para birimi taşır. Miktar, iskonto/KDV yüzdesi, fiyat böleni ve KDV esası para değildir. Hesap, veri sözleşmesi, snapshot ve PDF fiyat hesabı değişmedi.
 
-Paket içi Güncelleyici 2.3.1 yalnız yanıta bağlı aktör kontrollerini ekler; kurulum yetkisini genişletmez. Güncelleyici kullanıcı seçimi ve somut plan için açık uygulama onayı gerektirir. Teklif analizi kendiliğinden program kurmaz. Ayrı Güncelleyici deposu yayını ve canlı kurulum bu sürümün kapsamı değildir.
-
-Güncel [yayın kabulü](skills/teklif-degerlendirme/references/RELEASE_ACCEPTANCE_5.1.3.md) ve [manifest](release-manifest.json) geçerlidir. Son kaynak ağacına bağlı gerçek test JSON/logları GitHub release ile birlikte verilir; tarihsel test sayıları güncel sonuç olarak sunulmaz. Business eşitlemesi ve görünen sürüm ayrıca doğrulanır.
-
-[Kullanıcı Kanıtı ve Değerlendirme Önceliği](USER-EVIDENCE-POLICY.md) ve [Kurumsal Dil ve Yayın Standardı](EDITORIAL-POLICY.md) bütün teklif becerilerine uygulanır.
+Web teslimi resmî Work/Library aracıyla yapılır. Üretilen yerel dosya yolu, web indirmesinin tamamlandığı anlamına gelmez. Teslim ayrıntısı ana becerinin `references/work-file-delivery.md` dosyasındadır.

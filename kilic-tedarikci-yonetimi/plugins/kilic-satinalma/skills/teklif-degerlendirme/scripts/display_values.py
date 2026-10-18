@@ -73,6 +73,8 @@ def structured(value):
 
 def display_cell(sheet,col,value,header=False):
     if header:return label(value)
+    if sheet=='Kaynak Fiyat Zinciri' and col==4 and isinstance(value,str) and value in {'included','excluded'}:
+        return {'included':'KDV dahil','excluded':'KDV hariç'}[value]
     if sheet=='Teklif Karsilastirma' and col==19 and isinstance(value,str):
         return ', '.join(label(v.strip()) for v in value.split(','))
     if col in JSON_COLS.get(sheet,set()):return structured(value)

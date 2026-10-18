@@ -3,7 +3,7 @@ name: teklif-bagimsiz-kontrol
 description: Teklif kanıtı, uygun küme, kritik hesap ve sıralamayı ayrı kanıt/formül yoluyla denetler; yalnız kalan farkları hakeme taşır. Ana teklif akışında bağımsız doğrulama gerektiğinde kullan; ana hesabı tekrar çağırarak onay vermez.
 ---
 
-# Bağımsız Kontrol — 5.1.3
+# Bağımsız Kontrol — 5.2.0
 ## Sorunun yanıtına bağlı bekleme
 
 [Kullanıcı yanıtı bekleme kuralı](../../USER-EVIDENCE-POLICY.md#sorunun-yanıtına-bağlı-bekleme) zorunludur. Yalnız sorunun cevabına bağlı ajan ve işler durur; soru anında çalışan bağımsız ajanlar devam eder. Bekleyen ajan cevap gelene kadar araç/model çağrısı, okuma, hesap, yazma, rapor veya kontrol yapmaz; süre sınırı ve periyodik sorgulama yoktur. Soru kimliği/kapsamı ve bağımlı görev/ajan kimliklerini gösterimden önce kaydet. Yalnız ilgili yeterli yanıt bu bağımlılığı açar; “devam”, sessizlik veya seçili varsayılan cevap/onay değildir. Cevaplanmış soruyu sebepsiz tekrarlama.
@@ -22,7 +22,7 @@ Beklenen hesabı aynı geçerli kullanıcı girdisi ve özgün belge iziyle ayr�
 
 ## Her çağrıda başlangıç bildirimi
 
-Bu beceri fiilen çalışmaya başladığında, ilk kullanıcı mesajında ortak okuyucunun ürettiği satırı aynen göster. Kendi paketindeki `../../scripts/skill_startup.py --skill teklif-bagimsiz-kontrol` komutunu kendi fiziksel skill klasöründen çalıştır; başka plugin'in aynı adlı skill'ini genel adla çağırma. Okuyucu gerçek beceri adını ve o çağrıdaki VERSION dosyasını kullanır:
+Beceri başlangıcında `& "$env:USERPROFILE\KilicPython\teklif-python.exe" "<aktif-paket>/scripts/runtime_launcher.py" skill_startup --skill teklif-bagimsiz-kontrol` komutunu yürüt. Başlatıcı kayıtlı yerel Python ve paket kilidini doğrular; gerçek ad/sürüm satırını aynen göster. Ortam yoksa kurulum mesajını bildir; analiz içinde kurulum yapma.
 
 **[Beceri adı] skilli Kılıç Satınalma Departmanı tarafından geliştirilmiştir. Sürüm: [gerçek sürüm]**
 

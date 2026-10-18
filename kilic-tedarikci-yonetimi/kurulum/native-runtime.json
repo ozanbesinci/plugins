@@ -1,0 +1,37 @@
+{
+  "schema": "kilic-app-local-vc-runtime/v1",
+  "version": "14.44.35211.0",
+  "bootstrap_sha256": "3d03e977cc67ae682a6b123d157155bae0f38b2ea4e19081a8ae3fbc95b1f771",
+  "url": "https://download.visualstudio.microsoft.com/download/pr/990c720a-46ce-4dc7-87b9-c2eb615d34b9/CC0FF0EB1DC3F5188AE6300FAEF32BF5BEEBA4BDD6E8E445A9184072096B713B/VC_redist.x64.exe",
+  "sha256": "cc0ff0eb1dc3f5188ae6300faef32bf5beeba4bdd6e8e445a9184072096b713b",
+  "outer_cab": {
+    "offset": 686152,
+    "bytes": 24939223,
+    "sha256": "468f1264d50b9e3b9d309ab9e13c02ff379fd95a2837383bf65c9616583013d6"
+  },
+  "minimum_payload": "a12",
+  "minimum_sha256": "640aa6c516c72444523b8fbe034db46ff4e118ed02705340e3ccb62d426ff040",
+  "license_cab": {
+    "offset": 479744,
+    "bytes": 195988,
+    "sha256": "2f57cf2cd504bd100c9222bb123b9c3a40802cca73e89ca05c97885d91be3a78"
+  },
+  "license_payload": "u4",
+  "license_sha256": "8099dc3cf9502c335da829e5c755948a12e3e6de490eb492a99deb673d883d8b",
+  "dlls": {
+    "concrt140.dll": "2405355f0a58067b258f8df33c327e3a3d716eaac5a3a5aebb757842d85bd376",
+    "msvcp140.dll": "0f885b509a685d2bbfa652fed26b5fb31d88fbdab0a978c641d1c7b8aa460aa9",
+    "msvcp140_1.dll": "bfad5aef4c63a669e3c140655cdfdf395b6c979b400a447bd5dcb65ed8826c3d",
+    "msvcp140_2.dll": "3ea06f0ee098b4823cb79599df3780e7f23cce52c19aac31d2a0d47efe33a5e9",
+    "msvcp140_atomic_wait.dll": "640b2aefced484d0368eea5bdd06addd0658a3a70a49256e560d6923b404a479",
+    "msvcp140_codecvt_ids.dll": "f2069a52880ec885ee7f0511186100eb7fada0411a2b4948fafea7735b878a18",
+    "vcamp140.dll": "52af68f35476bd03d7b97752b01bef358ffdda568d150057d6ce809f77c4f704",
+    "vccorlib140.dll": "19839407c3fdbc824e5bce189bf68ddf8097f12ec28b757797ffa0415c144ddd",
+    "vcomp140.dll": "55aba23cdcd6484fbb06f4155b8ca75adfce7a881f10afd0c49457165e677164",
+    "vcruntime140.dll": "d5e4d9a3e835fa679450145d6a7d94e36573a509317111904d9b3712c30d9066",
+    "vcruntime140_1.dll": "1f2d41c4aa5db0bc33ebf7b66d72943a817d7ce6cbe880502a9403823633093f",
+    "vcruntime140_threads.dll": "219915cf20822f34d5e7c1fdd4e21ae7f3396881096c51036225fb8f84b47afa"
+  },
+  "source": "https://learn.microsoft.com/en-us/cpp/windows/deployment-in-visual-cpp",
+  "scope": "Extract official x64 release DLLs into the new venv Scripts directory only. Never execute EXE/MSI or write System32."
+}

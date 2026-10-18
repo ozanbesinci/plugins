@@ -251,6 +251,8 @@ CREATE TABLE IF NOT EXISTS model_receipts (
   input_tokens BIGINT,
   cached_input_tokens BIGINT,
   output_tokens BIGINT,
+  telemetry_status VARCHAR DEFAULT 'measured',
+  telemetry_reason VARCHAR,
   recorded_at VARCHAR NOT NULL
 );
 

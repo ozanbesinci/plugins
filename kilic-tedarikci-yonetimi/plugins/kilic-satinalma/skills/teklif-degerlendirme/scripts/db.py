@@ -77,7 +77,8 @@ def init_db(run_root: Path, skill_root: Path | None = None) -> Path:
         # Forward-compatible local migration for runs created by v5.0.3.
         # Fresh databases already contain this column; existing databases must
         # gain it before claim-registry writes can be recorded atomically.
-        for table, column in [("claims", "assertions_json"), ("scope_items", "cost_role")]:
+        for table, column in [("claims", "assertions_json"), ("scope_items", "cost_role"),
+                              ("model_receipts", "telemetry_status"), ("model_receipts", "telemetry_reason")]:
             columns = {r[1] for r in con.execute(f"PRAGMA table_info('{table}')").fetchall()}
             if column not in columns:
                 con.execute(f"ALTER TABLE {table} ADD COLUMN {column} VARCHAR")

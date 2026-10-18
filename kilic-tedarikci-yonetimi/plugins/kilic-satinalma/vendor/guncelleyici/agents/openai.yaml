@@ -1,6 +1,0 @@
-interface:
-  display_name: "Güncelleyici"
-  short_description: "Onaylı planla güvenli program ve ortam bakımı"
-  default_prompt: "Güncelleyici ile sürümleri kontrol et. Kurulum yapmadan önce seçim tablosunu göster ve açık onayımı bekle."
-policy:
-  allow_implicit_invocation: true

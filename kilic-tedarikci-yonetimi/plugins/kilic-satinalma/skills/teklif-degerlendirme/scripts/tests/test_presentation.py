@@ -4,6 +4,18 @@ from openpyxl import Workbook,load_workbook
 from display_values import label,structured,display_cell
 from print_layout import build_print_workbook
 class PresentationTests(unittest.TestCase):
+ def test_pdf_uses_human_readable_recommendation_without_internal_record(self):
+  import pymupdf
+  from pdf_renderer import render_pdf
+  with tempfile.TemporaryDirectory() as folder:
+   path=Path(folder)/'recommendation.pdf'
+   render_pdf({'recommendation':{'offer_id':'internal-id','action':'SHORTLIST'},
+               'recommendation_text':'Alfa teklifini kısa listeye al.'},path)
+   with pymupdf.open(path) as pdf:text='\n'.join(page.get_text() for page in pdf)
+   self.assertIn('Önerilen aksiyon: Alfa teklifini kısa listeye al.',text)
+   self.assertNotIn('offer_id',text)
+   self.assertNotIn('internal-id',text)
+   self.assertNotIn('SHORTLIST',text)
  def test_codes_are_turkish_but_source_quotes_are_verbatim(self):
   self.assertEqual(display_cell('Kanitlar',4,'requires_confirmation'),'Teyit bekleniyor')
   self.assertEqual(display_cell('Kanitlar',7,'Source says verified'),'Source says verified')

@@ -1,4 +1,86 @@
+## 5.2.0 — 2026-10-18 (kararlı sürüm)
+
+- Gerçek Work yerel analizi, otomatik hesap, Microsoft Excel referansı, aynı sohbet web devamı ve özgün ZIP teslimi kabul edildi.
+- Son indirme kontrolü kullanıcı kaydetme teyidi ve normal adlı dosyanın arşiv/üç üye SHA256 eşliğiyle kapandı.
+- RC1 sürümüne göre yalnız sürüm ve kabul belgeleri değişti; yürütülebilir kod, kilitler ve kurucu aynı.
+
+## 5.2.0-rc.1 — 2026-10-18 (kararlı sürüm adayı)
+
+- Hesap kodu ve kurucu dev.12 ile aynı; gerçek Work ve Excel referans kabulü kaynak farkıyla korunur.
+- Web dosya tesliminde resmî Library yükleme/önizleme/geri okuma/indirme durumları ayrılır; başarısız Windows bağlantısı başarılı teslim sayılmaz.
+- Library PDF dosyasına ek veri yazabildiği için özgün Excel/PDF ve resmî manifest ZIP içinde hash denetimiyle teslim edilir; ayrı önizlemeler özgün arşiv yerine geçmez.
+- Tarayıcı normal indirme tamamlanması açık; kararlı yayın iddiası yok.
+
+## 5.2.0-dev.12 — 2026-10-18 (geliştirme adayı)
+
+- Hesap süreci sonlandırıldığında sahipli alt süreçlerin gerçekten kapanması beklenir; yoğun yükte boş iş kaydı ile dosya kilitlerinin kapanması arasındaki yarış giderildi. Başka süreçler sonlandırılmaz.
+- PDF karar özeti, dahili veri kaydı yerine Excel ile aynı okunabilir öneri metnini gösterir.
+- Dev.11 adayının süreç kapanma hatası korunmuş test kanıtındadır; bu adayın tam regresyon ve gerçek Work kabulü ayrı ölçülür.
+
+## 5.2.0-dev.11 — 2026-10-18 (geliştirme adayı)
+
+- Yerel hesap sürecinde OpenCL kapatıldı; CPU hesaplaması kullanılır. Motorun kendi cl-test.ods kilidi paralel bütünlük taramasına karışmaz. Kullanıcının uygulama/Windows ayarları değiştirilmez.
+- Resmî ve ön raporların yeni geçici yayın klasörleri hedef klasör erişimini miras alır. Python 3.14 özel geçici klasör izinleri teslim edilen Excel/PDF'ye taşınmaz; mevcut izinler değiştirilmez.
+- Dev.10 gerçek Work analizi VERIFIED/LOCAL_RECALCULATED geçti; kullanıcı tarafındaki dosya erişim hatası ve eşzamanlı motor kontrolü bu adayda düzeltilmektedir. Önceki test başarıları dev.11'in kabulü sayılmaz.
+
 # 5.1.2 — 2026-10-12 (kararlı yama)
+
+## 5.2.0-dev.10 — ayrı yerel hesap motoru (kabul sürüyor)
+
+- Kullanıcı profilinde hash kilitli LibreOffice motoru; MSI kurulumu ve ortak ayar değişikliği yok.
+- Süre sınırlı sahipli süreç, formül/sabit doğrulaması ve özgün OOXML içine yalnız hücre sonucu aktarımı.
+- Raporlarda motor kimliği ve bağımsız sonuç kontrolü; native Excel karşılaştırması ayrı kabul kanıtı.
+
+## 5.2.0-dev.9 — 2026-10-17 (geliştirme adayı)
+
+- Gerçek dev.7 Work testinde görülen CSV hücre aralığı tutarsızlığı giderildi: kayıt kapısının kabul ettiği start_column/end_column adresi ödeme gününün kaynak birimini okurken de desteklenir. column ile start_column birlikte verilirse çelişki reddedilir.
+- Aynı kaynak satırı, tek gün birimi, gerçek hücre değeri, teklif/satıcı, güncel hash ve görsel olmayan kanıt kontrolleri korunur. Yalnız days metadata'sı ödeme günü kanıtı değildir; sipariş günü sıfır varsayılmaz.
+- Dev.7 ayrı doğrulanmış paket kopyasıyla gerçek Work'te iki fiyat zincirini ve Excel/PDF eşliğini geçti; ödeme adresi, Work COM ve yönetilen cache güncellemesi nedeniyle PARTIAL_ACCEPTANCE kaldı. Bu tarihsel sonuç dev.8 kabulü değildir.
+
+## 5.2.0-dev.7 — 2026-10-17 (geliştirme adayı)
+
+- Kaynak kalemleri için kendi kanıtlarına bağlı yapılandırılmış `pricing` sözleşmesi: sıralı iskonto yüzdeleri, KDV oranı/dahil-hariç esası, gerekirse fiyat miktar böleni ve beyan net/KDV/brüt tutarları. CSV hücresinin satırı, sütun rolü, iskonto aşaması, teklif sahibi ve kaynak hash'i birlikte doğrulanır.
+- Kaynak fiyat zinciri ana maliyet hesabından ayrı kaydedilir; beyan toplamıyla iki kez toplanmaz. Bilinen beyan farkı kritik teyit açar. Bilinmeyen oran sıfır sayılmaz; KDV indirilebilirliği veya tam maliyet türetilmez.
+- Bağımsız kontrol kaynak kalemlerini yeniden okuyup rasyonel aritmetikle hesaplar. Excel'deki Kaynak Fiyat Zinciri sayfası ve iki PDF motoru aynı dondurulmuş hesabı gösterir; hücreler hesap kimliği/değer yolu ile bağlanır. Kaynak kalem senaryoları yeni sözleşmeden beslenir.
+- Önceki dev.6'nın 637/637 SQLite ve 637/637 DuckDB sonuçları bu adayın kabulü değildir. Güncel tam testler, yerel giriş ve gerçek Work kabulü ayrıca gerekir. Python kurucusu ve paket kilidi değişmedi.
+
+## 5.2.0-dev.6 — 2026-10-17
+
+- CSV'de yalnız veri hücresinde20 yazıyorsa gün birimi kanıtlı teslim_gun başlığından alınır. Başlık/hücre, kaynak hash'i ve teklif sahipliği birlikte doğrulanır; şema dışı days metadata'sı birim kanıtı sayılmaz. Aynı sonuçta ödeme olgusunun teslimden önce gelmesi desteklenir.
+- Gerçek Work dev.5 kabulünde görülen teslim/fatura günü peşin ödeme artık sipariş günü sayılmaz. Ödeme olayı ve teslim sonrası süre, peşin/avans sözcüğünden önce değerlendirilir. Bilinmeyen fatura veya teslim tarihine sıfır gün atanmaz; kanıtsız normalleştirilmiş ödeme kaydı reddedilir.
+- PDF'de teklif toplamına dayanan senaryonun dayanağı açık gösterilir: miktar=1 fiziksel kaynak miktarı değil, teklif toplamı çarpanıdır. Mevcut Excel dayanağı ve hesap formülleri korunur.
+- On yeni ödeme/CSV regresyonu; kurulum/paket kilidi değişmedi. Tam güncel test ve gerçek Work kabulü ayrıca gerekir. Dev.5 motor VERIFIED işaretinin bütün iş kapsamının kabulü olmadığı gerçek kayıtla ayrıldı.
+
+## 5.2.0-dev.5 — 2026-10-17
+
+- Gerçek Work CSV kabulünde sütun başlıklarının yanındaki başka başlığı verified değer sanması giderildi. Yalnız açık, kısa alan etiketleri deterministik alan/değer yoluna girer; çok etiketli tablo satırları bounded semantik göreve bırakılır.
+- Kaynak tablosundaki başlıklar, kabul edilmiş semantik teslim bilgisini sonraki okumada sahte çelişkiye dönüştürmez. Gerçek farklı teslim değerleri için çelişki kapısı korunur.
+- Dev.4 Work kullanım kayıtları ve8550/9900net bağımsız maliyetleri geçti; bu yeni kaynağın veya KDV/brüt/rapor kabulünün yerine geçmez.
+
+## 5.2.0-dev.4 — 2026-10-17
+
+- Work görev bazlı kullanım bilgisini vermediğinde gerekçeli host_unavailable kaydı: bilinmeyen token NULL; model/efor işareti gerçek model kimliği değildir. Kaynak ve iş doğrulama kapıları korunur; açıklanmamış eski eksikler engeldir. Toplam token tavanı ölçülmüş sayılmaz.
+- Güvenli ön rapor için erişilebilir --reason/--inspect CLI; eksik eylem, bekleyen kullanıcı yanıtı ve eksik teslim sıfır çıkışla başarı sayılmaz.
+- READY ortamda komut/dosya izni hatası ayrı bildirilir; yalnız ortam doğrulama hatası ayrı kurucuya yönlenir. CLI olmayan kütüphane komut olarak çalıştırılmaz.
+- PDF kitaplığının yeni import adı CLI JSON çıktısına eski API uyarısının karışmasını önler. Eski dev.3 kabulü yeni sürüme taşınmaz.
+
+## 5.2.0-dev.3 — 2026-10-17
+
+- Windows PowerShell5.1/CMD aktarımında & içeren dosya yolunun argümanları bozması gerçek testte yakalandı. Varsayılan analiz girişi, ayrı kurucunun pip/distlib ile hazırladığı yerel Windows EXE başlatıcısına taşındı; CMD yalnız kurulum girişidir.
+- Kayıt seçimi, Python/paket kimliği ve analiz motoru korunur. Devam komutu aynı native girişe bağlandı; yollar PowerShell literal kurallarıyla kaçırılır.
+
+## 5.2.0-dev.2 — 2026-10-17
+
+- Temiz standart Windows hesabında Restricted politikası PS1 kurucusunu engelledi. Varsayılan kurulum ve eklenti başlangıcı CMD + Python oldu; politika değiştirilmez.
+- Kayıt seçicisi analizi aynı doğrulanmış sanal ortama aktarır; devam kimliği ve paket kilidi korunur.
+
+## 5.2.0-dev.1 — 2026-10-17
+
+- Güncelleyici giriş/motoru çıkarıldı; eklenti dışı hash kilitli kullanıcı kurulumu ve kayıtlı yerel Python başlatıcısı eklendi.
+- Doğrulanmış kaynaklardan senaryo başlangıcı; fiyat birimi, KDV dahil fiyat ve ardışık iskonto; ara yuvarlama kaldırıldı.
+- Çok kriterli puanlama, oransal/min–maks yöntem, baz ve iki alternatif ağırlık senaryosu; Excel/PDF ve senaryo içe alma bütünlüğü korundu.
+- Gerçek Work web+masaüstü ve temiz standart kullanıcı kabulü ayrıca gerekir.
+
 
 - Veri deposu oluşturulmadan ortam denetimi durduğunda güvenli XLSX/PDF çifti istenen hızlı, standart veya yüksek güvence profilini korur.
 - Profil yalnız aynı koşuya bağlı, boyutu sınırlı ve geçerli devam kaydından okunur. Geçersiz kayıt UNKNOWN olarak gösterilir; doğrulanmamış teklif olgusu veya sıralama üretilmez.
@@ -342,3 +424,7 @@ Cevaplanmış kapsam sorusunda açık soru kanıtı ile geniş ürün kapsamı k
 ## 5.0.29-dev.10
 
 Geçerli kullanıcı ödeme ve geçerlilik bilgileri ana karşılaştırmada hesap kanıtına bağlı gösterilir. Kaynak durumu ayrı etiketlenir; uygulanmayan toplam puan gerekçesi açık yazılır. Tutarlılık ve kaynak kontrolleri korunur.
+
+## 5.2.0-dev.9
+
+Kaynak Fiyat Zinciri görünümünde miktar, yüzde, fiyat böleni ve KDV esasındaki yanıltıcı para birimi kaldırıldı; parasal satırlar para birimini korur. Aynı Excel/PDF/snapshot regresyonu gerçek hücreleri kontrol eder. Matematik, kayıt kapıları, kurucu ve Python kilidi değişmedi. Dev.8 gerçek Work ödeme20/15 ve fiyat zinciri geçti; onun bütün657testi iki motorda PASS. Bu kanıtlar dev.9 kabulü yerine kullanılmaz.

@@ -267,7 +267,7 @@ class FormulaSliceTests(unittest.TestCase):
     def test_missing_inputs_are_not_zero_or_cached_pass(self):
         contract=self.make({}); self.assertEqual(contract["reference"]["2"],{})
         wb=load_workbook(self.path,data_only=True); self.assertIsNone(wb["Miktar ve Kapsam"]["B2"].value); wb.close()
-        self.assertEqual(validate_formulas(self.path,contract)["recalculation"],"PENDING_NATIVE_RECALC")
+        self.assertEqual(validate_formulas(self.path,contract)["recalculation"],"NOT_EVALUATED_BY_STRUCTURAL_CHECK")
     def test_changed_allowed_function_other_row_and_deleted_formula_rejected(self):
         contract=self.make()
         for change in ["=SUM(1,2)","='Senaryo Girdileri'!B3",None]:

@@ -3,10 +3,9 @@
 from question_waits import guard_run_operation
 from pathlib import Path
 import json
-import tempfile
 import uuid
 from common import sha256_file
-from report_delivery import _publish_directory, _validate_pair
+from report_delivery import _publish_directory, _validate_pair, _new_stage
 
 REQUIRED = {"Teklif_Degerlendirme.xlsx", "Teklif_Degerlendirme.pdf",
             "decision_snapshot.json", "formula_contract.json", "report_model.json"}
@@ -25,7 +24,7 @@ def stage_revision(run_root, directory):
     if not root.resolve().is_relative_to(run_root.resolve()):
         raise ValueError("Official report path leaves run")
     root.mkdir(parents=True, exist_ok=True)
-    return Path(tempfile.mkdtemp(prefix=".official-stage-", dir=root)), root / uuid.uuid4().hex
+    return _new_stage(root,".official-stage-"), root / uuid.uuid4().hex
 
 def publish(stage, target, contract, model, snapshot_sha):
     try:
@@ -35,7 +34,7 @@ def publish(stage, target, contract, model, snapshot_sha):
 
 def _publish(stage, target, contract, model, snapshot_sha):
     qa = _validate_pair(stage, contract, model)
-    import fitz
+    import pymupdf as fitz
     from pdf_bound_values import check_bound_values
     with fitz.open(stage / "Teklif_Degerlendirme.pdf") as pdf:
         errors = check_bound_values("\n".join(p.get_text() for p in pdf), model)

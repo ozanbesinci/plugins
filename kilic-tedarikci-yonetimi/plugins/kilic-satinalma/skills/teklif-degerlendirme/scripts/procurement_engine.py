@@ -174,6 +174,21 @@ def calculate_costs(con, financial_params: dict[str, Any]) -> dict[str, Any]:
     for offer in offers:
         offer_id = offer["offer_id"]
         offer_params = offer_parameters.get(offer_id, {}) if isinstance(offer_parameters.get(offer_id, {}), dict) else {}
+        from source_price_chain import calculate_offer_pricing, source_pricing_inputs
+        pricing_inputs = source_pricing_inputs(con, offer)
+        if pricing_inputs is not None:
+            pricing_result = calculate_offer_pricing(pricing_inputs)
+            _store_calc(con, offer_id, 'source_price_chain', pricing_inputs, pricing_result,
+                        'complete' if pricing_result['complete'] else 'blocked' if pricing_result['mismatches'] else 'incomplete')
+            issue_id = stable_id('issue', offer_id, 'source_price_chain_reconciliation', length=22)
+            if pricing_result['mismatches']:
+                previous = con.execute('SELECT created_at FROM open_issues WHERE issue_id=?', [issue_id]).fetchone()
+                con.execute('INSERT OR REPLACE INTO open_issues(issue_id,owner,severity,issue_type,question,fact_ids_json,evidence_ids_json,status,created_at) VALUES (?,?,?,?,?,?,?,?,?)',
+                            [issue_id, offer_id, 'critical', 'source_price_chain_reconciliation',
+                             'Kaynak kalemlerinin iskonto ve KDV hesabı ile beyan tutarları uyuşmamaktadır. Geçerli fiyat ve iskonto dayanağı teyit edilmelidir.',
+                             json_text(pricing_inputs['source_fact_ids']), '[]', 'open', previous[0] if previous else utc_now()])
+            elif pricing_result['complete']:
+                con.execute("UPDATE open_issues SET status='resolved' WHERE issue_id=? AND status='open'", [issue_id])
         total_f = _verified_fact(con, offer_id, "total")
         curr_f = _verified_fact(con, offer_id, "currency")
         buyer_currencies = inputs_for(con, offer_id, "currency")

@@ -106,7 +106,7 @@ Basarili parse, build, save, click, render veya test tek basina acceptance degil
 
 - XLSX kritik alaninda formula metnini deger olarak kullanma; calculated/cached sonuc yoksa `verified` uretme.
 - Verified evidence icin document/offer ownership, gerçek unit/locator, source hash ve quote-semantics birlikte dogrulanir. Bir evidence ID'nin var olmasi tek basina yeterli degildir.
-- Başarili model kaydi atomiktir: schema/evidence/model/effort/token receipt adimlarindan biri gecmezse canonical fact/claim/task state rollback edilir. Input ve output token sayilari bilinmiyorsa gorev `completed` olamaz.
+- Başarili model kaydi atomiktir: schema/evidence/model/effort/token receipt adimlarindan biri gecmezse canonical fact/claim/task state rollback edilir. Varsayilan olculmus modda input/output token zorunludur. Host bildirmiyorsa yalniz acik host_unavailable + gerekce kaydi kabul edilir; token NULL, bilinmeyen model/efor HOST_UNAVAILABLE olur. Bu modda kaynak/sonuc semasi, bagimsiz kontrol ve QA degismez; toplam token tavani olculmus sayilmaz. Aciklanmamis tarihsel eksik kayitlar yine engeldir.
 - Numeric `calculated` claim, canonical source path + operator + expected value assertion ile kanitlanir; yalniz calculation/fact ID referansi claim metnini dogrulamaz.
 - Source byte'lari run icindeki hash-adresli arsivde korunur. Final acceptance aktif document SHA ile arsiv SHA'nin ayni oldugunu tekrar dogrular.
 - Tamamlanmis run'a tekrar giris immutable snapshot/artifact state'ini degistirmez. Parent snapshot hash'i tutmayan artifact yeniden kullanilmaz.

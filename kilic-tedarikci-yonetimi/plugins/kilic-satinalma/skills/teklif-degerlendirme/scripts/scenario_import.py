@@ -31,7 +31,12 @@ def import_scenarios(run_root,workbook):
     try:
         for r,assumption in sorted(contract['assumptions'].items(),key=lambda pair:int(pair[0])):
             row=int(r);inputs={key:wb['Senaryo Girdileri'].cell(row,i).value for i,key in enumerate(INPUTS,start=2)}
-            scenario={'id':assumption['id'],'inputs':inputs,'basis':assumption.get('basis') or 'Kullanıcının Excel senaryo girdileri; kaynak ve resmî karar bazı değişmedi.'}
+            scenario={**assumption,'inputs':inputs,'basis':assumption.get('basis') or 'Kullanıcının Excel senaryo girdileri; kaynak ve resmî karar bazı değişmedi.'}
+            scenario.pop('financial',None)
+            scenario.pop('dated_costs',None)
+            if contract.get('pricing_rows'):
+                from scenario_pricing import read_pricing
+                scenario['pricing']=read_pricing(wb,row,contract)
             from dated_workbook import SUMMARY,read_ledger
             if SUMMARY in wb:
                 ledger=read_ledger(wb,row)
@@ -50,8 +55,10 @@ def import_scenarios(run_root,workbook):
                 if has_lifecycle or count is not None or financial['vat_refund_days'] is not None or financial['base_present_value'] is not None or any(v is not None for v in financial['policy'].values()):
                     scenario['financial']=financial
             scenarios.append(scenario)
+        from scenario_scoring import read_scoring
+        scoring=read_scoring(wb,contract)
     finally:wb.close()
-    report=export_preliminary(run_root,'Kullanıcı Excel senaryosu; kaynak olguları ve resmî karar bazı korunmuştur.',scenarios)
+    report=export_preliminary(run_root,'Kullanıcı Excel senaryosu; kaynak olguları ve resmî karar bazı korunmuştur.',scenarios,scoring=scoring)
     return {**report,'scenario_import':'IMPORTED' if report['delivery_status']=='READY' else 'FAILED',
             'imported_workbook_sha256':sha256_file(workbook),'decision_assurance':report.get('decision_assurance','NO_DECISION')}
 

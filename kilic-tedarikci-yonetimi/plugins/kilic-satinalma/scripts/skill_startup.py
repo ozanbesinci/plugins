@@ -22,7 +22,7 @@ def render(root: Path, name: str) -> str:
         version=inside(root,entry['version_file']).read_text(encoding='utf-8').strip()
         if 'matching_version_file' in entry:
             match=inside(root,entry['matching_version_file']).read_text(encoding='utf-8').strip()
-            if match!=version:raise StartupError('Güncelleyici giriş ve motor sürümleri uyuşmuyor.')
+            if match!=version:raise StartupError('Beceri sürüm kaynakları uyuşmuyor.')
     except (KeyError,TypeError,json.JSONDecodeError,UnicodeError,OSError) as exc:
         raise StartupError('Gerçek beceri ad/sürüm kaynağı okunamadı.') from exc
     if not isinstance(label,str) or not label.strip() or any(c in label for c in '\n\r[]<>'):

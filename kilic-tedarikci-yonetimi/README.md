@@ -1,11 +1,21 @@
-# Kılıç Tedarikçi Yönetimi
+# Kılıç Tedarikçi Yönetimi 1.4.0
 
-**Kararlı plugin 1.3.3**, **Teklif Değerlendirme 5.1.3** ve paket içi **Güncelleyici 2.3.1** içerir. Kılıç Satınalma Departmanı tarafından geliştirilmiştir.
+Kaynak kanıtlı teklif değerlendirme, otomatik yerel hesap ve Excel/PDF raporlama. Altı teklif becerisi **5.2.0** sürümündedir. Güncelleyici becerisi paketten çıkarılmıştır; analiz hazır ortamı doğrular ve kullanır.
 
-Kullanıcı sorusunda yalnız yanıtı bekleyen ajan ve işler durur; çalışan bağımsız işler devam eder. Süresiz, kalıcı bekleme kaydı görev/model/hesap/rapor girişlerine uygulanır. Cevaplanmış sorular aynı kapsamda tekrar gösterilmez. Teklif nüshası seçimi ve KDV olumsuzluk kanıtı düzeltmeleri kaynak/karar kapıları korunarak uygulanır.
+## Kurulum
 
-Güncel kapsam ve kabul: [5.1.3 kabul sözleşmesi](plugins/kilic-satinalma/skills/teklif-degerlendirme/references/RELEASE_ACCEPTANCE_5.1.3.md), [plugin bilgileri](plugins/kilic-satinalma/README.md).
+1. [1.4.0 sürüm sayfasından](https://github.com/ozanbesinci/plugins/releases/tag/kilic-tedarikci-yonetimi-v1.4.0) **kilic-teklif-1.4.0-kurulum.zip** dosyasını indirin ve tamamını bir klasöre çıkarın.
+2. `kurulum/Kur.cmd` dosyasını çift tıklayın. Kurulum kullanıcı profiline Python, kilitli paketler ve LibreOffice hesap motorunu hazırlar; yönetici yetkisi veya sistem PATH değişikliği gerektirmez.
+3. ChatGPT Business çalışma alanındaki **Kılıç Tedarikçi Yönetimi** eklentisini seçerek Work görevini masaüstünden başlatın.
 
-Marketplace plugin kaynağı `./plugins/kilic-satinalma` olarak korunur. GitHub release ZIP'i bu plugin klasörünü içerir; SHA256 dosyası indirme bütünlüğünü doğrular. Tam SQLite/native DuckDB JSON/logları son kaynak ağacına bağlıdır. Güncelleyici offline Python testleri ayrı kanıttır; canlı kurulum yapılmış sayılmaz.
+Yerel bilgisayar ve bağlı ChatGPT masaüstü açık kalmalıdır. Web'de aynı yerel erişime sahip mevcut Work görevi üzerinden devam edilir. Yeni bir web sohbetinin kendiliğinden bilgisayara bağlandığı varsayılmaz. Excel hesap kontrolü otomatik yürür; her analizde kullanıcıya ayrı hesap kontrolü yaptırılmaz.
 
-Business çalışma alanı mevcut GitHub main pazarını eşitleyerek bu kararlı sürümü alır. Aynı kapsam, maliyet, kullanıcı kanıtı, gerçek model makbuzu ve satınalma/QA kuralları korunur.
+Eklenti yöneticisi için **kilic-tedarikci-yonetimi-1.4.0.zip** yalnız eklenti paketidir. Python kurucusu ayrı ZIP içindedir. Kurumsal çalıştırma politikası kurulumu engelliyorsa kurucu bunu bildirir; politika değiştirilmez.
+
+## Doğrulama
+
+Kabul edilmiş yürütülebilir kodda SQLite 669 + gerçek DuckDB 669 = **1.338 test** geçti. Microsoft Excel referansı 16.136 formülde karşılaştırıldı; gerçek Work çıktısındaki 2.288 formül de ayrı Excel kopyasıyla eşleşti. Python olmayan, yönetici olmayan temiz Windows Sandbox hesabında kurulum geçti. Gerçek Work, aynı sohbet web devamı ve özgün Excel/PDF/manifest ZIP teslimi doğrulandı.
+
+[Ayrıntılı kabul kapsamı](plugins/kilic-satinalma/skills/teklif-degerlendirme/references/RELEASE_ACCEPTANCE_5.2.0.md) · [Kurulum ayrıntısı](kurulum/README.md) · [Değişiklikler](plugins/kilic-satinalma/skills/teklif-degerlendirme/CHANGELOG.md).
+
+Bilinemeyen fiyat, vergi, kur veya teknik veri uydurulmaz; kaynakla doğrulanan hesaplar ve kullanıcı senaryoları ayrı tutulur. Özgün dosyalar ZIP içinde teslim edilir; tekil Library PDF önizlemesi metadata nedeniyle farklı dosya baytları taşıyabilir.

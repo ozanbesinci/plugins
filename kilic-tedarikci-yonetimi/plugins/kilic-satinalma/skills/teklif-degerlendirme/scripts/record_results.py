@@ -156,7 +156,7 @@ def _payment_source_basis(con, offer_id: str, result: dict[str, Any], incoming_p
     return amount
 
 
-def _validate_payment_schedule(con, task, payload, fact, ev_id, schedule: Any, result: dict[str, Any], incoming_path: str) -> None:
+def _validate_payment_schedule(con, task, payload, fact, ev_id, schedule: Any, result: dict[str, Any], incoming_path: str, evidence_map: dict[str, str] | None = None) -> None:
     if not isinstance(schedule, list) or not schedule:
         raise ValueError("Payment schedule must be a non-empty list")
     ratios: list[Decimal | None] = []
@@ -217,8 +217,12 @@ def _validate_payment_schedule(con, task, payload, fact, ev_id, schedule: Any, r
     delivery=[delivery_facts["delivery"]] if delivery_facts.get("delivery") else []
     delivery_days = None
     if delivery:
-        from normalize import _duration_days
-        delivery_days = _duration_days(str(delivery[-1].get("value_text") or ""))
+        from normalize import _delivery_days_from_fact
+        delivery_fact = dict(delivery[-1])
+        aliases = evidence_map or {}
+        delivery_fact['offer_id'] = delivery_fact.get('offer_id') or resolved_offer_id
+        delivery_fact['evidence_id'] = aliases.get(delivery_fact.get('evidence_id'), delivery_fact.get('evidence_id')) or aliases.get(delivery_fact.get('evidence_client_id'))
+        delivery_days = _delivery_days_from_fact(con, delivery_fact)
     from normalize import _payment_schedule as parse_payment_schedule
     expected = parse_payment_schedule(quote, delivery_days)
     if expected is not None:
@@ -235,6 +239,9 @@ def _validate_payment_schedule(con, task, payload, fact, ev_id, schedule: Any, r
                     raise ValueError("Amount-only payment row cannot be bound to the sourced installment ratio")
     else:
         normalized_quote=_fold_text(quote)
+        from normalize import _payment_day_offset
+        if re.search(r"\b(?:teslim\w*|delivery|fatura\w*|invoice)\b", normalized_quote) and _payment_day_offset(normalized_quote, delivery_days) is None:
+            raise ValueError("Payment event date cannot be verified from the source timing basis")
         delivery_relative=bool(re.search(r"(?:teslimden|teslim sonrasi|after delivery)",normalized_quote))
         if delivery_relative and re.search(r"\d+\s*(?:gun|day|days)",normalized_quote) and delivery_days is None:
             raise ValueError("Delivery-relative payment date lacks a verified delivery lead-time basis")
@@ -739,7 +746,7 @@ def _record_facts(con, task: dict[str, Any], task_payload: dict[str, Any], resul
         fact['normalized'] = canonical_refs(fact.get('normalized', {}))
         payment_schedule = fact['normalized'].get('payment_schedule')
         if payment_schedule is not None:
-            _validate_payment_schedule(con, task, task_payload, fact, ev_id, payment_schedule, result, path)
+            _validate_payment_schedule(con, task, task_payload, fact, ev_id, payment_schedule, result, path, evidence_map)
         item_ids = [i['item_id'] for i in fact['normalized'].get('items', [])]
         if len(item_ids) != len(set(item_ids)):
             raise ValueError('Duplicate normalized item identity')
@@ -763,6 +770,14 @@ def _record_facts(con, task: dict[str, Any], task_payload: dict[str, Any], resul
                         continue
                 if not supported:
                     raise ValueError('Item value requires its own verified non-pixel evidence or independent confirmation')
+            if item.get('pricing') is not None:
+                from source_price_chain import validate_item_pricing
+                validate_item_pricing(
+                    con, item, fact.get('offer_id') or task.get('offer_id'),
+                    fact.get('supplier_id') or task.get('supplier_id'),
+                    lambda ref: _validate_existing_evidence(con, task, task_payload, ref),
+                    _decimal_tokens,
+                )
         if fact.get('field_key') == 'total' and fact.get('value_number') is not None and fact['normalized'].get('items') and fact['normalized'].get('amount_basis') != 'stated_grand_total':
             raise ValueError('Item prices are not a stated grand total; keep total null and calculated item subtotal separate')
         if fact['normalized'].get('items'):
@@ -1099,6 +1114,8 @@ def record_task_result(
     input_tokens: int | None = None,
     cached_input_tokens: int | None = None,
     output_tokens: int | None = None,
+    telemetry_status: str = "measured",
+    telemetry_reason: str | None = None,
 ) -> dict[str, Any]:
     from run_compatibility import assert_dispatch
     from question_waits import assert_task_allowed
@@ -1120,12 +1137,10 @@ def record_task_result(
         # Receipt completeness is a precondition, not an afterthought. Never
         # mutate canonical state and only then discover that usage/model
         # metadata was missing.
-        if not model_name or not reasoning_effort:
-            raise ValueError("Successful model task recording requires actual model_name and reasoning_effort receipt metadata")
-        if input_tokens is None or output_tokens is None:
-            raise ValueError("Successful model task recording requires actual input_tokens and output_tokens")
-        if int(input_tokens) < 0 or int(output_tokens) < 0 or (cached_input_tokens is not None and int(cached_input_tokens) < 0):
-            raise ValueError("Token receipt values must be non-negative")
+        from model_telemetry import receipt_values
+        telemetry = receipt_values(model_name=model_name, reasoning_effort=reasoning_effort,
+            response_id=response_id, input_tokens=input_tokens, cached_input_tokens=cached_input_tokens,
+            output_tokens=output_tokens, telemetry_status=telemetry_status, telemetry_reason=telemetry_reason)
         try:
             validation_receipt = validate_result(skill_root, kind, result)
             _validate_fact_contract(task, payload, result)
@@ -1161,14 +1176,16 @@ def record_task_result(
             raise ValueError(f"Unsupported task_kind: {kind}")
         if kind == "decision_summary":
             con.execute("INSERT OR REPLACE INTO run_meta(key,value) VALUES ('decision_summary_task_id',?)", [task_id])
-        receipt_id = stable_id("receipt", task_id, str(task.get("attempts", 0) + 1), model_name, response_id or "", length=24)
+        receipt_id = stable_id("receipt", task_id, str(task.get("attempts", 0) + 1), telemetry["model_name"], response_id or "", length=24)
         con.execute(
             """
             INSERT OR REPLACE INTO model_receipts(
-              receipt_id,task_id,model_name,reasoning_effort,response_id,input_tokens,cached_input_tokens,output_tokens,recorded_at
-            ) VALUES (?,?,?,?,?,?,?,?,?)
+              receipt_id,task_id,model_name,reasoning_effort,response_id,input_tokens,cached_input_tokens,output_tokens,
+              telemetry_status,telemetry_reason,recorded_at
+            ) VALUES (?,?,?,?,?,?,?,?,?,?,?)
             """,
-            [receipt_id, task_id, model_name, reasoning_effort, response_id, int(input_tokens), int(cached_input_tokens or 0), int(output_tokens), utc_now()],
+            [receipt_id, task_id, *[telemetry[k] for k in ("model_name", "reasoning_effort", "response_id",
+             "input_tokens", "cached_input_tokens", "output_tokens", "telemetry_status", "telemetry_reason")], utc_now()],
         )
         con.execute(
             "UPDATE task_queue SET status='completed',attempts=attempts+1,result_path=?,completed_at=? WHERE task_id=?",
@@ -1176,7 +1193,7 @@ def record_task_result(
         )
         if hasattr(con, "commit"):
             con.commit()
-        return {"task_id": task_id, "status": "completed", **counts}
+        return {"task_id": task_id, "status": "completed", "telemetry": telemetry, **counts}
     except Exception:
         try:
             if hasattr(con, "rollback"):
@@ -1201,8 +1218,10 @@ def main() -> None:
     ap.add_argument("--run", required=True)
     ap.add_argument("--task-id", required=True)
     ap.add_argument("--input", required=True)
-    ap.add_argument("--model", required=True, help="Actual model identity used for this task")
-    ap.add_argument("--effort", required=True, help="Actual reasoning effort used for this task")
+    ap.add_argument("--model", help="Actual model identity, only if exposed by the host")
+    ap.add_argument("--effort", help="Actual reasoning effort, only if exposed by the host")
+    ap.add_argument("--telemetry-status", choices=["measured", "host_unavailable"], default="measured")
+    ap.add_argument("--telemetry-reason", help="Required explanation when the host does not expose task telemetry")
     ap.add_argument("--response-id")
     ap.add_argument("--input-tokens", type=int)
     ap.add_argument("--cached-input-tokens", type=int)
@@ -1216,6 +1235,7 @@ def main() -> None:
         Path(args.run), args.task_id, payload, str(path),
         model_name=args.model, reasoning_effort=args.effort, response_id=args.response_id,
         input_tokens=args.input_tokens, cached_input_tokens=args.cached_input_tokens, output_tokens=args.output_tokens,
+        telemetry_status=args.telemetry_status, telemetry_reason=args.telemetry_reason,
     ), ensure_ascii=False, indent=2))
 
 

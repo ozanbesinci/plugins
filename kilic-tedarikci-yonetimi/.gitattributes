@@ -1,1 +1,3 @@
 plugins/** -text whitespace=cr-at-eol
+kurulum/** -text whitespace=cr-at-eol
+BASLANGIC.txt -text whitespace=cr-at-eol

@@ -3,7 +3,7 @@ name: teklif-maliyet
 description: Tekliflerin doğrulanmış kalem/kapsam/ödeme/finans girdilerini mevcut Python motoruyla hesaplar ve maliyet farkını mutabıklaştırır. Ana teklif akışında maliyet hesabı gerektiğinde kullan; model aritmetiği, kaynak yorumu ve bağımsız onay üretmez.
 ---
 
-# Maliyet Hesabı — 5.1.3
+# Maliyet Hesabı — 5.2.0
 ## Sorunun yanıtına bağlı bekleme
 
 [Kullanıcı yanıtı bekleme kuralı](../../USER-EVIDENCE-POLICY.md#sorunun-yanıtına-bağlı-bekleme) zorunludur. Yalnız sorunun cevabına bağlı ajan ve işler durur; soru anında çalışan bağımsız ajanlar devam eder. Bekleyen ajan cevap gelene kadar araç/model çağrısı, okuma, hesap, yazma, rapor veya kontrol yapmaz; süre sınırı ve periyodik sorgulama yoktur. Soru kimliği/kapsamı ve bağımlı görev/ajan kimliklerini gösterimden önce kaydet. Yalnız ilgili yeterli yanıt bu bağımlılığı açar; “devam”, sessizlik veya seçili varsayılan cevap/onay değildir. Cevaplanmış soruyu sebepsiz tekrarlama.
@@ -22,7 +22,7 @@ Hesabı geçerli kullanıcı girdisiyle yeniden üret; belgedeki eski miktar vey
 
 ## Her çağrıda başlangıç bildirimi
 
-Bu beceri fiilen çalışmaya başladığında, ilk kullanıcı mesajında ortak okuyucunun ürettiği satırı aynen göster. Kendi paketindeki `../../scripts/skill_startup.py --skill teklif-maliyet` komutunu kendi fiziksel skill klasöründen çalıştır; başka plugin'in aynı adlı skill'ini genel adla çağırma. Okuyucu gerçek beceri adını ve o çağrıdaki VERSION dosyasını kullanır:
+Beceri başlangıcında `& "$env:USERPROFILE\KilicPython\teklif-python.exe" "<aktif-paket>/scripts/runtime_launcher.py" skill_startup --skill teklif-maliyet` komutunu yürüt. Başlatıcı kayıtlı yerel Python ve paket kilidini doğrular; gerçek ad/sürüm satırını aynen göster. Ortam yoksa kurulum mesajını bildir; analiz içinde kurulum yapma.
 
 **[Beceri adı] skilli Kılıç Satınalma Departmanı tarafından geliştirilmiştir. Sürüm: [gerçek sürüm]**
 
@@ -36,7 +36,7 @@ Ana giriş [Teklif Değerlendirme](../teklif-degerlendirme/SKILL.md). Doğrudan 
 
 Hesap öncesinde [Analiz birimi ve üyelik](../teklif-degerlendirme/references/analysis-quality-workflow.md#analiz-birimi-ve-üyelik) yöntemini uygula; toplam eşitliğinin yanında doğru kaynak/kalem kümesini doğrula.
 
-Tek hesap motoru ana skill'in scripts/procurement_engine.py ve procurement_math.py dosyalarıdır. LLM sonuç hesaplamaz, ikinci maliyet motoru veya ayrı DB yazma. Yalnız kaynak/kullanıcı destekli açık ve karşılaştırılabilir girdilerle Python/DuckDB hesabını çalıştır.
+Tek maliyet akışı ana skill'in scripts/procurement_engine.py ve procurement_math.py dosyalarıdır. Kaynak fiyat zinciri aynı akışta source_price_chain.py ile ayrı hesap kaydı üretir; kaynak koşullarını canonical-data fiyat sözleşmesiyle doğrula. LLM sonuç hesaplamaz, ikinci maliyet motoru veya ayrı DB yazma. Yalnız kaynak/kullanıcı destekli açık ve karşılaştırılabilir girdilerle Python/DuckDB hesabını çalıştır.
 
 Kalem kendi quantity/unit, amount_basis, currency, evidence_status ve evidence_refs'iyle doğrulanır. Birim fiyat/satır toplamı/beyan toplamını ayır; karışık fiyat türlerini ve ayrı teklif revizyonlarını toplayıp tek tutar yapma. Bilinmeyen tutar sıfır değildir. Ardışık indirim çarpımlıdır. Dahil kapsamı iki kez ekleme, ortak/firmaya özel kapsam boşluklarını ayır.
 

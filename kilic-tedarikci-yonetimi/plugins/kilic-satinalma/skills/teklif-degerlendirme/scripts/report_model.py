@@ -139,10 +139,13 @@ def build_preliminary(run_root: Path, reason: str):
             con.execute("BEGIN TRANSACTION")
             meta = dict(con.execute("SELECT key,value FROM run_meta").fetchall())
             model["profile"] = meta.get("profile","standart")
+            model['meta']={key:decode(meta.get(key),{}) for key in ('financial_parameters','scoring_parameters')}
             for table in ("documents","suppliers","offers","facts","evidence","requirements","exclusions","open_issues"):
                 model[table] = rows_as_dict(con, f"SELECT * FROM {table}")
             from preliminary_buyer_values import project
             model['buyer_declarations'],model['buyer_quantity_totals']=project(con,model)
+            from model_telemetry import inspect_receipts
+            model["model_telemetry"] = inspect_receipts(con)
             # Do not promote calculation records or existing decision_summary into a reviewed result.
         finally:
             con.close()
@@ -154,6 +157,10 @@ def build_preliminary(run_root: Path, reason: str):
                 raise ValueError("Kaynak arşivi çalışma klasörü dışında")
             if not archive.is_file() or sha256_file(archive) != doc["sha256"]:
                 raise ValueError("Kaynak arşivi hash uyuşmazlığı: "+doc["relative_path"])
+        if model["model_telemetry"]["unavailable_receipts"]:
+            model["limitations"].append("Work görev bazlı model/efor/token kullanımını bildirmedi; kullanım toplamı bilinmiyor, token tavanı doğrulanamadı.")
+        if model["model_telemetry"]["invalid_receipts"]:
+            model["limitations"].append("Açıklanmamış veya geçersiz model kullanım kayıtları var; teknik doğrulama engeli devam ediyor.")
         model["matrix"] = matrix(model)
         active = [o for o in model["offers"] if o.get("status")=="active"]
         excluded = current_excluded_offers(model)

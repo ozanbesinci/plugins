@@ -15,8 +15,8 @@ INPUTS = ["quantity","unit_price","discount","fx_rate","vat_rate","vat_deductibl
           "cost_score","cost_weight","base_total"]
 INPUT_LABELS = ["Miktar","Birim fiyat","İskonto oranı","Hedef/kaynak kur","KDV oranı","İndirilebilir KDV payı",
                 "Navlun","Sigorta","Gümrük oranı","Yıllık efektif oran","Ödeme günü","Yıllık enerji",
-                "Yıllık bakım","Yıl sayısı","Kalıntı değer","Teknik puan","Teknik ağırlık",
-                "Maliyet puanı","Maliyet ağırlık","Karşılaştırma baz tutarı"]
+                "Yıllık bakım","Yıl sayısı","Kalıntı değer","Teknik puan","Teknik ağırlık (0–1)",
+                "Maliyet puanı","Maliyet ağırlık (0–1)","Karşılaştırma baz tutarı"]
 SHEETS = ["Senaryo Kontrol","Senaryo Girdileri","Miktar ve Kapsam","Kur Vergi Ithalat",
           "Odeme NBD Nakit","TCO Yasam Dongusu","Puanlama Duyarlilik","Senaryo Karsilastirma"]
 
@@ -55,7 +55,7 @@ def add_scenarios(wb, scenarios=None):
     if len({x["id"] for x in scenarios}) != len(scenarios): raise ValueError("Duplicate scenario")
     sheets = {n:wb.create_sheet(n) for n in SHEETS}
     contract = {"version":"teklif-formula-contract/v1","formulas":{},"inputs":{},
-                "source_cells":{},"reference":{},"recalculation":"PENDING_NATIVE_RECALC"}
+                "source_cells":{},"reference":{},"recalculation":"NOT_EVALUATED_BY_STRUCTURAL_CHECK"}
     def formula(ws,cell,value):
         ws[cell] = value
         contract["formulas"][ws.title+"!"+cell] = value
@@ -65,7 +65,7 @@ def add_scenarios(wb, scenarios=None):
         "Kur Vergi Ithalat":["Senaryo","Hedef para net","İthalat matrahı","İndirilemeyen vergi","Nakit brüt","TCO baz tutarı","Durum"],
         "Odeme NBD Nakit":["Senaryo","Nominal ödeme","NBD","Durum"],
         "TCO Yasam Dongusu":["Senaryo","Yaşam döngüsü nominal toplam","Durum"],
-        "Puanlama Duyarlilik":["Senaryo","Ağırlıklı puan","Teknik ağırlık +0,05 duyarlılığı","Durum"],
+        "Puanlama Duyarlilik":["Senaryo: iki puan / ağırlık toplamı 1","Ağırlıklı puan","Teknik ağırlık +0,05 duyarlılığı","Durum"],
         "Senaryo Karsilastirma":["Senaryo","Baz","Senaryo TCO","Fark","Oransal fark","Durum"],
         "Senaryo Kontrol":["Senaryo","Net bedel","NBD","TCO","Simülasyon durumu"],
     }.items(): literal(sheets[name],headers)
@@ -128,7 +128,7 @@ def add_scenarios(wb, scenarios=None):
             f("Senaryo Kontrol",col,ref,f"ISNUMBER({ref})")
         sheets["Senaryo Kontrol"].cell(row,5,"Kullanıcı senaryosu; kaynak ve resmî baz değişmez; sıralama yok.")
         sheets["Senaryo Kontrol"].cell(row,5).data_type="s"
-        contract["reference"][str(row)] = scenario_reference(values)
+        contract["reference"][str(row)] = scenario_reference(values, scenario.get('pricing'))
     for ws in sheets.values():
         ws.freeze_panes="B2"; ws.auto_filter.ref=ws.dimensions; ws.protection.sheet=True
         ws.column_dimensions["A"].width=30
@@ -155,6 +155,8 @@ def add_scenarios(wb, scenarios=None):
         validation.add(f"{get_column_letter(column)}2:{get_column_letter(column)}{len(scenarios)+1}")
     wb.calculation.fullCalcOnLoad=True
     wb.calculation.forceFullCalc=True
+    from scenario_pricing import add_pricing
+    add_pricing(wb,scenarios,contract)
     from finance_workbook import add_finance
     add_finance(wb,scenarios,contract)
     from dated_workbook import add_dated_ledgers
@@ -162,14 +164,12 @@ def add_scenarios(wb, scenarios=None):
     contract['assumptions']={str(r):scenario for r,scenario in enumerate(scenarios,start=2)}
     return contract
 
-def scenario_reference(v):
+def scenario_reference(v, pricing=None):
     """Reuse existing deterministic arithmetic; do not invent missing inputs."""
     result = {}
     def enough(*keys): return all(v.get(k) is not None for k in keys)
-    if enough("quantity","unit_price","discount"):
-        net = sequential_discount(line_gross(v["quantity"],v["unit_price"]),[v["discount"]])
-        from decimal import Decimal, ROUND_HALF_UP
-        net = net.quantize(Decimal("0.01"),rounding=ROUND_HALF_UP)
+    from scenario_pricing import net_price
+    if enough("quantity","unit_price","discount") and (net := net_price(v,pricing)) is not None:
         result["Miktar ve Kapsam!B"]=float(net)
         if enough("fx_rate"):
             fx=fx_to_base(net,v["fx_rate"])
@@ -227,6 +227,10 @@ def validate_formulas(path: Path, contract):
         except ValueError as exc: errors.append(str(exc))
     from finance_workbook import validate_extra_inputs
     errors.extend(validate_extra_inputs(wb,contract))
+    if contract.get('scoring'):
+        from scenario_scoring import read_scoring
+        try: read_scoring(wb,contract)
+        except (ValueError,KeyError,TypeError) as exc: errors.append(str(exc))
     wb.close()
     return {"status":"FAIL" if errors else "PASS","errors":errors,"formula_count":len(observed),
-            "recalculation":"PENDING_NATIVE_RECALC"}
+            "recalculation":"NOT_EVALUATED_BY_STRUCTURAL_CHECK"}

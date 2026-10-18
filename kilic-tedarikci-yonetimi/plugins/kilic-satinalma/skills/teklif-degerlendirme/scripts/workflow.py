@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import sys
 import hashlib
 import json
 import os
@@ -91,23 +92,24 @@ def _token_budget(run_root: Path, policy: dict[str, Any]) -> dict[str, Any]:
     cap = int(policy.get("profiles", {}).get(profile, {}).get("max_input_tokens", 0) or 0)
     con = connect(run_root)
     try:
-        row = con.execute(
-            "SELECT coalesce(sum(input_tokens),0),coalesce(sum(cached_input_tokens),0),coalesce(sum(output_tokens),0),"
-            "sum(CASE WHEN input_tokens IS NULL OR output_tokens IS NULL THEN 1 ELSE 0 END) FROM model_receipts"
-        ).fetchone()
+        from model_telemetry import inspect_receipts
+        telemetry = inspect_receipts(con)
     finally:
         con.close()
-    input_tokens = int(row[0] or 0)
-    cached = int(row[1] or 0)
-    output = int(row[2] or 0)
-    unknown_receipts = int(row[3] or 0)
+    known = telemetry["known_totals"]
+    input_tokens = known["input_tokens"]
+    unknown_receipts = len(telemetry["unavailable_receipts"]) + len(telemetry["invalid_receipts"])
     ratio = (input_tokens / cap) if cap else 0.0
     return {
-        "profile": profile, "input_tokens": input_tokens, "cached_input_tokens": cached,
-        "output_tokens": output, "max_input_tokens": cap, "ratio": round(ratio, 6),
+        "profile": profile, **{k: None if unknown_receipts else v for k, v in known.items()},
+        "known_totals": known, "max_input_tokens": cap, "ratio": None if unknown_receipts else round(ratio, 6),
+        "enforcement": "KNOWN_USAGE_ONLY" if unknown_receipts else "MEASURED_USAGE",
+        "limitation": "Host does not expose all task usage; total token cap cannot be guaranteed" if unknown_receipts else None,
+        "host_unavailable_receipts": telemetry["unavailable_receipts"],
+        "invalid_receipts": telemetry["invalid_receipts"],
         "usage_unknown": bool(unknown_receipts), "unknown_receipts": unknown_receipts,
         "warning": bool(unknown_receipts or (cap and ratio >= float(policy.get("budget_warning_ratio", 0.8)))),
-        "hard_stop": bool(unknown_receipts or (cap and ratio >= float(policy.get("budget_hard_stop_ratio", 1.0)))),
+        "hard_stop": bool(telemetry["invalid_receipts"] or (cap and ratio >= float(policy.get("budget_hard_stop_ratio", 1.0)))),
     }
 
 
@@ -224,13 +226,30 @@ def prepare(source: Path, run_root: Path, profile: str, analysis_date_value: dat
                 "automatic_installation": False,
                 "installation_performed": False,
                 "resume_request": str(run_root / "resume_request.json"),
-                "resume_command": f'python "{Path(__file__).resolve()}" prepare --resume-request "{run_root / "resume_request.json"}"',
+                "resume_command": __import__('subprocess').list2cmdline([sys.executable,'-B',str(Path(__file__).resolve()),'prepare','--resume-request',str(run_root/'resume_request.json')]),
             }
+        if os.environ.get('TEKLIF_TEST_MANAGED_RUNTIME_BYPASS')!='1':
+            try:
+                import importlib.util
+                registry_file=skill_root.parents[1]/'scripts/runtime_registry.py'
+                spec=importlib.util.spec_from_file_location('kilic_runtime_registry',registry_file)
+                registry=importlib.util.module_from_spec(spec);spec.loader.exec_module(registry)
+                identity=registry.current()
+                registry.bind_run(run_root,identity)
+                resume_request['runtime_identity']=identity
+            except (ValueError,OSError,KeyError) as exc:
+                dump_json(run_root/'resume_request.json',resume_request)
+                return {'status':'BLOCKED_ENVIRONMENT','automatic_installation':False,'installation_performed':False,
+                        'user_message':str(exc),'reason':'registered local runtime required',
+                        'resume_request':str(run_root/'resume_request.json'),
+                        'resume_command':'& ' + ' '.join("'" + str(part).replace("'", "''") + "'" for part in (Path(os.environ.get('USERPROFILE',''))/'KilicPython/teklif-python.exe',skill_root.parents[1]/'scripts/runtime_launcher.py','workflow','prepare','--resume-request',run_root/'resume_request.json'))}
     init_db(run_root, skill_root)
     from run_compatibility import execution_contract
     set_meta(run_root, 'execution_contract', execution_contract(skill_root))
     policy_bytes = (skill_root / "config" / "policy.json").read_bytes()
     set_meta(run_root, "skill_version", _version(skill_root))
+    if resume_request.get('runtime_identity'):
+        set_meta(run_root,'runtime_identity',resume_request['runtime_identity'])
     set_meta(run_root, "profile", profile)
     set_meta(run_root, "source_root", str(source.resolve()))
     set_meta(run_root, "analysis_date", (analysis_date_value or date.today()).isoformat())

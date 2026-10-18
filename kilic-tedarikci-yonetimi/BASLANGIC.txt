@@ -1,0 +1,24 @@
+﻿Kılıç Teklif — 1.4.0 kararlı sürüm
+
+Gerçek Work analizi, otomatik Excel hesabı, Excel referansı ve özgün raporların web teslimi doğrulandı.
+
+İlk kurulum:
+1. ZIP dosyasının tamamını kendi bilgisayarınızda bir klasöre çıkarın.
+2. kurulum klasöründeki Kur.cmd dosyasını çift tıklayın.
+3. Kurucu başarıyla tamamlanınca ChatGPT Work'te Kılıç Teklif eklentisini kullanın.
+
+Kurulum kullanıcıya özeldir. Yönetici veya IT işlemi istemez; resmî Python,
+sabitlenmiş Python paketleri ve LibreOffice hesap motorunu internetten indirir.
+Kurulum sırasında mevcut ortam kaydı ancak kontroller geçerse yayımlanır.
+Şirketin çalıştırma ilkesi izin vermiyorsa kurucu engeli bildirir.
+
+Sonraki analizlerde Excel hesap kontrolü otomatik yürür. Excel'i açmanız veya
+ayrı bir kontrol dosyasına çift tıklamanız gerekmez. Hesap motoru kullanıcı
+bilgisayarında çalışır; o bilgisayar açık ve Work'e bağlı kalmalıdır.
+Web devamında aynı yerel erişime sahip mevcut Work görevi kullanılır.
+
+Yalnız hesap motorunun eksik olduğu eski kurulumda Kur-Hesap.cmd kullanılabilir.
+Eklentinin içinde Güncelleyici becerisi yoktur; analiz sırasında kurulum yapılmaz.
+kurulum ve plugins klasörlerini birbirinden ayırmayın.
+
+Bu ZIP yerel Python ve hesap motoru kurucusudur. Business eklentisini çalışma alanı yöneticisi ayrıca yayımlar.

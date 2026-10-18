@@ -5,6 +5,8 @@ description: Satınalma tekliflerini PDF, Excel, CSV/TSV, Word, görsel ve diğe
 
 # Teklif Değerlendirme — Deterministic-First v5.0.24
 
+Bu dosya v5.0.24'ten gelen algoritma referansıdır. Güncel 5.2 başlangıç, ortam ve teslim kuralları için [ana beceri](../SKILL.md) ile [kurulum kılavuzu](../KURULUM.md) esas alınır. Aşağıdaki `python scripts/<betik>.py` kısa gösterimleri doğrudan genel Python ile çalıştırılmaz; `& "$env:USERPROFILE\KilicPython\teklif-python.exe" "<aktif-paket>/scripts/runtime_launcher.py" <betik> <argümanlar>` biçimine çevrilir. Ortam/koşu kimliği korunur.
+
 İhtiyaca uygun, karşılaştırılabilir, riskleri görünür ve kaynakları izlenebilir bir satınalma kararı hazırla. Nihai seçim yetkili karar merciine aittir. Türkçe, sade ve kurumsal dil kullan; analiz çıktılarında kişiye özel hitap kullanma.
 
 ## Temel ilke
@@ -31,7 +33,7 @@ Saf `independent_confirmation_required` issue'ları yalnız tüm bağlı güncel
 
 ## Başlangıç
 
-0. **Her teklif analizi koşusundan önce çalışma ortamını doğrula.** `python scripts/environment_check.py --strict --output "<koşu>/environment.json"` çalıştır. Kontrol; aktif Python sürümünü, `requirements.txt` içindeki uygulanabilir Python paketlerini ve sürüm aralıklarını, DuckDB Python paketini ve DuckDB `pdf` eklentisinin yüklenebilir/çalışır olmasını doğrular.
+0. **Her teklif analizi koşusundan önce çalışma ortamını doğrula.** Kayıtlı başlatıcıyla `environment_check --strict --output "<koşu>/environment.json"` çalıştır. Başlatıcı kayıtlı Python ve tam paket kilidini, ortam kontrolü gerekli belge ve veritabanı yeteneklerini doğrular. DuckDB ana motoru zorunludur; ikincil DuckDB `pdf` okuyucusu isteğe bağlıdır ve yokluğu uyarı olarak görünür. Yalnız açık kabul gereksinimi varsa `--require-pdf-extension` ekle.
    - `READY`: analize devam et.
    - `BLOCKED_ENVIRONMENT` (çıkış kodu 3): analizi başlatma, durdur. Kullanıcıya `missing_components` listesini tek tabloda göster: bileşen, gereken sürüm, kurulu sürüm, neden. `user_message` hazır Türkçe özettir.
    - Bu skill hiçbir bileşeni kurmaz: `pip install`, `INSTALL pdf`, başka bir skill'e kurulum devri, güvenlik/ExecutionPolicy değişikliği yapma ve önerme. Kurulumu yetkili kişi yapar.
@@ -49,7 +51,7 @@ Saf `independent_confirmation_required` issue'ları yalnız tüm bağlı güncel
 | `standart` | Çoğu teklif karşılaştırması | Deterministik çapraz kontrol + yalnız istisnalar | 1 |
 | `yuksek_guvence` | Yüksek tutar/karmaşıklık, ithalat+TCO, kritik teknik iş | İki parser/kanıt yolu + fark hakemi + delta görsel QA | 2 |
 
-Bütçe tavanlarını güvenlik kapağı olarak kullan; kaliteyi tüketime göre gevşetme. Model makbuzlarındaki gerçek input tokenları profille karşılaştır; %80'de uyarı üret, %100'de yeni model görevi açma. Kullanıcı açıkça devam etmeyi seçerse `workflow.py budget-override --allow true` ile koşuya denetlenebilir istisna yaz. Kritik iş girdisi eksikse `NEEDS_USER_INPUT` sorularını göster; teknik doğrulama başarısızsa `BLOCKED` olarak durdur.
+Bütçe tavanlarını güvenlik kapağı olarak kullan; kaliteyi tüketime göre gevşetme. Ölçülmüş model makbuzlarındaki gerçek input tokenları profille karşılaştır; host_unavailable varsa toplam bilinmiyor ve tavan güvencesi yok diye göster; %80'de uyarı üret, %100'de yeni model görevi açma. Kullanıcı açıkça devam etmeyi seçerse `workflow.py budget-override --allow true` ile koşuya denetlenebilir istisna yaz. Kritik iş girdisi eksikse `NEEDS_USER_INPUT` sorularını göster; teknik doğrulama başarısızsa `BLOCKED` olarak durdur.
 
 ## Durum makinesi
 
@@ -61,7 +63,7 @@ Görev paketleri yalnız en erken bekleyen aşamadan seçilir; sınıflandırma 
 
 Her aşama `PASS`, `PARTIAL`, `BLOCKED` veya `SKIPPED` kaydı bırakır. Bir sonraki aşamayı model seçmez; `workflow.py next` belirler.
 
-`workflow.py next` `NEEDS_LLM` döndürdüğünde yalnız listelenen görevleri çalıştır. Her başarılı model sonucunu `scripts/record_results.py` ile kaydederken gerçek model adı ve reasoning effort makbuzunu zorunlu geçir; varsa response id ve token sayaçlarını da kaydet. Tam sohbet geçmişini alt göreve taşıma.
+`workflow.py next` `NEEDS_LLM` döndürdüğünde yalnız listelenen görevleri çalıştır. Her başarılı model sonucunu `scripts/record_results.py` ile kaydet. Gerçek görev telemetry bilgisi sunuluyorsa gerçek model/efor ve input/output token zorunludur; response id ve cached token yalnız biliniyorsa kaydedilir. ChatGPT Work sunmuyorsa `--telemetry-status host_unavailable --telemetry-reason "Host görev bazlı kullanım bilgisini sunmuyor"` kullan, bilinmeyen model/efor/token uydurma. Ölçülmüş alt toplam ile bilinmeyen genel toplam ayrılır; açıklanmamış eski eksikler ve ölçülen tavan aşımı engeldir. Görev deneme sınırları sürer. Tam sohbet geçmişini alt göreve taşıma.
 
 ### 1. PREPARE / INGEST
 
@@ -120,6 +122,7 @@ Bu durumda iç yeterlilik sonucu `PRELIMINARY_ONLY` kaydedilebilir. Açık iş s
 - Rapor öncesi `reviewed_snapshot.py` ile doğrulanmış canonical veri, hesap, karar, claim, scope ve kontrol durumunu immutable `reviewed_snapshot.json` olarak dondur; SHA-256'sını parent lineage yap.
 - Excel/PDF/yönetici özetini canlı DuckDB tablolarından değil aynı reviewed snapshot'tan türet. `artifact_bindings` ile önemli hücre, tablo, claim ve hesapları fact/requirement/calculation/claim ID'lerine bağla.
 - Excel'i `scripts/report_export.py` ile oluştur; kaynak dosya + locator + fact/status bilgisini görünür/izlenebilir tut.
+- Formülleri ayrı kurulan hash kilitli LibreOffice motoruyla otomatik hesapla. Motoru analiz sırasında indirme/kurma. Özgün formül ve sabitler doğrulanmadan hesap kopyasını kabul etme; yalnız cache aktar. `LOCAL_RECALCULATED` ve motor kimliği rapor kanıtında yer alır; native Excel doğrulaması ayrı kabul testidir. `validate_formulas` yapısal kontroldür, tek başına hesap kanıtı değildir.
 - Hızlı/standartta PDF yalnız gerekiyorsa; yüksek güvencede kullanıcı/profil sözleşmesi gerektiriyorsa PDF üret.
 - Yönetici metni gerekiyorsa `decision_summary` modeli yalnız `context_packet.py --kind decision` çıktısını görsün; ham belgeleri tekrar okuma. `observation`, `calculated`, `assumption`, `hypothesis`, `recommendation` claim türlerini açık ayır.
 

@@ -147,8 +147,9 @@ def _artifact(con, path: Path, run_root: Path, artifact_type: str, parent_hashes
 
 
 def _recalc_with_excel(path: Path) -> dict[str, Any]:
-    from office_execution import execute_office
-    return execute_office("recalculate",path)
+    # Compatibility name for existing callers; evidence states the real engine.
+    from local_calculation import recalculate
+    return recalculate(path)
 
 
 def _export_pdf_with_excel(xlsx: Path, pdf: Path) -> dict[str, Any]:
@@ -421,6 +422,18 @@ def _export_report(run_root: Path, *, _directory="output") -> dict[str, Any]:
         if ws.max_row==1:
             _append_safe(ws,['Kalem hesabi kaydi bulunmuyor.'])
 
+        from source_price_display import SHEET as price_sheet, HEADERS as price_headers, sheet_entries
+        source_price_rows=sheet_entries(snap)
+        if source_price_rows:
+            ws=wb.create_sheet(price_sheet)
+            _append_safe(ws,price_headers)
+            for entry in source_price_rows:
+                rn=ws.max_row+1
+                _append_safe(ws,entry['values'])
+                bind(ws.title,ws.cell(rn,4).coordinate,calculation_ids=[entry['calculation_id']],value_path=entry['value_path'])
+                ws.cell(rn,4).comment=Comment('Kaynak fiyat zinciri; incelenen sürüm özeti: '+snapshot_sha+
+                    ' | Beyan genel toplamı ile ayrıca toplanmaz; KDV indirilebilirliği ve alıcı maliyeti varsayılmaz.','OpenAI')
+
         ws=wb.create_sheet(_safe_sheet("Kapsam ve Riskler")); _write_table(ws,["Teklif","Sinif","Aciklama","Durum","Tutar","Para Birimi","Kritik","Maliyet Rolu"],[[x.get("offer_id"),x.get("classification"),x.get("description"),x.get("status"),x.get("amount"),x.get("currency"),x.get("critical"),x.get('cost_role') or 'unresolved_adjustment'] for x in scope])
         st=ws.max_row+3; ws.cell(st,1,"Elemeler"); ws.cell(st,1).font=Font(bold=True); _append_safe(ws,["Teklif","Madde","Karar","Gerekce","Durum"])
         for x in exclusions: _append_safe(ws,[x.get("offer_id"),x.get("requirement_id"),x.get("decision"),x.get("reason"),x.get("status")])
@@ -475,8 +488,12 @@ def _export_report(run_root: Path, *, _directory="output") -> dict[str, Any]:
         from matrix_workbook import add_matrix, seal_source_cells
         from report_model import matrix
         report_matrix = matrix(snap)
-        formula_contract = add_scenarios(wb)
+        from source_scenarios import from_sources
+        from scenario_scoring import add_scoring
+        formula_contract = add_scenarios(wb, from_sources(snap))
         add_matrix(wb, {**snap, "matrix": report_matrix}, formula_contract)
+        add_scoring(wb,snap,formula_contract)
+        formula_contract['version']='teklif-formula-contract/v3'
         seal_source_cells(wb, formula_contract)
         from official_delivery import stage_revision, publish
         out_dir, target = stage_revision(run_root, _directory)
@@ -499,9 +516,13 @@ def _export_report(run_root: Path, *, _directory="output") -> dict[str, Any]:
                        "recommendation":recommendation,"source_digest":snapshot_sha,
                        "scenario_reference":formula_contract["reference"],
                        "scenario_assumptions":formula_contract.get("assumptions",{}),
+                       "scenario_scoring":(formula_contract.get('scoring') or {}).get('configuration'),
+                       "scenario_scoring_results":formula_contract.get('scoring_results',{}),
                        "recommendation_text":_recommendation_text(recommendation,suppliers,offers),
                        "limitations":list(snap.get("preliminary_reasons",[])),"matrix":report_matrix,
-                       "recalculation":"NATIVE_RECALCULATED" if recalc.get("available") else "PENDING_NATIVE_RECALC"}
+                       "recalculation":"LOCAL_RECALCULATED" if recalc.get("available") and recalc.get('status')=='LOCAL_RECALCULATED' else "PENDING_LOCAL_RECALC",
+                       "calculation_engine":recalc.get('engine'),
+                       "calculation_evidence":{k:v for k,v in recalc.items() if k not in ('path','process')}}
             from display_values import label as decision_label
             pdf_model["limitations"].append("Karar için bilgi yeterliliği: "+str(decision_label(decision_status)))
             try:

@@ -20,6 +20,12 @@ def excel_date_guard(ref):
             f'EXACT(RIGHT({ref},2),RIGHT("00"&DAY({serial}),2)))')
 
 def validate_input(kind, value):
+    if kind.startswith('pricing_'):
+        from scenario_pricing import validate
+        return validate(kind,value)
+    if kind.startswith('score_'):
+        from scenario_scoring import validate
+        return validate(kind,value)
     if kind.startswith('ledger_'):
         from dated_cashflows import validate_ledger_input
         validate_ledger_input(kind,value)

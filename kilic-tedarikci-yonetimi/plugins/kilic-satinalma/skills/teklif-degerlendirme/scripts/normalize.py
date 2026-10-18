@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from common import json_text, stable_id, utc_now
-from db import connect, rows_as_dict, set_state
+from db import connect, one_as_dict, rows_as_dict, set_state
 
 
 def _fold(text: str) -> str:
@@ -81,15 +81,95 @@ def _duration_days(text: str | None) -> int | None:
 
 
 
+def _delivery_days_from_fact(con, fact: dict[str, Any]) -> int | None:
+    explicit = _duration_days(str(fact.get('value_text') or ''))
+    if explicit is not None:
+        return explicit
+    if fact.get('evidence_status') != 'verified' or not fact.get('evidence_id'):
+        return None
+    ev = one_as_dict(con, 'SELECT * FROM evidence WHERE evidence_id=?', [fact['evidence_id']]) or {}
+    doc = one_as_dict(con, 'SELECT * FROM documents WHERE document_id=?', [ev.get('document_id')]) or {}
+    if (ev.get('evidence_status') != 'verified' or ev.get('extraction_path') == 'vision'
+            or not doc.get('active') or doc.get('format_family') != 'csv'
+            or ev.get('source_sha256') != doc.get('sha256')
+            or doc.get('offer_id') != fact.get('offer_id')
+            or (fact.get('supplier_id') and doc.get('supplier_id') != fact['supplier_id'])):
+        return None
+    try:
+        loc = json.loads(ev.get('locator_json') or '{}')
+        if not isinstance(loc, dict):
+            return None
+        row, first = loc.get('row'), loc.get('column', loc.get('start_column'))
+        if 'column' in loc and 'start_column' in loc and loc['column'] != loc['start_column']:
+            return None
+        last = loc.get('end_column', first)
+        if any(type(n) is not int or n < 1 for n in (row, first, last)) or last < first:
+            return None
+        units = rows_as_dict(con, "SELECT * FROM document_units WHERE document_id=? AND unit_type='csv_chunk' ORDER BY unit_index", [doc['document_id']])
+        header = None
+        values = None
+        for unit in units:
+            unit_loc = json.loads(unit.get('locator_json') or '{}')
+            structured = json.loads(unit.get('structured_json') or '{}')
+            if not isinstance(unit_loc, dict) or not isinstance(structured, dict):
+                continue
+            rows = structured.get('rows', [])
+            start = unit_loc.get('start_row')
+            if type(start) is not int or not isinstance(rows, list):
+                continue
+            if start == 1 and rows and isinstance(rows[0], list):
+                header = rows[0]
+            if start <= row < start + len(rows) and (not ev.get('unit_id') or ev['unit_id'] == unit['unit_id']):
+                values = rows[row - start]
+        if row == 1 or not isinstance(header, list) or not isinstance(values, list) or last > len(header) or last > len(values):
+            return None
+        labels = {'teslim gun', 'teslim suresi gun', 'delivery days', 'delivery lead time days'}
+        columns = [i for i in range(first-1, last) if re.sub(r'[\W_]+', ' ', _fold(str(header[i]))).strip() in labels]
+        if len(columns) != 1:
+            return None
+        cell = str(values[columns[0]]).strip()
+        if not re.fullmatch(r'\d+(?:[.,]0+)?', cell):
+            return None
+        if not re.search(r'(?<!\d)' + re.escape(cell) + r'(?!\d)', str(ev.get('quote') or '')):
+            return None
+        return int(float(cell.replace(',', '.')))
+    except (ValueError, TypeError, IndexError, OverflowError):
+        return None
+
+
+def _payment_day_offset(text: str, delivery_days: int | None) -> int | None:
+    """Keep the stated payment event before considering a cash/advance word."""
+    f = _fold(text)
+    delivery = bool(re.search(r"\b(?:teslim\w*|delivery)\b", f))
+    invoice = bool(re.search(r"\b(?:fatura\w*|invoice)\b", f))
+    duration = re.search(r"(\d+)\s*(?:gun|days?)\b", f)
+    if delivery:
+        if delivery_days is None or re.search(r"\b(?:once|oncesi|before)\b", f):
+            return None
+        relative = bool(re.search(r"(?:teslimden|teslim sonrasi|after delivery)", f))
+        if duration:
+            return int(delivery_days) + int(duration.group(1)) if relative else None
+        if relative:
+            return None
+        return int(delivery_days)
+    # An invoice date is not supplied by delivery lead time or the word cash.
+    if invoice:
+        return None
+    if duration:
+        return int(duration.group(1))
+    if re.search(r"\b(?:pesin|cash|avans|advance|siparis|order)\b", f):
+        return 0
+    return None
+
+
 def _payment_schedule(text: str | None, delivery_days: int | None) -> list[dict[str, Any]] | None:
     if not text:
         return None
     f = _fold(text)
-    # Common simple cases first.
-    if any(k in f for k in ["pesin", "cash", "100% advance", "%100 advance"]) and not re.search(r"%\s*\d+", f):
-        return [{"ratio": 1.0, "days": 0}]
-    if any(k in f for k in ["teslimde", "on delivery", "at delivery"]) and not re.search(r"%\s*\d+", f) and delivery_days is not None:
-        return [{"ratio": 1.0, "days": int(delivery_days)}]
+    percent = r"%\s*\d+|\d+(?:[.,]\d+)?\s*%"
+    if not re.search(percent, f) and any(k in f for k in ["pesin", "cash", "teslimde", "on delivery", "at delivery"]):
+        day = _payment_day_offset(f, delivery_days)
+        return [{"ratio": 1.0, "days": day}] if day is not None else None
     parts = re.split(r"[,;+]", f)
     rows: list[dict[str, Any]] = []
     for part in parts:
@@ -98,22 +178,7 @@ def _payment_schedule(text: str | None, delivery_days: int | None) -> list[dict[
             continue
         raw = m.group(1) or m.group(2)
         ratio = float(raw.replace(",", ".")) / 100.0
-        days = None
-        if any(k in part for k in ["pesin", "avans", "advance", "siparis", "order"]):
-            days = 0
-        else:
-            dm = re.search(r"(\d+)\s*(gun|day|days)", part)
-            if dm:
-                days = int(dm.group(1))
-                # "60 days after delivery" is not day 60 from order date.
-                # Add the normalized delivery lead time when the phrase is
-                # explicitly delivery-relative.
-                if any(k in part for k in ["teslimden", "teslim sonrasi", "teslim sonrası", "after delivery"]):
-                    if delivery_days is None:
-                        return None
-                    days += int(delivery_days)
-            elif any(k in part for k in ["teslim", "delivery"]) and delivery_days is not None:
-                days = int(delivery_days)
+        days = _payment_day_offset(part, delivery_days)
         if days is None:
             return None
         rows.append({"ratio": ratio, "days": days})
@@ -170,10 +235,12 @@ def normalize(run_root: Path) -> dict[str, Any]:
 
             delivery_days = None
             for field, normalized_key in [("delivery", "days"), ("warranty", "months")]:
-                row = con.execute("SELECT fact_id,value_text,normalized_json FROM facts WHERE offer_id=? AND field_key=?", [offer_id, field]).fetchone()
+                row = con.execute("SELECT fact_id,value_text,normalized_json,evidence_id,evidence_status,supplier_id FROM facts WHERE offer_id=? AND field_key=?", [offer_id, field]).fetchone()
                 if not row or not row[1]:
                     continue
-                days = _duration_days(row[1])
+                days = (_delivery_days_from_fact(con, {'value_text':row[1], 'evidence_id':row[3],
+                        'evidence_status':row[4], 'supplier_id':row[5], 'offer_id':offer_id})
+                        if field == 'delivery' else _duration_days(row[1]))
                 if days is None:
                     continue
                 value = round(days / 30) if field == "warranty" else days

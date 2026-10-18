@@ -114,6 +114,20 @@ def check(run_root:Path)->dict[str,Any]:
                         expected=display_cell(ws.title,col,val)
                         if not _same(expected,ws.cell(rn,col).value):
                             add(ws.title,ws.cell(rn,col).coordinate,'calculated_item_subtotal',expected,ws.cell(rn,col).value)
+        from source_price_display import SHEET as price_sheet, sheet_entries
+        source_price_rows=sheet_entries(snap)
+        if source_price_rows:
+            if price_sheet not in wb.sheetnames:
+                add(price_sheet,'sheet','source_price_chain','present','missing')
+            else:
+                ws=wb[price_sheet]
+                if ws.max_row != len(source_price_rows)+1:
+                    add(ws.title,'rows','source_price_chain_count',len(source_price_rows),ws.max_row-1)
+                for rn,entry in enumerate(source_price_rows,start=2):
+                    for col,val in enumerate(entry['values'],start=1):
+                        expected=display_cell(ws.title,col,val)
+                        if not _same(expected,ws.cell(rn,col).value):
+                            add(ws.title,ws.cell(rn,col).coordinate,'source_price_chain',expected,ws.cell(rn,col).value)
         decision_artifact = current.get('decision_snapshot')
         decision = run_root / decision_artifact['relative_path'] if decision_artifact else run_root/'output'/'decision_snapshot.json'
         if decision.exists():

@@ -4,7 +4,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
-import tempfile
+import uuid
 import time
 from collections import Counter
 from common import json_text, sha256_file
@@ -12,6 +12,20 @@ from db import connect
 from report_model import build_preliminary, matrix_values
 from scenario_formulas import literal, add_scenarios, validate_formulas
 from pdf_renderer import render_pdf, label
+
+
+def _new_stage(root, prefix):
+    # Windows tempfile.mkdtemp uses a private DACL. A delivered revision must
+    # inherit its destination's existing access, including the human user.
+    # This creates a new unique directory; no existing permissions are edited.
+    for _ in range(10):
+        stage=Path(root)/(prefix+uuid.uuid4().hex)
+        try:
+            stage.mkdir(mode=0o777 if os.name=='nt' else 0o700)
+            return stage
+        except FileExistsError:
+            continue
+    raise FileExistsError('Could not allocate a fresh report stage')
 
 
 def _publish_directory(stage, target):
@@ -30,10 +44,19 @@ def _publish_directory(stage, target):
 
 def _validate_pair(directory, contract, model):
     from openpyxl import load_workbook
-    import fitz
+    import pymupdf as fitz
     xlsx=directory/"Teklif_Degerlendirme.xlsx"; pdf=directory/"Teklif_Degerlendirme.pdf"
     result=validate_formulas(xlsx,contract)
     if result["status"]!="PASS": raise ValueError("; ".join(result["errors"]))
+    cache_check={'status':'NOT_CALCULATED'}
+    if model.get('recalculation')=='LOCAL_RECALCULATED':
+        from calculation_cache import validate_caches
+        evidence=model.get('calculation_evidence') or {}
+        if (evidence.get('available') is not True or evidence.get('status')!='LOCAL_RECALCULATED'
+                or evidence.get('engine')!=model.get('calculation_engine')
+                or evidence.get('output_sha256')!=sha256_file(xlsx)):
+            raise ValueError('Yerel hesap kanıtı Excel dosyasıyla uyuşmuyor')
+        cache_check=validate_caches(xlsx,contract)
     wb=load_workbook(xlsx,data_only=False)
     if len(wb.sheetnames)<2: raise ValueError("Çok sekmeli XLSX yok")
     # Independently count rendered assessment rows, excluding headers.
@@ -48,11 +71,13 @@ def _validate_pair(directory, contract, model):
         text="\n".join(p.get_text() for p in doc)
     for phrase in (label(model["decision_assurance"]),label(model["comparison_status"])):
         if phrase not in text: raise ValueError("PDF rapor statüsü kayboldu")
-    return {"status":"PASS","formula_count":result["formula_count"],"pdf_pages":pages,
-            "native_recalculation":model.get('recalculation','PENDING_NATIVE_RECALC'),
+    return {"status":"PASS","formula_count":result["formula_count"],"pdf_pages":pages,"calculation_cache":cache_check,
+            "recalculation":model.get('recalculation','PENDING_LOCAL_RECALC'),
+            "calculation_engine":model.get('calculation_engine'),
+            "native_recalculation":"NOT_RUN" if model.get('recalculation')=='LOCAL_RECALCULATED' else model.get('recalculation','PENDING_LOCAL_RECALC'),
             "formula_check_recalculation":"NOT_EVALUATED_BY_STRUCTURAL_CHECK"}
 
-def _workbook(model,scenarios):
+def _workbook(model,scenarios,scoring=None):
     from openpyxl import Workbook
     from openpyxl.styles import Alignment, Font, PatternFill
     wb=Workbook(); wb.remove(wb.active)
@@ -71,7 +96,7 @@ def _workbook(model,scenarios):
         ["Karşılaştırma",label(model["comparison_status"])],["Profil",model["profile"]],
         ["Kesin öneri","Yok"],["Kaynak özeti",model.get("source_digest","Bütünlük doğrulanamadı")],
         ["Sınırlamalar","\n".join(model["limitations"]+model.get("integrity_findings",[]))],
-        ["Excel formül hesabı","Native Excel yeniden hesaplama bekliyor; formül yapısı kontrol edildi."]])
+        ["Excel formül hesabı","Hesap durumu eşlik eden PDF ve rapor doğrulama kaydında gösterilir."]])
     table("Envanter",["Belge","Durum","Kaynak hash"],[[d["relative_path"],d["parse_status"],d["sha256"]]
                                                     for d in model["documents"]])
     names={s["supplier_id"]:s["display_name"] for s in model["suppliers"]}
@@ -92,9 +117,13 @@ def _workbook(model,scenarios):
         table('Alici Miktar Esasi',['Teklif','Kaynak toplamı','Miktar esasıyla ara tutar','Para birimi','Fark','Sınır'],
               [[r['offer_id'],r['source_total'],r['quantity_adjusted_total'],r['currency'],r['delta'],r['limitation']]
                for r in model['buyer_quantity_totals']])
-    contract=add_scenarios(wb,scenarios)
+    from source_scenarios import from_sources
+    from scenario_scoring import add_scoring
+    contract=add_scenarios(wb,from_sources(model) if scenarios is None else scenarios)
     from matrix_workbook import add_matrix, seal_source_cells
     add_matrix(wb, model, contract)
+    add_scoring(wb,model,contract,scoring)
+    contract['version']='teklif-formula-contract/v3'
     seal_source_cells(wb, contract)
     return wb,contract
 
@@ -112,7 +141,7 @@ def _register(run_root,revision,manifest):
         raise
     finally: con.close()
 
-def export_preliminary(run_root: Path,reason: str,scenarios=None,*,_directory="reports",_allow_fallback=True):
+def export_preliminary(run_root: Path,reason: str,scenarios=None,*,scoring=None,_directory="reports",_allow_fallback=True):
     """No analytical state/snapshot is promoted; never overwrite a completed run."""
     from question_waits import assert_operation_allowed
     assert_operation_allowed(run_root, 'report_delivery.export_preliminary')
@@ -133,9 +162,11 @@ def export_preliminary(run_root: Path,reason: str,scenarios=None,*,_directory="r
                     raise ValueError("Completed run preserved; use a new run")
             finally: con.close()
         reports.mkdir(parents=True,exist_ok=True)
-        wb,contract=_workbook(model,scenarios)
+        wb,contract=_workbook(model,scenarios,scoring)
         model["scenario_reference"]=contract["reference"]
         model["scenario_assumptions"]=contract.get("assumptions",{})
+        model['scenario_scoring']=(contract.get('scoring') or {}).get('configuration')
+        model['scenario_scoring_results']=contract.get('scoring_results',{})
         identity=hashlib.sha256(json_text({"model":model,"scenarios":scenarios,"formula_version":contract["version"]}).encode()).hexdigest()
         revision=identity[:24]; target=reports/revision
         if not target.resolve().is_relative_to(reports.resolve()):
@@ -153,17 +184,23 @@ def export_preliminary(run_root: Path,reason: str,scenarios=None,*,_directory="r
             if saved_contract != contract:
                 raise ValueError("Previous formula contract changed")
             saved_model=json.loads((target/"report_model.json").read_text(encoding="utf-8"))
-            if saved_model != model:
+            source_projection={k:v for k,v in saved_model.items() if k not in ('recalculation','calculation_engine','calculation_evidence')}
+            if source_projection != model:
                 raise ValueError("Previous report projection changed")
-            _validate_pair(target,contract,model)
+            _validate_pair(target,contract,saved_model)
             phase="register"
             if model["content_status"]!="SAFETY_NOTICE": _register(run_root,revision,manifest)
             wb.close()
             return {**manifest,"delivery_status":"READY","deliverable_artifacts":True,"reused":True,
                     "xlsx":str(target/"Teklif_Degerlendirme.xlsx"),"pdf":str(target/"Teklif_Degerlendirme.pdf")}
-        stage=Path(tempfile.mkdtemp(prefix=".report-stage-",dir=reports))
+        stage=_new_stage(reports,".report-stage-")
         xlsx=stage/"Teklif_Degerlendirme.xlsx"; pdf=stage/"Teklif_Degerlendirme.pdf"
         wb.save(xlsx); wb.close()
+        from local_calculation import recalculate
+        recalc=recalculate(xlsx)
+        model['recalculation']='LOCAL_RECALCULATED' if recalc.get('available') else 'PENDING_LOCAL_RECALC'
+        model['calculation_engine']=recalc.get('engine')
+        model['calculation_evidence']={k:v for k,v in recalc.items() if k not in ('path','process')}
         (stage/"report_model.json").write_text(json.dumps(model,ensure_ascii=False,indent=2,default=str),encoding="utf-8")
         (stage/"formula_contract.json").write_text(json.dumps(contract,ensure_ascii=False,indent=2,default=str),encoding="utf-8")
         try:
@@ -190,7 +227,7 @@ def export_preliminary(run_root: Path,reason: str,scenarios=None,*,_directory="r
                 "renderer":pdf_result}
     except Exception as exc:
         if isinstance(exc, OSError) and phase != "register" and _allow_fallback:
-            result=export_preliminary(run_root,reason,scenarios,_directory="reports_fallback",_allow_fallback=False)
+            result=export_preliminary(run_root,reason,scenarios,scoring=scoring,_directory="reports_fallback",_allow_fallback=False)
             return {**result,"alternate_report_path_attempted":True,"primary_path_error":str(exc)}
         return {"delivery_status":"FAILED","deliverable_artifacts":False,
                 "decision_assurance":model["decision_assurance"],"error":str(exc)}
@@ -220,6 +257,10 @@ def inspect_preliminary(run_root: Path):
         current = build_preliminary(run_root, model["limitations"][0])
         current["scenario_reference"] = model["scenario_reference"]
         current["scenario_assumptions"] = model.get("scenario_assumptions",{})
+        current['scenario_scoring']=model.get('scenario_scoring')
+        current['scenario_scoring_results']=model.get('scenario_scoring_results',{})
+        for key in ('recalculation','calculation_engine','calculation_evidence'):
+            if key in model:current[key]=model[key]
         if current != model:
             raise ValueError("Report source state changed; create a new revision")
         qa = _validate_pair(directory, contract, model)
@@ -229,3 +270,29 @@ def inspect_preliminary(run_root: Path):
                 "pdf": str(directory / "Teklif_Degerlendirme.pdf"), "qa": qa}
     except Exception as exc:
         return {"delivery_status": "FAILED", "deliverable_artifacts": False, "error": str(exc)}
+
+
+def main():
+    import argparse
+    parser = argparse.ArgumentParser(description="Create or inspect a validated preliminary Excel/PDF pair; never approves a purchase")
+    parser.add_argument("--run", required=True)
+    action = parser.add_mutually_exclusive_group(required=True)
+    action.add_argument("--reason", help="Actual reason for the preliminary or safety report")
+    action.add_argument("--inspect", action="store_true", help="Inspect the current committed preliminary pair")
+    args = parser.parse_args()
+    run = Path(args.run)
+    from run_compatibility import assert_compatible
+    assert_compatible(run, Path(__file__).resolve().parents[1])
+    if args.inspect:
+        result = inspect_preliminary(run)
+    else:
+        if not args.reason.strip():
+            parser.error("A non-empty report reason is required")
+        result = export_preliminary(run, args.reason.strip())
+    print(json.dumps(result, ensure_ascii=False, indent=2, default=str))
+    return 0 if result.get("delivery_status") == "READY" and result.get("deliverable_artifacts") else 3
+
+
+if __name__ == "__main__":
+    from question_waits import run_guarded_main
+    raise SystemExit(run_guarded_main(main))

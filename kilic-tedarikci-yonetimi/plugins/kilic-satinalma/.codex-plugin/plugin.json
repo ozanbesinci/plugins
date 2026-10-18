@@ -1,15 +1,15 @@
 {
   "name": "kilic-satinalma",
-  "version": "1.3.3",
-  "description": "Kaynak kanıtlı satınalma teklif değerlendirme ve açık onaylı Windows güncelleyici becerileri.",
+  "version": "1.4.0",
+  "description": "Hazır yerel Python ortamında kaynak kanıtlı teklif değerlendirme, çok kriterli senaryo ve Excel/PDF raporlama.",
   "author": {
     "name": "Ozan Beşinci"
   },
   "skills": "./skills/",
   "interface": {
     "displayName": "Kılıç Tedarikçi Yönetimi",
-    "shortDescription": "Teklif değerlendirme ve güncelleyici",
-    "longDescription": "Teklifleri kaynak kanıtı, kapsam, maliyet, ticari koşul ve risk açısından değerlendirir; gerekçeli öneri ve Excel/PDF üretir. Windows program sürümlerini açık seçim ve onayla kontrol eder ve günceller.",
+    "shortDescription": "Teklif değerlendirme ve Excel/PDF raporlama",
+    "longDescription": "Doğrulanmış teklifleri kapsam, maliyet, ticari koşul ve risk açısından değerlendirir. Kullanıcı bilgisayarındaki ayrı kurulmuş Python ortamını doğrular; gerekçeli öneri ve kaynaklardan ayrılmış Excel/PDF senaryoları üretir.",
     "developerName": "Ozan Beşinci",
     "category": "Productivity",
     "capabilities": [

@@ -62,12 +62,10 @@ def validate(run_root: Path) -> dict[str, Any]:
         ).fetchone()[0]
         if missing_receipts:
             blocking.append(f"{missing_receipts} completed model tasks are missing model/effort receipts")
-        incomplete_usage = con.execute(
-            """SELECT count(*) FROM task_queue t JOIN model_receipts r ON r.task_id=t.task_id
-               WHERE t.status='completed' AND (r.input_tokens IS NULL OR r.output_tokens IS NULL)"""
-        ).fetchone()[0]
-        if incomplete_usage:
-            blocking.append(f"{incomplete_usage} completed model tasks are missing token usage receipts")
+        from model_telemetry import inspect_receipts
+        telemetry = inspect_receipts(con)
+        if telemetry["invalid_receipts"]:
+            blocking.append(f"{len(telemetry['invalid_receipts'])} model tasks have invalid or unexplained telemetry receipts")
 
         missing_schema_validation = con.execute(
             """SELECT count(*) FROM task_queue t
@@ -267,6 +265,8 @@ def validate(run_root: Path) -> dict[str, Any]:
             "blocking_reasons": sorted(set(blocking)),
             "preliminary_reasons": sorted(set(preliminary)),
             "decision_sufficiency": suff,
+            "model_telemetry": telemetry,
+            "telemetry_warning": "Host usage unavailable; token totals and model runtime metadata may be unknown" if telemetry["unavailable_receipts"] else None,
             "validated_at": utc_now(),
         }
         out = run_root / "output" / "verification.json"

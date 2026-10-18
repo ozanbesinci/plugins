@@ -4,7 +4,7 @@
 
 The strongest high-effort model is the adjudicator, not the workflow engine. Coordination, state, arithmetic, filtering, diffing and mechanical QA are deterministic code.
 
-Do not hard-code a product model version in the skill. Resolve each role against the actual approved runtime catalog, record the actual model and effort, and never silently downgrade.
+Do not hard-code a product model version in the skill. Resolve each role against the actual approved runtime catalog, record the actual model and effort when exposed, and never silently downgrade. If ChatGPT Work hides task telemetry, record explicit host_unavailable plus a reason; unknown identity/effort uses the reserved HOST_UNAVAILABLE marker and token counts remain NULL. Do not claim the requested role model was actually used or that aggregate token cost/cap was measured.
 
 ## Roles
 

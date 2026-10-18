@@ -3,7 +3,7 @@ name: teklif-karar-rapor
 description: Doğrulanmış teklif analizinden tek gerekçeli satınalma eylemi önerisi, aynı snapshot bağlı Excel/PDF ve çıktı QA üretimini yönetir. Ana teklif akışının rapor/kapanışında kullan; eksik girdiyi tamamlamaz ve kullanıcı adına satınalma onayı vermez.
 ---
 
-# Karar ve Rapor — 5.1.3
+# Karar ve Rapor — 5.2.0
 ## Sorunun yanıtına bağlı bekleme
 
 [Kullanıcı yanıtı bekleme kuralı](../../USER-EVIDENCE-POLICY.md#sorunun-yanıtına-bağlı-bekleme) zorunludur. Yalnız sorunun cevabına bağlı ajan ve işler durur; soru anında çalışan bağımsız ajanlar devam eder. Bekleyen ajan cevap gelene kadar araç/model çağrısı, okuma, hesap, yazma, rapor veya kontrol yapmaz; süre sınırı ve periyodik sorgulama yoktur. Soru kimliği/kapsamı ve bağımlı görev/ajan kimliklerini gösterimden önce kaydet. Yalnız ilgili yeterli yanıt bu bağımlılığı açar; “devam”, sessizlik veya seçili varsayılan cevap/onay değildir. Cevaplanmış soruyu sebepsiz tekrarlama.
@@ -22,7 +22,7 @@ Karar ve Excel/PDF kullanıcı teyidine dayalı geçerli girdiyi gösterir. Daya
 
 ## Her çağrıda başlangıç bildirimi
 
-Bu beceri fiilen çalışmaya başladığında, ilk kullanıcı mesajında ortak okuyucunun ürettiği satırı aynen göster. Kendi paketindeki `../../scripts/skill_startup.py --skill teklif-karar-rapor` komutunu kendi fiziksel skill klasöründen çalıştır; başka plugin'in aynı adlı skill'ini genel adla çağırma. Okuyucu gerçek beceri adını ve o çağrıdaki VERSION dosyasını kullanır:
+Beceri başlangıcında `& "$env:USERPROFILE\KilicPython\teklif-python.exe" "<aktif-paket>/scripts/runtime_launcher.py" skill_startup --skill teklif-karar-rapor` komutunu yürüt. Başlatıcı kayıtlı yerel Python ve paket kilidini doğrular; gerçek ad/sürüm satırını aynen göster. Ortam yoksa kurulum mesajını bildir; analiz içinde kurulum yapma.
 
 **[Beceri adı] skilli Kılıç Satınalma Departmanı tarafından geliştirilmiştir. Sürüm: [gerçek sürüm]**
 
@@ -55,3 +55,7 @@ Mekanik formül/kaynak/bütünlük QA, cross_output_consistency, provenance_surv
 VERIFIED/PRELIMINARY/BLOCKED ve PASS/SKIPPED aşamalarını açık bildir; açık kritik girdi/coverage'i saklama. COMPLETE reentry salt okunur; değişen kaynak/artefakt/QA parent eski onayı geçersiz kılar. Görsel QA yeniden kullanımı yalnız ilgili içerik/snapshot/hash sözleşmesi aynıysa mümkündür.
 
 Ayrıntı: [qa-and-output](../teklif-degerlendirme/references/qa-and-output.md); kapılar ve pinler için ana skill'in mevcut yürütme protokolü.
+
+## Web üzerinden dosya teslimi
+
+Excel/PDF çiftini Work web kullanıcısına sunarken [Work dosya teslimi](../teklif-degerlendirme/references/work-file-delivery.md) kuralını uygula; yerel hesap başarısını web indirme başarısı olarak gösterme.

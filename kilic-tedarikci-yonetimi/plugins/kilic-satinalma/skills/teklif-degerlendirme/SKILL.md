@@ -3,7 +3,7 @@ name: teklif-degerlendirme
 description: Satınalma tekliflerini kaynak, kapsam, ticari koşul, deterministik maliyet ve bağımsız kontrol üzerinden değerlendirir; aynı doğrulanmış veriden karar önerisi ve Excel/PDF üretimini yönetir. Teklif karşılaştırma, şartname uygunluğu ve satınalma karar desteğinde ana giriş olarak kullan.
 ---
 
-# Teklif Değerlendirme — 5.1.3
+# Teklif Değerlendirme — 5.2.0
 ## Sorunun yanıtına bağlı bekleme
 
 [Kullanıcı yanıtı bekleme kuralı](../../USER-EVIDENCE-POLICY.md#sorunun-yanıtına-bağlı-bekleme) zorunludur. Yalnız sorunun cevabına bağlı ajan ve işler durur; soru anında çalışan bağımsız ajanlar devam eder. Bekleyen ajan cevap gelene kadar araç/model çağrısı, okuma, hesap, yazma, rapor veya kontrol yapmaz; süre sınırı ve periyodik sorgulama yoktur. Soru kimliği/kapsamı ve bağımlı görev/ajan kimliklerini gösterimden önce kaydet. Yalnız ilgili yeterli yanıt bu bağımlılığı açar; “devam”, sessizlik veya seçili varsayılan cevap/onay değildir. Cevaplanmış soruyu sebepsiz tekrarlama.
@@ -22,7 +22,7 @@ Kullanıcının doğrudan verdiği olgu, teyit, düzeltme ve karar yetkili kulla
 
 ## Her çağrıda başlangıç bildirimi
 
-Bu beceri fiilen çalışmaya başladığında, ilk kullanıcı mesajında ortak okuyucunun ürettiği satırı aynen göster. Kendi paketindeki `../../scripts/skill_startup.py --skill teklif-degerlendirme` komutunu kendi fiziksel skill klasöründen çalıştır; başka plugin'in aynı adlı skill'ini genel adla çağırma. Okuyucu gerçek beceri adını ve o çağrıdaki VERSION dosyasını kullanır:
+Beceri başlangıcında `& "$env:USERPROFILE\KilicPython\teklif-python.exe" "<aktif-paket>/scripts/runtime_launcher.py" skill_startup --skill teklif-degerlendirme` komutunu yürüt. Başlatıcı kayıtlı yerel Python ve paket kilidini doğrular; gerçek ad/sürüm satırını aynen göster. Ortam yoksa kurulum mesajını bildir; analiz içinde kurulum yapma.
 
 **[Beceri adı] skilli Kılıç Satınalma Departmanı tarafından geliştirilmiştir. Sürüm: [gerçek sürüm]**
 
@@ -34,10 +34,12 @@ Bu beceri tek ana giriş noktasıdır. Kullanıcıya bütünleşik bir akış su
 
 ## Başlangıç ve ortak sınır
 
-1. Ortamı `scripts/environment_check.py --strict --output "<run>/environment.json"` ile kontrol et. `READY` olmadan analiz başlatma. Eksikleri gereken/kurulu sürüm ve nedenle tek tabloda göster. DuckDB ikincil PDF okuyucusu isteğe bağlıdır; yokluğu uyarı olarak görünür, birincil okuma/rapor yeteneğiyle karıştırılmaz. Özel kabulde `--require-pdf-extension` kullanılabilir. Güncelleyici otomatik çağrılmaz; paket kurulmaz. Geliştirme veya sürüm sorusu bir teklif analizi değildir.
+1. Ortamı `& "$env:USERPROFILE\KilicPython\teklif-python.exe" "<aktif-paket>/scripts/runtime_launcher.py" environment_check --strict --output "<run>/environment.json"` ile kontrol et. `READY` olmadan analiz başlatma. Eksikleri gereken/kurulu sürüm ve nedenle tek tabloda göster. DuckDB ikincil PDF okuyucusu isteğe bağlıdır; yokluğu uyarı olarak görünür, birincil okuma/rapor yeteneğiyle karıştırılmaz. Özel kabulde `--require-pdf-extension` kullanılabilir. Güncelleyici bu eklentide yoktur; paket kurulmaz. Geliştirme veya sürüm sorusu bir teklif analizi değildir.
 2. Yalnız yeni boş run için `scripts/workflow.py prepare --source "<source>" --run "<run>" --profile <profil>` kullan. Kaynak salt okunur; arşiv kopyası hash eşit olmalı. Var olan koşuya prepare uygulama. Kullanıcı profil/girdi vermişse tekrar sorma.
 3. Envanteri dosya/format/rol/firma/revizyon/okunabilirlik olarak tek tabloda göster. Kaynak klasör adı kullanıcı tarafından firma olarak belirtilmişse bu ilişkiyi kaydet; diğer adlardan sessiz firma/revizyon seçimi yapma.
 4. [Ortak çalışma sözleşmesini](references/module-contract.md) oku. Tek run/DB, mevcut şema/context, task ID, kaynak/hash/evidence ve gerçek model makbuzu bütün bölümlerde korunur. Normal otomatik keşif açıktır; doğrudan alt skill çağrısı da bu ana akışa bağlanır.
+
+Kaynak kalemde sıralı iskonto/KDV varsa [yapılandırılmış fiyat zinciri sözleşmesini](references/canonical-data.md#kaynak-kalem-fiyat-zinciri--520-dev7) uygula. Her oran ve tutar kendi kanıtına bağlanır; düz `discounts`/`vat_rate` alanları yerine `normalized.items[].pricing` kullanılır. Beyan genel toplamı kaynak kalem hesabına eklenmez.
 
 ## Bölüm seçimi
 
@@ -71,9 +73,9 @@ Geliştirme adayında resmî rapor çifti ve karar JSON'u `output/revisions/<kim
 
 Excel kullanıcı varsayımları sekiz hesap grubuna ve beş finans sekmesine ayrılır. Çok adımlı ödeme, KDV geri kazanımı ve kalıntı NBD'si yalnız açık kullanıcı kur politikası ve yeterli girdilerle hesaplanır. Yaşam gideri modeli `CONSTANT_ANNUAL` sabit enerji/bakımı kapsar; diğer giderler kapsam dışıdır. `YEARLY_SCHEDULE` seçildiğinde en çok 100 yılın her biri için enerji/bakım/diğer gider ayrı ve hedef para biriminde, yıl sonu esasıyla girilir. Bilinen sıfır açıkça 0 yazılır; eksik yıl/kategori/model toplam TCO'yu hesaplanamadı bırakır. Sabit ve yıllık model girdileri karıştırılmaz; dönem dışındaki gider reddedilir. Kullanıcı varsayımları iki raporda da görünür. Mavi hücrelerdeki değişikliklerden yeni ön rapor çifti üretmek için `scenario_import.py --run <açık-koşu> --workbook <kullanıcı-kopyası.xlsx>` kullanılır. Kaynak/formül tahrifi veya değişmiş kaynak bazı reddedilir; kaynak facts ve resmî karar yazılmaz. Kapanmış koşu için yeni analiz gerekir. Eksik varsayım sıfır ve senaryo puanı resmî firma sıralaması olmaz.
 
-Mevcut sıra `PREPARE → INGEST → REQUIREMENTS → EXTRACT → NORMALIZE → SUFFICIENCY → REVIEW → ADJUDICATE → REPORT → QA → COMPLETE`. Sırayı Python belirler; alt skill yeni aşama yaratmaz. Açık iş sorusuna bağlı bir sonraki çağrıyı çalıştırmadan kullanıcıya dön. `NEEDS_LLM` için yalnız listelenen bounded context + görev şeması + listelenen görselleri ver; strict JSON ve gerçek model/efor/token ile `record_results.py` kayıt kapısını uygula.
+Mevcut sıra `PREPARE → INGEST → REQUIREMENTS → EXTRACT → NORMALIZE → SUFFICIENCY → REVIEW → ADJUDICATE → REPORT → QA → COMPLETE`. Sırayı Python belirler; alt skill yeni aşama yaratmaz. Açık iş sorusuna bağlı bir sonraki çağrıyı çalıştırmadan kullanıcıya dön. `NEEDS_LLM` için yalnız listelenen bounded context + görev şeması + listelenen görselleri ver; strict JSON ile `record_results.py` kayıt kapısını uygula. Host gerçek görev model/efor/token bilgisini veriyorsa aynen kaydet. ChatGPT Work bu bilgiyi vermiyorsa `--telemetry-status host_unavailable --telemetry-reason "ChatGPT Work görev bazlı kullanım bilgisini sunmuyor"` kullan; bilinen gerçek model/eforu isteğe bağlı geçir, bilinmeyeni uydurma ve token sayısı verme. `HOST_UNAVAILABLE` bir bilinmiyor işaretidir, gerçek model adı değildir. Bu kayıt kaynak/şema/hesap/bağımsız kontrol/görsel QA kapılarını kaldırmaz. Bütçe toplamı ve tavanın doğrulandığı iddia edilmez; ölçülmüş kullanım ve görev deneme sınırı uygulanır.
 
-**Bu geliştirme adayının yürütme sınırı:** `workflow.py prepare/next`, açık kritik iş sorularında `NEEDS_USER_INPUT` döndürür; `user_question_gate.py` yanıtı soru/kaynak kapsamıyla kaydeder ve değişen girdi için yeni koşu talebi üretir. `report_delivery.py` karar güvencesinden ayrı, iki dosyalı ön rapor teslimini denetler. Kaynak bütünlüğü bozuksa teklif değerlerini yayımlamayan iki dosyalı güvenli bildirim denenir. İki dosya doğrulanmadan teslim READY olmaz. Senaryolar kullanıcı varsayımıdır; kaynaklar ve resmî karar hesabı değişmez. Native yeniden hesaplama yapılmamış senaryo VERIFIED değildir. Yanıt kaynak olgularını doğrudan `verified` yapmaz. Gerçek belge kabulü olmadan üretim kabulü verilmez.
+**Bu geliştirme adayının yürütme sınırı:** `workflow.py prepare/next`, açık kritik iş sorularında `NEEDS_USER_INPUT` döndürür; `user_question_gate.py` yanıtı soru/kaynak kapsamıyla kaydeder ve değişen girdi için yeni koşu talebi üretir. `report_delivery.py --run <açık-koşu> --reason "Gerçek engel veya ön rapor nedeni"` komutunu aynı runtime_launcher üzerinden çalıştır; `--inspect` mevcut çifti doğrular. Kullanıcı yanıtına bağlı rapor işi cevap gelene kadar durur. Komut karar güvencesinden ayrı iki dosyalı ön rapor teslimini denetler; READY yalnız iki dosya ve hash/formül/PDF kontrolleri geçtiğinde verilir, analizi VERIFIED yapmaz. Kaynak bütünlüğü bozuksa teklif değerlerini yayımlamayan iki dosyalı güvenli bildirim denenir. İki dosya doğrulanmadan teslim READY olmaz. Senaryolar kullanıcı varsayımıdır; kaynaklar ve resmî karar hesabı değişmez. Yerel motorla hesaplanmamış senaryo doğrulanmış hesap sonucu değildir. Yanıt kaynak olgularını doğrudan `verified` yapmaz. Gerçek belge kabulü olmadan üretim kabulü verilmez.
 
 Teknik parser/şema/hesap/QA hatası kullanıcı ticari cevabıyla PASS olmaz. `PASS/SKIPPED/BLOCKED` aşamalarını ayrı bildir. Tamamlanan analiz tek gerekçeli ana satınalma eylemi önerisiyle kapanır: doğrulanmış firma/kapsam/bedel/koşul/risk ve sonraki adım. Yeterli kanıt yoksa somut teyit/yenileme talebi veya mevcut şartlarda alımı önermeme kararı ver; zorla firma seçme. Teknik BLOCKED başarılı karar teslimi değildir.
 
@@ -89,3 +91,19 @@ Kurulum/güncelleme/yayın ayrı yetkidir; analiz sırasında skill dosyaların�
 
 
 Açık “bilinmiyor” yanıtı kaydedilir; aynı soru tekrarlanmaz ve değer uydurulmaz. Karar etkisi alan bazında gerekçelendirilir. Bilinmeyen teklif tarihi, güncel geçerlilik ayrı firma/alan/kaynak/hash kapsamlı kullanıcı kanıtıyla uygulanmış ve bağımsız kontrol edilmişse tek başına firma önerisini engellemez. Geçerlilik veya diğer karar etkili bilgi bilinmiyorsa somut engel belirtilir. Özgün kaynak gözlemi ile etkin değerlendirme kanıtı ayrı tutulur. Çok alanlı soruda cevaplanan ve kalan alanlar ayrı izlenir. Karma birimler toplanmaz; kaynak satırları ve geçerli miktar düzeltmeleri ayrı doğrulanır. Uygulanmayan karşılaştırma alanı gerekçeli kayıtla açıklanır. Hesap, kaynak, bağımsız inceleme ve görsel QA kapıları korunur.
+
+## Hazır yerel ortam ve Excel senaryoları — 5.2
+
+Tüm analiz, rapor ve devam komutlarını `& "$env:USERPROFILE\KilicPython\teklif-python.exe" "<aktif-paket>/scripts/runtime_launcher.py" <betik-adı> <argümanlar>` üzerinden aynı kayıtlı yerel Python ile yürüt. Başlatıcı PATH veya en yeni klasör seçmez; bilgisayar/kullanıcı, ortam kimliği, Python yolu ve tam paket kilidini doğrular. Kurulum eklenti dışındaki `kurulum/Kur.cmd` ile kullanıcı profiline yapılır; analiz sırasında onarım veya paket kurulumu yoktur. Eksik ortamda kurucunun konumunu göster ve dur. Formül hesabı ayrı kurulan, sürümü ve hashleri kilitli LibreOffice motoruyla otomatik yürür. Mevcut Python kullanıcısı motoru bir defa `kurulum/Kur-Hesap.cmd` ile ekler; analiz sırasında kurulum yapılmaz. `LOCAL_RECALCULATED` yerel motor sonucudur, native Excel çalıştırma kanıtı değildir. Hesaplanmış kopyadan yalnız doğrulanan hücre sonuçları özgün Excel yapısına aktarılır; hata halinde `PENDING_LOCAL_RECALC` sınırını açıkça bildir.
+
+ChatGPT Work masaüstü ve aynı uygun görevin web devamı yerel bilgisayar erişimini gerektirir. Bu bağlantı yoksa bulut Python'una geçme; bilgisayar/masaüstü uygulaması bağlı olmalı. Web'den açılan her yeni görevin yerel erişimi olduğunu varsayma. Yerel kancalara dayanma. Bu sürümün gerçek Work bağlantı kabulü ayrı raporlanır.
+
+Doğrulanmış, aynı firmaya/teklife ve kaynak hashine bağlı bedeller Excel senaryolarına başlangıç verisi olur. Teklif toplamının miktar çarpanı 1 fiziksel ürün miktarı değildir. Eksik vergi, kur, tarih veya gideri sıfırla doldurma. Kaynak kalemleri ayrı senaryodur; teklif toplamıyla birlikte toplanmaz. Fiyat birimi, KDV dahil/hariç seçimi ve ardışık iskontolar izinli hücrelerden değiştirilir; ara aşamada para yuvarlaması yapılmaz.
+
+Çok kriterli senaryoda ağırlık toplamı 100, puan aralığı 0–10; doğrudan/oransal/min–maks yöntemleri, baz ve en az iki alternatif ağırlık seti bulunur. Alternatif örnekler şirket politikası değildir. İki puanlı hızlı senaryonun ağırlık toplamı 1 olduğu başlığında belirtilir. Tek uygun bağımsız firmaya rekabetçi sıra üretme. İçe alınan hücreler yalnız yeni kullanıcı senaryosu Excel/PDF çifti üretir; kaynak olgularını, resmî sıralamayı ve satınalma önerisini yazmaz.
+
+Ayrıntı: [5.2 değişiklik ve kabul durumu](references/RELEASE_ACCEPTANCE_5.2.0.md).
+
+## Web üzerinden dosya teslimi
+
+Excel/PDF çiftini Work web kullanıcısına sunarken [Work dosya teslimi](references/work-file-delivery.md) kuralını uygula; yerel hesap başarısını web indirme başarısı olarak gösterme.

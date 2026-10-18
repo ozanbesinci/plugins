@@ -59,7 +59,8 @@ class EnvironmentBootstrapTests(unittest.TestCase):
         for removed in ("guncelleyici", "updater", "runtime_handoff", "repair-runtime", "repair"):  # negative-assertion: must stay absent
             self.assertNotIn(removed, text)
 
-    def test_missing_pdf_extension_is_listed(self):
+    @patch('calculation_runtime.check',return_value={'status':'READY'})
+    def test_missing_pdf_extension_is_listed(self,calculation_ready):
         ok_req = {"requirements_file": "r", "items": [], "missing": [], "version_mismatch": [], "parse_errors": [], "ok": True}
         with patch.object(ec, "check_requirements", return_value=ok_req), patch.object(
             ec, "check_duckdb_pdf", return_value={"duckdb": True, "pdf_extension": False, "pdf_installed": False, "required": True}
@@ -68,7 +69,8 @@ class EnvironmentBootstrapTests(unittest.TestCase):
         self.assertEqual(result["status"], "BLOCKED_ENVIRONMENT")
         self.assertEqual([x["component"] for x in result["missing_components"]], ["DuckDB pdf eklentisi"])
 
-    def test_optional_secondary_pdf_reader_does_not_block_or_claim_available(self):
+    @patch('calculation_runtime.check',return_value={'status':'READY'})
+    def test_optional_secondary_pdf_reader_does_not_block_or_claim_available(self,calculation_ready):
         ok_req={"requirements_file":"r","items":[],"missing":[],"version_mismatch":[],"parse_errors":[],"ok":True}
         with patch.object(ec,"check_requirements",return_value=ok_req),patch.object(
             ec,"check_duckdb_pdf",return_value={"duckdb":True,"pdf_extension":False,"pdf_installed":False,"required":False}

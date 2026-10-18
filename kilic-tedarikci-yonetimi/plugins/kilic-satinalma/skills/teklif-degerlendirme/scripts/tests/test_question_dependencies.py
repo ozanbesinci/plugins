@@ -202,25 +202,12 @@ class QuestionDependencyTests(unittest.TestCase):
         (self.run/'user_wait_control'/'state.json').unlink()
         with self.assertRaises(UserAnswerRequired):active(self.run)
 
-    def test_updater_native_and_python_guard_only_bound_actor(self):
-        q=self.question(kind='approval');register(self.run,q,agent_ids=['waiting-agent'])
+    def test_removed_updater_is_not_a_selectable_skill(self):
         plugin=Path(__file__).resolve().parents[4]
-        native=plugin/'vendor/guncelleyici/scripts/program-ortak.ps1'
-        py=plugin/'vendor/guncelleyici/scripts/islem_guvencesi.py'
-        state=self.run/'user_wait_control'/'state.json'
-        for actor,blocked in [('waiting-agent',True),('independent-agent',False)]:
-            env={**os.environ,'KILIC_USER_WAIT_STATE':str(state),'KILIC_AGENT_ID':actor}
-            command=". $args[0]; Assert-UserAnswerDependencies; 'ALLOWED'"
-            # Paths are passed as an argument, not interpolated as shell code.
-            psfile=self.root/'guard.ps1'
-            psfile.write_text("param([string]$GuardFile)\n. $GuardFile\nAssert-UserAnswerDependencies\n'ALLOWED'\n",encoding='utf-8')
-            ps=subprocess.run([str(Path(os.environ['SystemRoot'])/'System32/WindowsPowerShell/v1.0/powershell.exe'),
-                               '-NoProfile','-File',str(psfile),str(native)],env=env,
-                              capture_output=True,text=True,encoding='utf-8',errors='replace',timeout=30)
-            python=subprocess.run([sys.executable,'-B',str(py)],env=env,capture_output=True,
-                                  text=True,encoding='utf-8',errors='replace',timeout=30)
-            self.assertEqual(ps.returncode!=0,blocked)
-            self.assertEqual(python.returncode==4,blocked)
+        catalog=json.loads((plugin/'config/skill-catalog.json').read_text(encoding='utf-8'))
+        self.assertNotIn('guncelleyici',catalog['skills'])
+        self.assertFalse((plugin/'vendor/guncelleyici').exists())
+        self.assertFalse((plugin/'skills/guncelleyici').exists())
 
 
 if __name__=='__main__':unittest.main()

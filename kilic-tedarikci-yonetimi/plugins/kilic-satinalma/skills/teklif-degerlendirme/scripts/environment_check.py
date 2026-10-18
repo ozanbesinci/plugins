@@ -199,6 +199,12 @@ def check(requirements: Path | None = None, require_pdf_extension: bool = False)
     pdf_ok = bool(duck.get("pdf_extension")) or not require_pdf_extension
     ready = python_ok and req["ok"] and duck_ok and pdf_ok
     missing_components = missing_component_list(python_ok, req, duck, require_pdf_extension)
+    from calculation_runtime import check as calculation_check
+    calculation=calculation_check()
+    if calculation['status']!='READY':
+        ready=False
+        missing_components.append({'component':'Yerel hesap motoru','required':'Kilitli LibreOffice sürümü',
+                                   'installed':None,'reason':calculation['reason']})
     return {
         "status": "READY" if ready else "BLOCKED_ENVIRONMENT",
         "action": "CONTINUE" if ready else "STOP_ANALYSIS",
@@ -211,6 +217,7 @@ def check(requirements: Path | None = None, require_pdf_extension: bool = False)
         "platform": platform.platform(),
         "requirements": req,
         "duckdb": duck,
+        "calculation_engine": calculation,
         "missing_components": missing_components,
         "warnings": [] if pdf_ok and duck.get("pdf_extension") else [
             "DuckDB ikincil PDF okuyucusu kullanılamıyor; birincil PDF okuma ve rapor üretimi ayrı doğrulanır."
@@ -255,7 +262,7 @@ def blocked_message(missing_components: list[dict[str, Any]]) -> str:
     for item in missing_components:
         installed = f" (kurulu: {item['installed']})" if item.get("installed") else ""
         lines.append(f"- {item['component']}: {item['required']}{installed} — {item['reason']}")
-    lines.append("Bu skill otomatik kurulum yapmaz. Bileşenleri yetkili kişi kurduktan sonra ortam kontrolünü yeniden çalıştırın.")
+    lines.append("Bu skill otomatik kurulum yapmaz. Eklenti dışındaki kurulum/Kur.cmd ile kullanıcı ortamını hazırlayıp aynı başlatıcıyla yeniden deneyin.")
     return "\n".join(lines)
 
 

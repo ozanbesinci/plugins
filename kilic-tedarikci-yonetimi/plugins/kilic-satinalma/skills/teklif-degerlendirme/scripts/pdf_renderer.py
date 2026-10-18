@@ -14,7 +14,9 @@ LABELS = {"NO_DECISION":"Karar verilemedi","BLOCKED_INTEGRITY":"Bütünlük enge
           "EXCLUDE_OFFER":"Teklifi ele","BLOCK_RECOMMENDATION":"Öneriyi engelle","WARNING":"Uyarı","NONE":"Yok"}
 LABELS.update({"read":"Okundu", "active":"Aktif", "open":"Açık", "critical":"Kritik", "medium":"Orta",
                "PENDING_NATIVE_RECALC":"Excel yeniden hesaplama bekliyor",
-               "NATIVE_RECALCULATED":"Excel ile yeniden hesaplandı"})
+               "NATIVE_RECALCULATED":"Excel ile yeniden hesaplandı",
+               "LOCAL_RECALCULATED":"Yerel LibreOffice motoruyla hesaplandı",
+               "PENDING_LOCAL_RECALC":"Yerel hesap kontrolü tamamlanamadı"})
 
 SCENARIO_LABELS = {"Miktar ve Kapsam!B":"Net kalem tutarı", "Kur Vergi Ithalat!B":"Hedef para net tutarı",
     "Kur Vergi Ithalat!C":"İthalat matrahı", "Kur Vergi Ithalat!D":"Gümrük ve indirilemeyen vergi",
@@ -124,7 +126,7 @@ def render_pdf(model, path: Path):
     heading("Karar ve rapor durumu")
     for text in [label(model.get("content_status")),label(model.get("decision_assurance")),
                  label(model.get("comparison_status")),"Profil: "+model.get("profile","standart"),
-                 "Kesin satınalma önerisi: "+("Yok" if model.get("recommendation") is None else str(model["recommendation"])),
+                 "Önerilen aksiyon: "+str(model.get("recommendation_text") or "Kesin öneri yok"),
                  "Kaynak özeti: "+model.get("source_digest","Bütünlük doğrulanamadı")]:
         story.append(para(text))
     heading("Karar verilememe gerekçesi ve sınırlamalar")
@@ -167,6 +169,12 @@ def render_pdf(model, path: Path):
     table(["Firma","Teklif","Kaynak bedeli","Karşılaştırılabilir","Para"],costs,[115,100,100,110,90])
     if not costs: story.append(para("Doğrulanmış maliyet hesabı yok. Fiyat, miktar, kur, ödeme ve kapsam girdileri gereken alanlarda teyit edilmelidir; bilinmeyen bedel sıfır değildir."))
     from display_values import label as business_label, structured
+    from source_price_display import pdf_rows as source_price_rows
+    source_prices=source_price_rows(model)
+    if source_prices:
+        heading("Kaynak fiyat zinciri ve beyan mutabakatı")
+        story.append(para("Kaynak miktarı, birim fiyatı, sıralı iskontoları ve KDV esası aynı incelenen hesaba bağlıdır. Beyan genel toplamıyla ayrıca toplanmaz. KDV indirilebilirliği, ödeme finansmanı ve tam maliyet bu tablodan çıkarılmaz."))
+        table(["Teklif / kaynak kalemi", "Kaynak iskonto ve KDV esası", "Hesap ve beyan karşılığı"],source_prices,[175,165,175])
     heading("Kaynak ticari koşullar")
     terms = []
     for fact in model.get("facts", []):
@@ -216,10 +224,21 @@ def render_pdf(model, path: Path):
     for sid,reference in model.get("scenario_reference",{}).items():
         assumptions=model.get('scenario_assumptions',{}).get(sid)
         if assumptions:
-            heading("Senaryo " + str(assumptions['id']) + " — kullanıcı varsayımları")
-            table(["Varsayım", "Kullanıcı girdisi"],assumption_rows(assumptions),[280,235])
+            heading("Senaryo " + str(assumptions['id']) + " — dayanak ve varsayımlar")
+            if assumptions.get('basis'):
+                story.append(para("Senaryo dayanağı: " + str(assumptions['basis'])))
+            table(["Girdi", "Değer"],assumption_rows(assumptions),[280,235])
         heading("Senaryo satırı " + sid + " — bağımsız Python referans hesabı")
         table(["Hesap", "Varsayımlara bağlı sonuç"], scenario_rows(reference), [350,165])
+    scoring=model.get('scenario_scoring')
+    if scoring:
+        heading('Çok kriterli kullanıcı puanlaması ve ağırlık duyarlılığı')
+        story.append(para(scoring['basis']))
+        table(['Kriter','Ağırlık / 100','Yön / yöntem'],[[c['id'],str(c.get('weight')),str(c.get('direction'))+' / '+str(c.get('method'))] for c in scoring['criteria']],[200,100,215])
+        for case,result in model.get('scenario_scoring_results',{}).items():
+            heading('Kullanıcı ağırlık senaryosu: '+case)
+            table(['Teklif','Puan / 10','Senaryo sırası'],[[oid,str(round(score,6)),str(result['ranks'][oid])] for oid,score in result['scores'].items()],[300,115,100])
+        story.append(para('Senaryo puanı resmî satınalma sıralaması değildir. Örnek alternatif ağırlıklar şirket politikası değildir.'))
     story.append(para("Excel formül yeniden hesaplama durumu: "+label(model.get("recalculation","PENDING_NATIVE_RECALC"))))
     def footer(canvas,doc):
         canvas.setFont("KilicReport",8)
@@ -228,7 +247,7 @@ def render_pdf(model, path: Path):
     SimpleDocTemplate(str(path),pagesize=A4,rightMargin=40,leftMargin=40,
                       topMargin=35,bottomMargin=40,title="Teklif Değerlendirme",
                       author="Kılıç Satınalma Departmanı").build(story,onFirstPage=footer,onLaterPages=footer)
-    import fitz
+    import pymupdf as fitz
     with fitz.open(path) as doc:
         if len(doc)<2 or any(not p.get_text().strip() for p in doc):
             raise ValueError("PDF en az iki anlamlı sayfa içermeli")

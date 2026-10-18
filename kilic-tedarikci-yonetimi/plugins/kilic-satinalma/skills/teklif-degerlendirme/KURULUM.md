@@ -1,55 +1,51 @@
-# Kurulum ve calisma ortami - v5.0.17
+# Kurulum ve çalışma ortamı — 5.2 geliştirme adayı
 
-This skill is designed for a local Windows procurement workflow, but deterministic tests also run cross-platform.
+Python ve yerel hesap motorunun kurulumu eklentiden ayrıdır. Kullanıcı dağıtım paketindeki `kurulum/Kur.cmd` dosyasını bir defa açar. Kurucu Windows 64 bit / Python 3.14 ortamını, tam sürüm ve SHA256 ile kilitli paketleri kullanıcı profilindeki `%USERPROFILE%\KilicPython` altında hazırlar. Sistem PATH'i ve diğer Python ortamları değiştirilmez. Yönetici yetkisi istenmez; kurumsal çalıştırma ilkeleri engellenirse bu ilkeler atlatılmaz. Ayrıntı: [ayrı kurucu](../../../../kurulum/README.md).
 
-## Required runtime
+Eklentide Güncelleyici yoktur. Analiz sırasında paket, Python, Office veya uzantı kurulmaz; başka bir beceriye onarım devredilmez. Eklenti hazır ortamı bulur ve doğrular. Kurucunun belge okuma/yazma kontrolleri, Microsoft Excel'in formülleri hesapladığını veya Work bağlantısının çalıştığını kanıtlamaz.
 
-- Python 3.11+; tested development code is compatible with Python 3.13.
-- Packages in `requirements.txt`, including `jsonschema` for strict model-result gates.
-- DuckDB is the production state/evidence database.
-- The DuckDB `pdf` community extension is a required startup dependency in v5.0.17. `scripts/environment_check.py` verifies actual functions rather than assuming compatibility from a version string.
-- The skill never installs or repairs dependencies and does not hand repair off to another skill. It checks, lists what is missing, and stops. Installation is done by an authorised person outside the skill; afterwards the preflight is re-run and the same request can resume.
-- Microsoft Excel + pywin32 is required on Windows for real Excel recalculation and PDF export when those verification steps are required. No silent LibreOffice substitution is used.
+## Kayıtlı ortamı doğrulama
 
-## Preflight
+`<aktif-paket>`, çalıştırılan eklentinin köküdür. Genel `python`, PATH'teki bir Python veya en yeni görünen ortam seçilmez. Bütün analiz ve devam komutları aynı girişten çalışır:
 
-Run:
-
-```text
-python scripts/environment_check.py --output environment.json
-python scripts/run_tests.py
+```powershell
+& "$env:USERPROFILE\KilicPython\teklif-python.exe" "<aktif-paket>/scripts/runtime_launcher.py" environment_check --strict --output "<yeni-kosu>/environment.json"
 ```
 
-Any missing/out-of-range required Python package, missing DuckDB package, or unavailable DuckDB `pdf` extension returns `BLOCKED_ENVIRONMENT` (`--strict` exit code 3) with a concrete `missing_components` list (component, required, installed, reason) and a Turkish `user_message`. No package, extension or security setting is changed. Analysis continues only after `READY`. Test-only SQLite compatibility is enabled only by the test suite through `TEKLIF_TEST_SQLITE=1` and is not a production fallback.
+Başlatıcı bilgisayar/kullanıcı ve ortam kimliğini, Python yolunu ve tam paket kilidini doğrular. `READY` olmadan analiz başlamaz. `BLOCKED_ENVIRONMENT` eksik bileşen ve nedenleriyle bildirilir; eklenti kurulum yapmaz. Ortam hazırlandıktan sonra kontrol yeniden çalıştırılır.
 
-## Analysis entrypoint
+DuckDB ana veritabanı zorunludur. İkincil DuckDB `pdf` okuyucusu isteğe bağlıdır; yokluğu uyarıdır. Birincil PDF okuma ve rapor bağımlılıkları ayrı kontrol edilir. Özel kabul senaryosu bu ikinci okuyucuyu gerektiriyorsa `environment_check --strict --require-pdf-extension` kullanılır. SQLite yalnız test ortamıdır; üretim yedeği değildir.
 
-```text
-python scripts/workflow.py prepare --source "<source-folder>" --run "<run-folder>" --profile standart
-python scripts/workflow.py next --run "<run-folder>"
-python scripts/workflow.py status --run "<run-folder>"
+## Analizi başlatma ve sürdürme
+
+```powershell
+& "$env:USERPROFILE\KilicPython\teklif-python.exe" "<aktif-paket>/scripts/runtime_launcher.py" workflow prepare --source "<kaynak>" --run "<yeni-bos-kosu>" --profile standart
+& "$env:USERPROFILE\KilicPython\teklif-python.exe" "<aktif-paket>/scripts/runtime_launcher.py" workflow next --run "<kosu>"
+& "$env:USERPROFILE\KilicPython\teklif-python.exe" "<aktif-paket>/scripts/runtime_launcher.py" workflow status --run "<kosu>"
 ```
 
-When `next` returns `NEEDS_LLM`, execute only the returned bounded task packets with an approved runtime model matching `config/policy.json`. Record strict JSON results together with the **actual** model and effort receipt:
+Kaynak salt okunurdur. Var olan veya kapanmış koşuya `prepare` uygulanmaz. Devamda aynı ortam ve koşu kimliği korunur. `NEEDS_USER_INPUT` dönerse yalnız ilgili iş belirsizliği sorulur; yanıt olmadan bağlı hesap ve karar ilerletilmez. `NEEDS_LLM` dönerse yalnız listelenen görev bağlamı ve şeması kullanılır.
+
+Model görevini `record_results` ile kaydederken host gerçek model/efor/token veriyorsa bunlar aynen kullanılır. ChatGPT Work bu bilgiyi sunmuyorsa şu seçeneklerle açık eksiklik kaydı tutulur:
 
 ```text
-python scripts/record_results.py --run "<run-folder>" --task-id "<task-id>" --input "<result.json>" --model "<actual-model>" --effort "<actual-effort>" --response-id "<optional-response-id>" --input-tokens <required> --cached-input-tokens <optional> --output-tokens <required>
+--telemetry-status host_unavailable --telemetry-reason "ChatGPT Work görev bazlı kullanım bilgisini sunmuyor"
 ```
 
-Each model result is schema-validated before it can enter the canonical store. `input_tokens` and `output_tokens` are mandatory for a successful model receipt; unknown usage is not treated as zero. Continue `workflow.py next` until VERIFIED/PRELIMINARY/BLOCKED. Final validation also requires source/data-quality controls, cross-output reconciliation and the revision-aware coverage record. Profile token caps are computed from recorded input-token receipts. At the hard cap no new model task is dispatched unless the user explicitly authorizes a run-level override with `workflow.py budget-override --run "<run-folder>" --allow true`.
+Bilinmeyen model, efor veya token uydurulmaz. Bilinen tüketim alt toplamı genel toplam değildir; bilinmeyen tüketim sıfır sayılmaz ve bütçe tavanının doğrulandığı söylenmez. Görev şeması, kaynak, bağımsız hesap, görev deneme sınırı ve ilgili QA kontrolleri uygulanmaya devam eder.
 
-## CLI durum kodlari
+## Work masaüstü ve web
 
-`workflow.py` ve `validate_run.py` JSON durumunu stdout'a yazar; otomasyon ayrıca exit code'u kontrol etmelidir. `VERIFIED/OK` başarıdır. `PRELIMINARY` (2) kontrollü eksik sonuçtur; `BLOCKED_ENVIRONMENT` (3) eksik bileşen listesiyle analizin hiç başlamadığını bildirir; `BLOCKED`, `MANUAL_REVIEW_REQUIRED` ve `BUDGET_EXHAUSTED` (4) başarılı teslim değildir. Bileşenler elle kurulduktan sonra devam parametreleri komut satırına dağılmaz; `resume_request.json` içinde source/run/profile/analysis-date/financial/scoring payload'ları birlikte korunur.
+Aynı uygun Work görevinin webden devamı için yerel bilgisayar erişimi etkin ve bilgisayar bağlı olmalıdır. Webde açılan her yeni görevin yerel araçları görebildiği varsayılmaz. Yerel bağlantı yoksa bulut Python'una geçilmez. Python kurucusu, Work'ün yerel erişim veya Office uygulama kontrolünü kurmaz.
 
-## v5.0.17 kabul kapilari
+Tam otomatik formül hesabı ayrı kurulan LibreOffice motoruyla yapılır. Yeni kullanıcı `Kur.cmd`, mevcut kayıtlı Python kullanıcısı `Kur-Hesap.cmd` dosyasını bir defa açar. Her analizde kullanıcı işlemi gerekmez. Motor resmî, sabit hashli MSI paketinden yalnız kullanıcı klasörüne dosya açılarak hazırlanır; MSI kurulumu, sistem PATH'i, servis veya Office kaydı yapılmaz. Eklenti motor kaydını ve dosya bütünlüğünü doğrular; her hesap için ayrı profil ve geçici kopya kullanır.
 
-- Hesaplanmamış Excel formülleri, çözümlenmemiş veya çelişkili toplamlar, başka teklife ait ya da dayanağı bulunmayan kanıtlar ve geçersiz kaynak konumları `verified` olarak işaretlenemez.
-- Ürün/kapsam ve miktar birimi doğrulanmadan ranking açılmaz; açık satır-toplam mutabakatsızlığı kritik bulgudur.
-- Ödeme oranı/tutarı anaparaya mutabık değilse maliyet hesabı incomplete kalır ve karar kapısı `SUFFICIENT` olamaz.
-- Final XLSX formula-free üretilir; yüksek güvence PDF'sinde kritik snapshot değerleri gerçek PDF metninde ayrıca doğrulanır.
-- Gerçek DuckDB + DuckDB PDF extension ve Windows COM canlı kabulü ilgili üretim ortamında ayrıca yapılmalıdır; SQLite test modu bunların yerine geçmez.
+Hesaplanan kopyada formüller ve sabitler doğrulanır; yalnız hücre sonuçları özgün Excel dosyasına aktarılır. Başarı `LOCAL_RECALCULATED`, başarısızlık `PENDING_LOCAL_RECALC` olarak açıklanır. LibreOffice hesabı Microsoft Excel çalıştırılmış gibi gösterilmez. Microsoft Excel ile sürüme özgü karşılaştırmalı kabul ayrı tutulur; yalnız eski motorla alınan sonuç yeni sürüme taşınmaz. Ortak çalıştırıcı, ACL, DCOM veya Office kimlik ayarları değiştirilmez.
 
-## Release note
+## Rapor ve kabul
 
-Do not replace an installed organizational version until controlled live acceptance has been completed on representative procurement files. Synthetic tests validate code paths, not real supplier-document accuracy or token consumption.
+Excel kaynak verisini ve izinli kullanıcı senaryo formüllerini taşır; bu sürümde nihai dosya formülsüz değildir. Formüllerin konumu ve ifadesi, değişmez kaynak hücreleri ve izinli girdiler sözleşmeyle denetlenir. Formül yazılması veya dosyanın kaydedilmesi yeniden hesaplama kanıtı değildir.
+
+Excel/PDF çifti aynı snapshot ve rapor revizyonuna bağlı üretilir. İki dosya ve bütünlük kontrolleri geçmeden teslim `READY` olmaz; teslim `READY` olması analiz veya senaryoların doğrulandığı anlamına gelmez. Hesaplanmamış senaryolar doğrulanmış sonuç diye sunulmaz. Resmî görsel QA `yuksek_guvence` profiline bağlıdır; hızlı profildeki `NOT_APPLICABLE` bütün profillerin görsel kabulü sayılmaz.
+
+Gerçek Windows/Work kabulü, desteklenen hesap motoru, bağlantı dönüşü ve rapor kontrolleri ayrıca kanıtlanır. Teknik veya sentetik test sonucu gerçek tedarikçi belgesinin doğruluğu ya da satınalma onayı değildir. Güncel durum: [5.2 kabul kaydı](references/RELEASE_ACCEPTANCE_5.2.0.md). Bu geliştirme adayı kararlı yayın ilanı değildir.

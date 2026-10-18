@@ -29,12 +29,6 @@
       "display_name": "Maliyet Hesabı",
       "skill_file": "skills/teklif-maliyet/SKILL.md",
       "version_file": "skills/teklif-maliyet/VERSION"
-    },
-    "guncelleyici": {
-      "display_name": "Güncelleyici",
-      "skill_file": "skills/guncelleyici/SKILL.md",
-      "version_file": "vendor/guncelleyici/VERSION",
-      "matching_version_file": "skills/guncelleyici/VERSION"
     }
   }
 }

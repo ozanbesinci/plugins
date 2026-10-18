@@ -354,7 +354,7 @@ def _sheet_candidates(unit: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
 
 
 def _tabular_candidates(unit: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
-    """High-confidence label/value extraction for CSV/TSV row structures."""
+    """Conservative CSV/TSV label/value pairs; column headers stay semantic."""
     out: dict[str, list[dict[str, Any]]] = {k: [] for k in CRITICAL_FIELDS}
     try:
         structured = json.loads(unit.get("structured_json") or "{}")
@@ -376,14 +376,37 @@ def _tabular_candidates(unit: dict[str, Any]) -> dict[str, list[dict[str, Any]]]
         "quantity": ["miktar", "quantity", "qty"],
         "scope_signature": ["urun", "malzeme", "product", "item", "scope", "kapsam", "konu"],
     }
+    qualifiers = {"suresi", "tarihi", "sekli", "kosulu", "durumu", "adi", "tanimi",
+                  "aciklamasi", "bilgisi", "bedeli", "tutari", "birimi", "no",
+                  "numarasi", "gun", "days", "ay", "sonu", "baslangici"}
+
+    def field_label(value):
+        if not isinstance(value, str) or len(value) > 48 or "\n" in value or "\r" in value:
+            return None
+        folded = " ".join(_fold(value).replace("_", " ").split()).strip(" :;-()")
+        for key, terms in labels.items():
+            for term in terms:
+                if folded == term:
+                    return key
+                if folded.startswith(term + " "):
+                    tail = folded[len(term):].strip(" :;-()").split()
+                    if 0 < len(tail) <= 2 and all(word in qualifiers for word in tail):
+                        return key
+        return None
+
     for row_index, row in enumerate(rows, start=1):
         if not isinstance(row, list) or len(row) < 2:
+            continue
+        # In a horizontal table, ``odeme,garanti_ay,nakliye`` are column
+        # names, not payment=garanti_ay and warranty=nakliye. Multi-label
+        # rows are deliberately left to the bounded semantic task, including
+        # ambiguous mixed layouts; never invent deterministic verified values.
+        if sum(field_label(value) is not None for value in row) >= 2:
             continue
         for col_index, raw_label in enumerate(row[:-1], start=1):
             if raw_label is None:
                 continue
-            label = _fold(str(raw_label))
-            field = next((k for k, terms in labels.items() if any(t in label for t in terms)), None)
+            field = field_label(raw_label)
             if not field:
                 continue
             # Prefer the next non-empty cell in the same row.

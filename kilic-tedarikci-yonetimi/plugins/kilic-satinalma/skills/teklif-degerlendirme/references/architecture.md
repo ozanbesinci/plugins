@@ -56,4 +56,4 @@ Ana zincir: `document -> unit -> evidence -> fact -> calculation/claim -> review
 
 ## v5.0.4 transaction ve immutable-source kurali
 
-**Source Archive** ingest aninda exact source byte'larini SHA-256 ile run altinda korur. Model-result write tek transaction'dir: schema, evidence ownership/locator/quote, model/effort ve token receipt gecmeden canonical state mutate edilmez. Reviewed snapshot ayni source revision icin idempotenttir; tamamlanmis run'a tekrar giris yeni snapshot veya workflow mutation uretmez.
+**Source Archive** ingest aninda exact source byte'larini SHA-256 ile run altinda korur. Model-result write tek transaction'dir: schema, evidence ownership/locator/quote ve telemetry receipt gecmeden canonical state mutate edilmez. Telemetry gercek olculmus model/efor/token veya host_unavailable + acik gerekcedir; bilinmeyen token NULL kalir, toplam butce tavaninin dogrulandigi soylenmez. Aciklanmamis eski eksik kayitlar engeldir. Reviewed snapshot ayni source revision icin idempotenttir; tamamlanmis run'a tekrar giris yeni snapshot veya workflow mutation uretmez.

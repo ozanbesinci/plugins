@@ -551,6 +551,143 @@ def _check_id_membership(mism: list[dict[str,Any]], field: str, actual: Any, exp
 from error_log import log_failures
 
 
+def _recompute_source_price_chain(con, calc):
+    """Re-read canonical source rows and use exact rational arithmetic.
+
+    No source_price_chain/procurement_math computation or primary item list is
+    used here. Input source percentages remain percent values, not fractions.
+    """
+    from fractions import Fraction
+    from decimal import localcontext
+    import unicodedata
+
+    def fraction(raw):
+        if raw is None or isinstance(raw, bool):
+            raise ValueError('unknown source number')
+        d = D(str(raw))
+        if not d.is_finite() or d < 0:
+            raise ValueError('invalid source number')
+        return Fraction(str(raw))
+
+    def display(value):
+        with localcontext() as ctx:
+            ctx.prec = 50
+            return str(D(value.numerator) / D(value.denominator))
+
+    def basis(raw):
+        text = str(raw or '').replace('ı','i')
+        text = ''.join(c for c in unicodedata.normalize('NFKD',text).casefold() if not unicodedata.combining(c))
+        if 'haric degil' in text:
+            return None
+        if 'dahil degil' in text or 'not included' in text:
+            return 'excluded'
+        if re.search(r'\b(?:haric|excluded|exclude)\b',text):
+            return 'excluded'
+        if re.search(r'\b(?:dahil|included|include)\b',text):
+            return 'included'
+        return None
+
+    facts=rows_as_dict(con,"SELECT * FROM facts WHERE offer_id=? AND evidence_status='verified' ORDER BY fact_id",[calc['offer_id']])
+    raw_items=[]
+    for fact in facts:
+        normalized=j(fact.get('normalized_json'),{})
+        if not isinstance(normalized,dict) or not isinstance(normalized.get('items',[]),list):
+            continue
+        raw_items.extend(item for item in normalized.get('items',[]) if isinstance(item,dict) and item.get('amount_basis') in ('unit_price','line_total'))
+    rows=[];warnings=[];values={};declared={};seen=set();mismatch=False
+    for item in raw_items:
+        try:
+            if item['item_id'] in seen:
+                raise ValueError('duplicate source item')
+            seen.add(item['item_id'])
+            if item.get('evidence_status')!='verified' or item.get('amount_basis')!='unit_price':
+                raise ValueError('source item is not a verified unit price')
+            pricing=item['pricing'];q=fraction(item['quantity']);unit=fraction((pricing.get('price_unit') or {}).get('value',1));price=fraction(item['amount'])
+            if q<=0 or unit<=0 or not item.get('currency'):
+                raise ValueError('source quantity/unit/currency missing')
+            rates=pricing['discounts']['percentages'];tax_percent=fraction(pricing['vat']['percent']);flag=pricing['vat']['basis']
+            if not rates or tax_percent>100:
+                raise ValueError('source percentages missing or invalid')
+            raw=q*price/unit;amount=raw;normalized_rates=[]
+            for percent in rates:
+                rate=fraction(percent)
+                if rate>=100:raise ValueError('source discount out of range')
+                amount=amount*(100-rate)/100;normalized_rates.append(display(rate))
+            if flag=='included':
+                gross=amount;net=amount*100/(100+tax_percent)
+            elif flag=='excluded':
+                net=amount;gross=amount*(100+tax_percent)/100
+            else:raise ValueError('source VAT basis missing')
+            tax=gross-net;currency=str(item['currency']).upper()
+            row={'item_id':item['item_id'],'currency':currency,'quantity':display(q),'unit_price':display(price),'price_unit':display(unit),
+                 'discount_percentages':normalized_rates,'vat_percent':display(tax_percent),'price_vat_basis':flag,
+                 'pre_discount_source_amount':display(raw),'discounted_source_amount':display(amount),'net':display(net),'vat':display(tax),'gross':display(gross)}
+            rows.append(row);values[item['item_id']]={'net':net,'vat':tax,'gross':gross}
+            source=pricing.get('stated_amounts') or {}
+            for field in ('net','vat','gross'):
+                if field not in source:continue
+                key=(source['scope'],item['item_id'] if source['scope']=='line' else '',field)
+                stated=fraction(source[field]['amount'])
+                if key in declared and declared[key]!=stated:
+                    warnings.append('conflicting_source_stated_amounts')
+                declared[key]=stated
+        except (KeyError,ValueError,TypeError,InvalidOperation,ZeroDivisionError) as exc:
+            warnings.append(str(exc))
+    currencies={r['currency'] for r in rows}
+    if len(currencies)!=1:
+        warnings.append('source currencies missing or mixed')
+    totals={field:sum((v[field] for v in values.values()),Fraction(0)) for field in ('net','vat','gross')}
+    reconciliations=[]
+    for (scope,item_id,field),stated in declared.items():
+        actual=totals[field] if scope=='offer' else values.get(item_id,{}).get(field)
+        if actual is None:
+            warnings.append('source line reconciliation missing');continue
+        residual=actual-stated
+        reconciliations.append({'scope':scope,'item_id':item_id or None,'field':field,'stated':display(stated),'calculated':display(actual),'residual':display(residual)})
+        mismatch=mismatch or abs(residual)>Fraction(1,100)
+    total=next((f for f in facts if f.get('field_key')=='total'),{})
+    curr=next((f.get('value_text') for f in facts if f.get('field_key')=='currency'),None)
+    source_basis=basis(next((f.get('value_text') for f in facts if f.get('field_key')=='vat'),None))
+    if total.get('value_number') is not None and source_basis and len(currencies)==1:
+        if str(curr or '').upper()!=next(iter(currencies)):
+            warnings.append('source total currency differs')
+        else:
+            field='net' if source_basis=='excluded' else 'gross';stated=fraction(total['value_number']);residual=totals[field]-stated
+            reconciliations.append({'scope':'offer','field':field,'stated':display(stated),'calculated':display(totals[field]),'residual':display(residual),'fact_id':total['fact_id']})
+            mismatch=mismatch or abs(residual)>Fraction(1,100)
+    complete=bool(raw_items) and len(rows)==len(raw_items) and not warnings and not mismatch
+    return {'known':bool(rows),'complete':complete,'status':'mismatch' if mismatch else 'complete' if complete else 'incomplete',
+            'currency':next(iter(currencies)) if len(currencies)==1 else None,'items':rows,'reconciliations':reconciliations,
+            **{field+'_total':display(value) if rows else None for field,value in totals.items()}},warnings
+
+
+def _source_price_differences(expected,recomputed,tolerance):
+    mismatches=[]
+    for field in ('known','complete','status','currency'):
+        if expected.get(field)!=recomputed.get(field):mismatches.append({'field':field,'expected':expected.get(field),'recomputed':recomputed.get(field)})
+    for field in ('net_total','vat_total','gross_total'):
+        if not _num_equal(expected.get(field),recomputed.get(field),tolerance):mismatches.append({'field':field,'expected':expected.get(field),'recomputed':recomputed.get(field)})
+    left={r['item_id']:r for r in expected.get('items',[])};right={r['item_id']:r for r in recomputed.get('items',[])}
+    if set(left)!=set(right) or len(left)!=len(expected.get('items',[])) or len(right)!=len(recomputed.get('items',[])):
+        mismatches.append({'field':'source_item_identity_coverage'})
+    for item_id in set(left)&set(right):
+        a,b=left[item_id],right[item_id]
+        for field in ('currency','price_vat_basis'):
+            if a.get(field)!=b.get(field):mismatches.append({'item_id':item_id,'field':field})
+        for field in ('quantity','unit_price','price_unit','vat_percent','pre_discount_source_amount','discounted_source_amount','net','vat','gross'):
+            tol=tolerance if field in ('pre_discount_source_amount','discounted_source_amount','net','vat','gross') else D('.00000001')
+            if not _num_equal(a.get(field),b.get(field),tol):mismatches.append({'item_id':item_id,'field':field,'expected':a.get(field),'recomputed':b.get(field)})
+        ar=a.get('discount_percentages',[]);br=b.get('discount_percentages',[])
+        if len(ar)!=len(br) or any(not _num_equal(x,y,D('.00000001')) for x,y in zip(ar,br)):mismatches.append({'item_id':item_id,'field':'discount_stage_order'})
+    def signature(r):return (r.get('scope'),r.get('item_id'),r.get('field'),r.get('fact_id'))
+    a={signature(r):r for r in expected.get('reconciliations',[])};b={signature(r):r for r in recomputed.get('reconciliations',[])}
+    if set(a)!=set(b):mismatches.append({'field':'source_reconciliation_coverage'})
+    for key in set(a)&set(b):
+        for field in ('stated','calculated','residual'):
+            if not _num_equal(a[key].get(field),b[key].get(field),tolerance):mismatches.append({'field':'source_reconciliation_'+field,'identity':key})
+    return mismatches
+
+
 @guard_run_operation
 @log_failures('independent_recompute.run')
 def run(run_root: Path, amount_tolerance: float=0.01, score_tolerance: float=0.0001) -> dict[str,Any]:
@@ -564,6 +701,18 @@ def run(run_root: Path, amount_tolerance: float=0.01, score_tolerance: float=0.0
         results=[]
         atol=D(str(amount_tolerance)); stol=D(str(score_tolerance))
         for (offer_id,ctype),calc in latest.items():
+            if ctype=='source_price_chain':
+                exp=j(calc.get('result_json'),{}) or {}
+                rec,warns=_recompute_source_price_chain(con,calc)
+                mism=_source_price_differences(exp,rec,atol)
+                state='unverified' if calc.get('status')!='complete' else 'fail' if mism or warns else 'pass'
+                detail={'mismatches':mism,'warnings':warns}
+                ih=calc.get('input_hash') or hashlib.sha256(str(calc.get('inputs_json') or '').encode()).hexdigest()
+                iid=stable_id('irecalc',calc['calculation_id'],ih,length=24)
+                con.execute('INSERT INTO independent_calculations(independent_id,calculation_id,offer_id,calculation_type,method,expected_json,recomputed_json,tolerance,status,detail_json,input_hash,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
+                            [iid,calc['calculation_id'],offer_id,ctype,'independent_fraction_source_prices_v1',json_text(exp),json_text(rec),float(atol),state,json_text(detail),ih,utc_now()])
+                results.append({'independent_id':iid,'calculation_id':calc['calculation_id'],'offer_id':offer_id,'calculation_type':ctype,'status':state,'detail':detail})
+                continue
             if ctype!="cost_summary": continue
             exp=j(calc.get("result_json"),{}) or {}
             if calc.get("status") != "complete" or not exp.get("complete"):
