@@ -30,9 +30,14 @@ rem Normal inline command; no execution-policy or system security changes.
 "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -Command "$ErrorActionPreference='Stop'; Expand-Archive -LiteralPath $env:KILIC_SETUP_ARCHIVE -DestinationPath (Join-Path $env:KILIC_SETUP_STAGE 'payload')"
 if not "%ERRORLEVEL%"=="0" goto extractfailed
 if not exist "%KILIC_SETUP_STAGE%\payload\kurulum\Kur.cmd" goto extractfailed
+rem Use a relative command after PUSHD so spaces/metacharacters never enter /c.
+pushd "%KILIC_SETUP_STAGE%\payload\kurulum"
+if not "%ERRORLEVEL%"=="0" goto extractfailed
 rem NUL satisfies the published installer's final PAUSE without user input.
-"%ComSpec%" /d /s /c ""%KILIC_SETUP_STAGE%\payload\kurulum\Kur.cmd" <nul"
-if not "%ERRORLEVEL%"=="0" goto installfailed
+"%ComSpec%" /d /c Kur.cmd <nul
+set "KILIC_INSTALL_EXIT=%ERRORLEVEL%"
+popd
+if not "%KILIC_INSTALL_EXIT%"=="0" goto installfailed
 if not exist "%KILIC_NATIVE_ENTRY%" goto verifyfailed
 "%KILIC_NATIVE_ENTRY%" "%~dp0runtime_launcher.py" runtime_probe
 if not "%ERRORLEVEL%"=="0" goto verifyfailed
