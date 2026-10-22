@@ -14,7 +14,7 @@
   "separate_installer": "downloaded and verified automatically",
   "change_scope": "Automatic pinned installer download, SHA256 verification and unattended per-user runtime preparation before the original command; ready runtime reuse; no personal developer permission.",
   "acceptance_report": "skills/teklif-degerlendirme/references/RELEASE_ACCEPTANCE_5.2.0.md",
-  "work_web_desktop_acceptance": "PENDING_1_4_1_BOOTSTRAP_VALIDATION",
+  "work_web_desktop_acceptance": "BOOTSTRAP_WINDOWS_PASS; BUSINESS_DEPLOYMENT_PENDING_AUTHENTICATION; PREVIOUS_WORK_ACCEPTANCE_IS_1_4_0",
   "previous_release": {
     "plugin_version": "1.4.0",
     "offer_skill_version": "5.2.0"
@@ -32,7 +32,7 @@
     "output_review": "Currency tag appeared on quantity and percentage rows; dev9 changes display only"
   },
   "calculation_runtime_profile": "config/calculation-profile.json",
-  "current_acceptance_claim": "1.4.1 automatic bootstrap: validation pending; previous 1.4.0 analysis acceptance is historical.",
+  "current_acceptance_claim": "1.4.1 automatic bootstrap: 11/11 actual Windows tests passed at commit 063c028c0dfa3e397ebb136351bd6a75fd580c01; full engine CI still in progress; Business deployment not performed because administrator authentication was not completed.",
   "accepted_executable_baseline": {
     "plugin_version": "1.4.0-dev.12",
     "source_sha256": "0fc5eb44f6760d1cbcd5c6ddaa766d76323f8f4d104c3fd18d3564d8666b399e",
@@ -52,6 +52,19 @@
     "entry": "scripts/teklif.cmd",
     "installer_url": "https://github.com/ozanbesinci/plugins/releases/download/kilic-tedarikci-yonetimi-v1.4.0/kilic-teklif-1.4.0-kurulum.zip",
     "sha256": "928ff61174f8d01c8441090f4c45376cae98c312147c946aa22d54d50a8c29c4",
-    "windows_acceptance": "PENDING"
+    "windows_acceptance": "PASS_11_OF_11_REAL_WINDOWS_TESTS",
+    "tested_commit": "063c028c0dfa3e397ebb136351bd6a75fd580c01",
+    "workflow_run_id": 39769533718,
+    "workflow_job_id": 119793292585,
+    "validated_cases": [
+      "no Python profile automatic install",
+      "ready runtime reused without reinstall",
+      "same skill resumes after installation",
+      "native PowerShell argument transport with metacharacters",
+      "hash mismatch blocks extraction",
+      "installer error blocks analysis",
+      "existing lock blocks duplicate setup",
+      "native crash is not success"
+    ]
   }
 }

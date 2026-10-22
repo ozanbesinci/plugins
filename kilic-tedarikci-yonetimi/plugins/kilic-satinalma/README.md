@@ -10,7 +10,7 @@ Doğrulanmış teklif bedelleri ve kaynak kalemleri ayrı Excel senaryolarına a
 
 ChatGPT Work web devamı için aynı uygun görevin yerel bilgisayar erişimi bulunmalıdır; bilgisayar ve masaüstü uygulaması bağlı olmalıdır. Web'de her yeni görev için kendiliğinden yerel erişim varsayılmaz. Yerel kancalara veya yeni bir sunucuya dayanılmaz.
 
-1.4.1 değişikliği otomatik ortam hazırlama girişidir. Önceki 1.4.0 analiz/motor kabul kayıtları tarihsel kanıttır; yeni başlangıcın Windows kabulü ayrıca kaydedilir.
+1.4.1 değişikliği otomatik ortam hazırlama girişidir. Önceki 1.4.0 analiz/motor kabul kayıtları tarihsel kanıttır; yeni başlangıcın Windows kabulünde 11/11 test geçti (GitHub Actions koşusu 39769533718, commit 063c028). Geniş regresyon koşuları sürüyor. Business yayını yönetici oturumu tamamlanana kadar bekler.
 
 Dev.9 kaynak fiyat sayfasında yalnız parasal satırlar para birimi taşır. Miktar, iskonto/KDV yüzdesi, fiyat böleni ve KDV esası para değildir. Hesap, veri sözleşmesi, snapshot ve PDF fiyat hesabı değişmedi.
 
