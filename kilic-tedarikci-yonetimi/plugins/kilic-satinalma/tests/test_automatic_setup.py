@@ -85,8 +85,12 @@ class RealWindowsBootstrapTests(unittest.TestCase):
     def run_cmd(self, entry, profile, *, base_python=None, arguments='skill_startup --skill teklif-degerlendirme'):
         env = os.environ.copy()
         env['USERPROFILE'] = str(profile)
-        env['KILIC_BASE_PYTHON'] = str(base_python or sys.executable)
-        command = f'"{env["ComSpec"]}" /d /s /c ""{entry}" {arguments}"'
+        if base_python is None:
+            env.pop('KILIC_BASE_PYTHON', None)
+            env['LOCALAPPDATA'] = str(profile/'AppData/Local')
+        else:
+            env['KILIC_BASE_PYTHON'] = str(base_python)
+        command = f'"{os.environ["COMSPEC"]}" /d /s /c ""{entry}" {arguments}"'
         return subprocess.run(command, stdin=subprocess.DEVNULL, capture_output=True,
                               text=True, encoding='utf-8', errors='replace', env=env, timeout=1200)
 
@@ -97,6 +101,7 @@ class RealWindowsBootstrapTests(unittest.TestCase):
             self.assertEqual(first.returncode, 0, first.stdout+'\n'+first.stderr)
             self.assertIn('INSTALLING_ENVIRONMENT', first.stdout)
             self.assertIn('Sürüm: 5.2.1', first.stdout)
+            self.assertTrue((profile/'KilicPython/python-3.14.8/python.exe').is_file(), first.stdout)
             record_path = profile/'KilicPython/teklif-runtime.json'
             original = record_path.read_bytes()
             second = self.run_cmd(SCRIPTS/'teklif.cmd', profile)
@@ -104,6 +109,17 @@ class RealWindowsBootstrapTests(unittest.TestCase):
             self.assertNotIn('INSTALLING_ENVIRONMENT', second.stdout)
             self.assertEqual(record_path.read_bytes(), original)
             self.assertIn('Sürüm: 5.2.1', second.stdout)
+            # Match the documented PowerShell -> native Python route with shell metacharacters.
+            output = profile/'R&D%/report & result.json'
+            env = os.environ.copy()
+            env['USERPROFILE'] = str(profile)
+            env['KILIC_TEST_LAUNCHER'] = str(SCRIPTS/'runtime_launcher.py')
+            env['KILIC_TEST_OUTPUT'] = str(output)
+            continuation = subprocess.run(['powershell.exe', '-NoProfile', '-NonInteractive', '-Command',
+                '& "$env:USERPROFILE\\KilicPython\\teklif-python.exe" $env:KILIC_TEST_LAUNCHER environment_check --strict --output $env:KILIC_TEST_OUTPUT; exit $LASTEXITCODE'],
+                env=env, capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=180)
+            self.assertEqual(continuation.returncode, 0, continuation.stdout+continuation.stderr)
+            self.assertEqual(json.loads(output.read_text(encoding='utf-8'))['status'], 'READY')
 
     def test_existing_install_lock_blocks_without_download_or_analysis(self):
         with tempfile.TemporaryDirectory() as td:
@@ -113,6 +129,24 @@ class RealWindowsBootstrapTests(unittest.TestCase):
             self.assertEqual(result.returncode, 3, result.stdout+result.stderr)
             self.assertIn('SETUP_ALREADY_RUNNING_OR_LOCKED', result.stdout)
             self.assertNotIn('Sürüm:', result.stdout)
+
+    def test_native_crash_exit_does_not_report_ready(self):
+        with tempfile.TemporaryDirectory() as td:
+            profile = Path(td)
+            root = profile/'KilicPython'
+            root.mkdir()
+            exe = root/'teklif-python.exe'
+            env = os.environ.copy()
+            env['KILIC_TEST_EXE'] = str(exe)
+            source = 'public class NativeCrash { public static void Main() { System.Environment.Exit(unchecked((int)0xC0000135)); } }'
+            built = subprocess.run(['powershell.exe', '-NoProfile', '-NonInteractive', '-Command',
+                f"Add-Type -TypeDefinition '{source}' -OutputAssembly $env:KILIC_TEST_EXE -OutputType ConsoleApplication"],
+                env=env, capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=60)
+            self.assertEqual(built.returncode, 0, built.stdout+built.stderr)
+            (root/'teklif-setup.lock').mkdir()
+            result = self.run_cmd(SCRIPTS/'teklif.cmd', profile)
+            self.assertEqual(result.returncode, 3, result.stdout+result.stderr)
+            self.assertIn('SETUP_ALREADY_RUNNING_OR_LOCKED', result.stdout)
 
     def test_changed_download_hash_is_never_extracted_or_executed(self):
         with tempfile.TemporaryDirectory() as td:

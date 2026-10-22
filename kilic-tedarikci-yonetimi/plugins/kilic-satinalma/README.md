@@ -4,7 +4,7 @@ Teklif becerileri 5.2.1. Güncelleyici becerisi ve motoru bu paketten çıkarıl
 
 Başlangıç: `& "<aktif-paket>/scripts/teklif.cmd" skill_startup --skill teklif-degerlendirme`. Python veya hesap motoru eksikse giriş sabit SHA-256 ile doğrulanan yayımlanmış kurulum paketini otomatik indirip çalıştırır. Kurulum ve aktif paket doğrulaması tamamlanınca aynı komut devam eder. Hazır ortam yeniden kurulmaz. Geliştiriciden kişisel izin veya elle indirme istenmez. Yönetici yetkisi, sistem PATH veya çalıştırma politikası değiştirilmez; kurumsal engel somut hatayla bildirilir.
 
-Analiz: `& "<aktif-paket>/scripts/teklif.cmd" workflow prepare --source "<kaynak>" --run "<koşu>" --profile standart`. Diğer komutlar da aynı girişten çalışır. Kayıtlı yerel Python ve tam paket kilidi korunur. Ayrıntı: [kurulum ve çalışma ortamı](skills/teklif-degerlendirme/KURULUM.md).
+Analiz: `& "$env:USERPROFILE\KilicPython\teklif-python.exe" "<aktif-paket>/scripts/runtime_launcher.py" workflow prepare --source "<kaynak>" --run "<koşu>" --profile standart`. Başlangıç kontrolünden sonra analiz ve devam komutları kayıtlı native Python girişinden çalışır; karmaşık argümanlar CMD üzerinden aktarılmaz. Kayıtlı yerel Python ve tam paket kilidi korunur. Ayrıntı: [kurulum ve çalışma ortamı](skills/teklif-degerlendirme/KURULUM.md).
 
 Doğrulanmış teklif bedelleri ve kaynak kalemleri ayrı Excel senaryolarına aktarılır. Bilinmeyen vergi/kur/gider tamamlanmaz. Fiyat birimi, KDV dahil fiyat ve ardışık iskonto desteklenir. Çok kriterli puanlama, baz ve iki alternatif ağırlık senaryosu kullanıcı hesaplarıdır; resmî karar değişmez. Excel'den içe alma yeni Excel/PDF ön rapor revizyonu üretir.
 

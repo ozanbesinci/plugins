@@ -5,7 +5,7 @@ description: Satınalma tekliflerini PDF, Excel, CSV/TSV, Word, görsel ve diğe
 
 # Teklif Değerlendirme — Deterministic-First v5.0.24
 
-Bu dosya v5.0.24'ten gelen algoritma referansıdır. Güncel 5.2 başlangıç, ortam ve teslim kuralları için [ana beceri](../SKILL.md) ile [kurulum kılavuzu](../KURULUM.md) esas alınır. Aşağıdaki `python scripts/<betik>.py` kısa gösterimleri doğrudan genel Python ile çalıştırılmaz; `& "<aktif-paket>/scripts/teklif.cmd" <betik> <argümanlar>` biçimine çevrilir. Ortam/koşu kimliği korunur.
+Bu dosya v5.0.24'ten gelen algoritma referansıdır. Güncel 5.2 başlangıç, ortam ve teslim kuralları için [ana beceri](../SKILL.md) ile [kurulum kılavuzu](../KURULUM.md) esas alınır. Aşağıdaki `python scripts/<betik>.py` kısa gösterimleri doğrudan genel Python ile çalıştırılmaz; `& "$env:USERPROFILE\KilicPython\teklif-python.exe" "<aktif-paket>/scripts/runtime_launcher.py" <betik> <argümanlar>` biçimine çevrilir. Ortam/koşu kimliği korunur.
 
 İhtiyaca uygun, karşılaştırılabilir, riskleri görünür ve kaynakları izlenebilir bir satınalma kararı hazırla. Nihai seçim yetkili karar merciine aittir. Türkçe, sade ve kurumsal dil kullan; analiz çıktılarında kişiye özel hitap kullanma.
 

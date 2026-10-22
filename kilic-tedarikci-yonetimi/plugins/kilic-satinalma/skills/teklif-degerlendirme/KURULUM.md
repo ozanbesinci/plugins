@@ -1,6 +1,6 @@
 # Kurulum ve çalışma ortamı — 5.2.1
 
-Windows 64 bit ortamında bütün başlangıç, analiz ve devam komutlarını `scripts/teklif.cmd` ile çalıştır. Bu giriş Python kurulu olmadan da açılır. Hazır ortamı doğrular; eksik veya uyumsuz ortamda yayımlanmış `kilic-teklif-1.4.0-kurulum.zip` dosyasını otomatik indirir, sabit SHA-256 ile doğrular, açar ve `kurulum/Kur.cmd` dosyasını kullanıcı girdisi beklemeden çalıştırır. Kurulumdan sonra aktif eklentinin Python/paket kilidi ve hesap motoru dosyaları yeniden doğrulanır; asıl komut yalnız başarıdan sonra bir kez yürür. İkinci çağrıda hazır ortam yeniden kurulmaz.
+Windows 64 bit ortamında önce `& "<aktif-paket>/scripts/teklif.cmd" skill_startup --skill teklif-degerlendirme` komutuyla başlangıç kontrolünü çalıştır. Bu giriş Python kurulu olmadan da açılır. Hazır ortamı doğrular; eksik veya uyumsuz ortamda yayımlanmış `kilic-teklif-1.4.0-kurulum.zip` dosyasını otomatik indirir, sabit SHA-256 ile doğrular, açar ve `kurulum/Kur.cmd` dosyasını kullanıcı girdisi beklemeden çalıştırır. Kurulumdan sonra aktif eklentinin Python/paket kilidi ve hesap motoru dosyaları yeniden doğrulanır; başlangıç komutu yalnız başarıdan sonra bir kez yürür. Ardından aynı kullanıcı talebinin analiz komutlarını kayıtlı native Python girişiyle sürdür; dosya yolu ve serbest metin argümanlarını CMD üzerinden aktarma. İkinci çağrıda hazır ortam yeniden kurulmaz.
 
 Kurucu kullanıcı profilindeki `%USERPROFILE%\KilicPython` altında çalışır. Yönetici yetkisi, PATH veya çalıştırma politikası değişikliği istemez. Geliştiriciden kişisel izin, elle indirme ya da kurucuyu elle çalıştırma isteme. İşletim sistemi veya kurum engeli varsa gerçek hata nedenini bildir ve dur. Eşzamanlı ikinci kurulum kilit nedeniyle durur. İndirme/hash/açma/kurulum/son doğrulama hataları ayrı bildirilir; başarısız kurulumdan sonra analize geçilmez. Yerel bilgisayar bağlantısı yoksa bu giriş bulut ortamında çalıştırılmaz.
 
@@ -8,10 +8,10 @@ Kurucu kullanıcı profilindeki `%USERPROFILE%\KilicPython` altında çalışır
 
 ## Kayıtlı ortamı doğrulama
 
-`<aktif-paket>`, çalıştırılan eklentinin köküdür. Genel `python`, PATH'teki bir Python veya en yeni görünen ortam seçilmez. Bütün analiz ve devam komutları aynı girişten çalışır:
+`<aktif-paket>`, çalıştırılan eklentinin köküdür. Genel `python`, PATH'teki bir Python veya en yeni görünen ortam seçilmez. Başlangıç kontrolü başarıyla tamamlandıktan sonra bütün analiz ve devam komutları kayıtlı native Python girişinden çalışır:
 
 ```powershell
-& "<aktif-paket>/scripts/teklif.cmd" environment_check --strict --output "<yeni-kosu>/environment.json"
+& "$env:USERPROFILE\KilicPython\teklif-python.exe" "<aktif-paket>/scripts/runtime_launcher.py" environment_check --strict --output "<yeni-kosu>/environment.json"
 ```
 
 Başlatıcı bilgisayar/kullanıcı ve ortam kimliğini, Python yolunu ve tam paket kilidini doğrular. `READY` olmadan analiz başlamaz. Başlangıç girişi eksik ortamı otomatik hazırlar; hazırlama başarısızsa `BLOCKED_INSTALLATION` nedeni bildirilir. Analiz motorunun bağımsız ortam kontrolü ayrıca korunur.
@@ -21,9 +21,9 @@ DuckDB ana veritabanı zorunludur. İkincil DuckDB `pdf` okuyucusu isteğe bağl
 ## Analizi başlatma ve sürdürme
 
 ```powershell
-& "<aktif-paket>/scripts/teklif.cmd" workflow prepare --source "<kaynak>" --run "<yeni-bos-kosu>" --profile standart
-& "<aktif-paket>/scripts/teklif.cmd" workflow next --run "<kosu>"
-& "<aktif-paket>/scripts/teklif.cmd" workflow status --run "<kosu>"
+& "$env:USERPROFILE\KilicPython\teklif-python.exe" "<aktif-paket>/scripts/runtime_launcher.py" workflow prepare --source "<kaynak>" --run "<yeni-bos-kosu>" --profile standart
+& "$env:USERPROFILE\KilicPython\teklif-python.exe" "<aktif-paket>/scripts/runtime_launcher.py" workflow next --run "<kosu>"
+& "$env:USERPROFILE\KilicPython\teklif-python.exe" "<aktif-paket>/scripts/runtime_launcher.py" workflow status --run "<kosu>"
 ```
 
 Kaynak salt okunurdur. Var olan veya kapanmış koşuya `prepare` uygulanmaz. Devamda aynı ortam ve koşu kimliği korunur. `NEEDS_USER_INPUT` dönerse yalnız ilgili iş belirsizliği sorulur; yanıt olmadan bağlı hesap ve karar ilerletilmez. `NEEDS_LLM` dönerse yalnız listelenen görev bağlamı ve şeması kullanılır.
