@@ -1,24 +1,23 @@
 {
   "schema": "kilic-satinalma-stable-release/v2",
-  "package_channel": "stable",
-  "plugin_version": "1.4.0",
+  "package_channel": "candidate",
+  "plugin_version": "1.4.1",
   "skill_versions": {
-    "teklif-bagimsiz-kontrol": "5.2.0",
-    "teklif-belge-kaynak": "5.2.0",
-    "teklif-degerlendirme": "5.2.0",
-    "teklif-kapsam-ticari": "5.2.0",
-    "teklif-karar-rapor": "5.2.0",
-    "teklif-maliyet": "5.2.0"
+    "teklif-bagimsiz-kontrol": "5.2.1",
+    "teklif-belge-kaynak": "5.2.1",
+    "teklif-degerlendirme": "5.2.1",
+    "teklif-kapsam-ticari": "5.2.1",
+    "teklif-karar-rapor": "5.2.1",
+    "teklif-maliyet": "5.2.1"
   },
   "updater_removed": true,
-  "separate_installer": "../../kurulum",
-  "change_scope": "Separate per-user hashed runtime; explicit local launcher; verified Excel scenario seeds; price unit/VAT/sequential discounts; multi-criterion scoring and weight sensitivity; Explicit host telemetry unavailability; safe paired-report CLI; runtime versus command error routing; Conservative CSV header/value extraction and stable semantic delivery on re-extract; Payment event timing before cash/advance shortcuts; reject unresolved invoice/delivery dates; expose source-total scenario basis in both PDF renderers; Resolve CSV delivery-day units from source header and row with current owner/hash evidence, including same-payload evidence aliases; Source-evidence-bound item pricing, sequential discount/VAT/net/gross chain, independent arithmetic and stated-total reconciliation; Source CSV start_column/end_column delivery ranges supported consistently with scalar column; conflicting aliases rejected; Currency labels only on monetary source-price rows, never quantities/rates/basis labels; Separate pinned LibreOffice runtime and MSI file-only user installation; owned bounded process tree; cold formula cache validation and cache-only OOXML transfer; engine provenance and independent cached-result checks; portable Gregorian 1900 date interval correction; Disable OpenCL self-test only in owned calculation processes to keep installation immutable during concurrency; report stages inherit existing destination access without changing ACLs; Wait owned process handles for completed teardown before publishing cleanup success; display the human-readable recommendation in PDF",
+  "separate_installer": "downloaded and verified automatically",
+  "change_scope": "Automatic pinned installer download, SHA256 verification and unattended per-user runtime preparation before the original command; ready runtime reuse; no personal developer permission.",
   "acceptance_report": "skills/teklif-degerlendirme/references/RELEASE_ACCEPTANCE_5.2.0.md",
-  "work_web_desktop_acceptance": "PASS_ACTUAL_WORK_LOCAL_ANALYSIS_AUTOMATIC_CALC_NATIVE_EXCEL_SAME_CHAT_WEB_AND_ORIGINAL_ZIP_DOWNLOAD",
+  "work_web_desktop_acceptance": "PENDING_1_4_1_BOOTSTRAP_VALIDATION",
   "previous_release": {
-    "plugin_version": "1.3.3",
-    "offer_skill_version": "5.1.3",
-    "updater_version": "2.3.1"
+    "plugin_version": "1.4.0",
+    "offer_skill_version": "5.2.0"
   },
   "historical_acceptance_is_not_current_acceptance": true,
   "previous_candidate_acceptance": {
@@ -33,7 +32,7 @@
     "output_review": "Currency tag appeared on quantity and percentage rows; dev9 changes display only"
   },
   "calculation_runtime_profile": "config/calculation-profile.json",
-  "current_acceptance_claim": "Stable 1.4.0; executable code identical to accepted dev12; original ZIP browser save confirmed by user and independent local archive/member SHA256 verification",
+  "current_acceptance_claim": "1.4.1 automatic bootstrap: validation pending; previous 1.4.0 analysis acceptance is historical.",
   "accepted_executable_baseline": {
     "plugin_version": "1.4.0-dev.12",
     "source_sha256": "0fc5eb44f6760d1cbcd5c6ddaa766d76323f8f4d104c3fd18d3564d8666b399e",
@@ -42,11 +41,17 @@
     "native_excel_reference_formulas": 16136,
     "actual_work_native_excel_formulas": 2288
   },
-  "stable_release_accepted": true,
+  "stable_release_accepted": false,
   "distribution_scope": "GitHub release and Business workspace plugin distribution; Python and calculation runtime installed separately per Windows user",
   "browser_delivery": {
     "status": "PASS_USER_SAVE_AND_LOCAL_BYTE_VERIFICATION",
     "archive_sha256": "c8209d5e9d39556bafbde2a8a09e8a82d13265585c6f7c4254b1ca20cfb2f162",
     "member_count": 3
+  },
+  "automatic_setup": {
+    "entry": "scripts/teklif.cmd",
+    "installer_url": "https://github.com/ozanbesinci/plugins/releases/download/kilic-tedarikci-yonetimi-v1.4.0/kilic-teklif-1.4.0-kurulum.zip",
+    "sha256": "928ff61174f8d01c8441090f4c45376cae98c312147c946aa22d54d50a8c29c4",
+    "windows_acceptance": "PENDING"
   }
 }

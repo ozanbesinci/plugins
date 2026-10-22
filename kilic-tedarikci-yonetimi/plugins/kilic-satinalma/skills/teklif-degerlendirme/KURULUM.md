@@ -1,27 +1,29 @@
-# Kurulum ve çalışma ortamı — 5.2 geliştirme adayı
+# Kurulum ve çalışma ortamı — 5.2.1
 
-Python ve yerel hesap motorunun kurulumu eklentiden ayrıdır. Kullanıcı dağıtım paketindeki `kurulum/Kur.cmd` dosyasını bir defa açar. Kurucu Windows 64 bit / Python 3.14 ortamını, tam sürüm ve SHA256 ile kilitli paketleri kullanıcı profilindeki `%USERPROFILE%\KilicPython` altında hazırlar. Sistem PATH'i ve diğer Python ortamları değiştirilmez. Yönetici yetkisi istenmez; kurumsal çalıştırma ilkeleri engellenirse bu ilkeler atlatılmaz. Ayrıntı: [ayrı kurucu](../../../../kurulum/README.md).
+Windows 64 bit ortamında bütün başlangıç, analiz ve devam komutlarını `scripts/teklif.cmd` ile çalıştır. Bu giriş Python kurulu olmadan da açılır. Hazır ortamı doğrular; eksik veya uyumsuz ortamda yayımlanmış `kilic-teklif-1.4.0-kurulum.zip` dosyasını otomatik indirir, sabit SHA-256 ile doğrular, açar ve `kurulum/Kur.cmd` dosyasını kullanıcı girdisi beklemeden çalıştırır. Kurulumdan sonra aktif eklentinin Python/paket kilidi ve hesap motoru dosyaları yeniden doğrulanır; asıl komut yalnız başarıdan sonra bir kez yürür. İkinci çağrıda hazır ortam yeniden kurulmaz.
 
-Eklentide Güncelleyici yoktur. Analiz sırasında paket, Python, Office veya uzantı kurulmaz; başka bir beceriye onarım devredilmez. Eklenti hazır ortamı bulur ve doğrular. Kurucunun belge okuma/yazma kontrolleri, Microsoft Excel'in formülleri hesapladığını veya Work bağlantısının çalıştığını kanıtlamaz.
+Kurucu kullanıcı profilindeki `%USERPROFILE%\KilicPython` altında çalışır. Yönetici yetkisi, PATH veya çalıştırma politikası değişikliği istemez. Geliştiriciden kişisel izin, elle indirme ya da kurucuyu elle çalıştırma isteme. İşletim sistemi veya kurum engeli varsa gerçek hata nedenini bildir ve dur. Eşzamanlı ikinci kurulum kilit nedeniyle durur. İndirme/hash/açma/kurulum/son doğrulama hataları ayrı bildirilir; başarısız kurulumdan sonra analize geçilmez. Yerel bilgisayar bağlantısı yoksa bu giriş bulut ortamında çalıştırılmaz.
+
+İndirme adresi ve beklenen SHA-256 `scripts/ensure_runtime.cmd` içinde sabittir. İndirilen paket, mevcut sürümle aynı Python ve hesap motoru kilitlerini taşır. Kurucu belge kontrolleri Work bağlantısının veya Microsoft Excel çalıştırılmasının kanıtı değildir.
 
 ## Kayıtlı ortamı doğrulama
 
 `<aktif-paket>`, çalıştırılan eklentinin köküdür. Genel `python`, PATH'teki bir Python veya en yeni görünen ortam seçilmez. Bütün analiz ve devam komutları aynı girişten çalışır:
 
 ```powershell
-& "$env:USERPROFILE\KilicPython\teklif-python.exe" "<aktif-paket>/scripts/runtime_launcher.py" environment_check --strict --output "<yeni-kosu>/environment.json"
+& "<aktif-paket>/scripts/teklif.cmd" environment_check --strict --output "<yeni-kosu>/environment.json"
 ```
 
-Başlatıcı bilgisayar/kullanıcı ve ortam kimliğini, Python yolunu ve tam paket kilidini doğrular. `READY` olmadan analiz başlamaz. `BLOCKED_ENVIRONMENT` eksik bileşen ve nedenleriyle bildirilir; eklenti kurulum yapmaz. Ortam hazırlandıktan sonra kontrol yeniden çalıştırılır.
+Başlatıcı bilgisayar/kullanıcı ve ortam kimliğini, Python yolunu ve tam paket kilidini doğrular. `READY` olmadan analiz başlamaz. Başlangıç girişi eksik ortamı otomatik hazırlar; hazırlama başarısızsa `BLOCKED_INSTALLATION` nedeni bildirilir. Analiz motorunun bağımsız ortam kontrolü ayrıca korunur.
 
 DuckDB ana veritabanı zorunludur. İkincil DuckDB `pdf` okuyucusu isteğe bağlıdır; yokluğu uyarıdır. Birincil PDF okuma ve rapor bağımlılıkları ayrı kontrol edilir. Özel kabul senaryosu bu ikinci okuyucuyu gerektiriyorsa `environment_check --strict --require-pdf-extension` kullanılır. SQLite yalnız test ortamıdır; üretim yedeği değildir.
 
 ## Analizi başlatma ve sürdürme
 
 ```powershell
-& "$env:USERPROFILE\KilicPython\teklif-python.exe" "<aktif-paket>/scripts/runtime_launcher.py" workflow prepare --source "<kaynak>" --run "<yeni-bos-kosu>" --profile standart
-& "$env:USERPROFILE\KilicPython\teklif-python.exe" "<aktif-paket>/scripts/runtime_launcher.py" workflow next --run "<kosu>"
-& "$env:USERPROFILE\KilicPython\teklif-python.exe" "<aktif-paket>/scripts/runtime_launcher.py" workflow status --run "<kosu>"
+& "<aktif-paket>/scripts/teklif.cmd" workflow prepare --source "<kaynak>" --run "<yeni-bos-kosu>" --profile standart
+& "<aktif-paket>/scripts/teklif.cmd" workflow next --run "<kosu>"
+& "<aktif-paket>/scripts/teklif.cmd" workflow status --run "<kosu>"
 ```
 
 Kaynak salt okunurdur. Var olan veya kapanmış koşuya `prepare` uygulanmaz. Devamda aynı ortam ve koşu kimliği korunur. `NEEDS_USER_INPUT` dönerse yalnız ilgili iş belirsizliği sorulur; yanıt olmadan bağlı hesap ve karar ilerletilmez. `NEEDS_LLM` dönerse yalnız listelenen görev bağlamı ve şeması kullanılır.
@@ -38,7 +40,7 @@ Bilinmeyen model, efor veya token uydurulmaz. Bilinen tüketim alt toplamı gene
 
 Aynı uygun Work görevinin webden devamı için yerel bilgisayar erişimi etkin ve bilgisayar bağlı olmalıdır. Webde açılan her yeni görevin yerel araçları görebildiği varsayılmaz. Yerel bağlantı yoksa bulut Python'una geçilmez. Python kurucusu, Work'ün yerel erişim veya Office uygulama kontrolünü kurmaz.
 
-Tam otomatik formül hesabı ayrı kurulan LibreOffice motoruyla yapılır. Yeni kullanıcı `Kur.cmd`, mevcut kayıtlı Python kullanıcısı `Kur-Hesap.cmd` dosyasını bir defa açar. Her analizde kullanıcı işlemi gerekmez. Motor resmî, sabit hashli MSI paketinden yalnız kullanıcı klasörüne dosya açılarak hazırlanır; MSI kurulumu, sistem PATH'i, servis veya Office kaydı yapılmaz. Eklenti motor kaydını ve dosya bütünlüğünü doğrular; her hesap için ayrı profil ve geçici kopya kullanır.
+Tam otomatik formül hesabı ayrı kurulan LibreOffice motoruyla yapılır. Gerekli kurulum başlangıç girişi tarafından otomatik yürütülür. Her analizde kullanıcı işlemi gerekmez. Motor resmî, sabit hashli MSI paketinden yalnız kullanıcı klasörüne dosya açılarak hazırlanır; MSI kurulumu, sistem PATH'i, servis veya Office kaydı yapılmaz. Eklenti motor kaydını ve dosya bütünlüğünü doğrular; her hesap için ayrı profil ve geçici kopya kullanır.
 
 Hesaplanan kopyada formüller ve sabitler doğrulanır; yalnız hücre sonuçları özgün Excel dosyasına aktarılır. Başarı `LOCAL_RECALCULATED`, başarısızlık `PENDING_LOCAL_RECALC` olarak açıklanır. LibreOffice hesabı Microsoft Excel çalıştırılmış gibi gösterilmez. Microsoft Excel ile sürüme özgü karşılaştırmalı kabul ayrı tutulur; yalnız eski motorla alınan sonuç yeni sürüme taşınmaz. Ortak çalıştırıcı, ACL, DCOM veya Office kimlik ayarları değiştirilmez.
 
