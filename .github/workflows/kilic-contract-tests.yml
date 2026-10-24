@@ -29,7 +29,7 @@ jobs:
           fetch-depth: 0 # Immutable f5f739 audit code is required for compatibility probes.
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
-          python-version: '3.14'
+          python-version: '3.14.8'
           architecture: x64
       - name: Hash bağlı sabit binary set
         shell: pwsh
@@ -39,21 +39,15 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python -m pip check
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - name: İmzalı DuckDB PDF eklentisi (varsayılan eklenti klasörü)
+      - name: Ayrı çevrimdışı kullanıcı kurucusu
         shell: pwsh
         run: |
-          # Native startup tests expect the signed community PDF extension where a configured workstation keeps it.
-          $code = @'
-          import duckdb
-          c = duckdb.connect(config={"allow_unsigned_extensions": False, "autoinstall_known_extensions": False, "autoload_known_extensions": False})
-          c.execute("INSTALL pdf FROM community")
-          c.execute("LOAD pdf")
-          names = {r[0] for r in c.execute("SELECT DISTINCT function_name FROM duckdb_functions() WHERE function_name IN ('read_pdf','read_pdf_tables','pdf_info')").fetchall()}
-          assert names == {"read_pdf", "read_pdf_tables", "pdf_info"}, names
-          print(c.execute("SELECT install_path, installed_from FROM duckdb_extensions() WHERE extension_name='pdf'").fetchall())
-          '@
-          $code | python -B -
-          exit $LASTEXITCODE
+          $build = Join-Path $env:RUNNER_TEMP 'contract-installer'
+          python -B -X utf8 kilic-sozlesme-yonetimi/kurulum/build_installer.py --output $build
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $installer = (Get-Content -LiteralPath (Join-Path $build 'BUILD.json') -Raw | ConvertFrom-Json).installer
+          if (-not (Test-Path -LiteralPath $installer -PathType Leaf)) { throw 'Derlenen kurucu bulunamadı.' }
+          "SOZLESME_TEST_INSTALLER=$installer" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
       - name: Sürüm aracının kanıt ve kapsam kontrolleri
         shell: pwsh
         run: |

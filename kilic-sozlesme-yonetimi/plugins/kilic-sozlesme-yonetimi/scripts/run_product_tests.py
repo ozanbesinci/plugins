@@ -148,7 +148,7 @@ def interrupted_report(output,reason):
 def run_child(output, suite_name, selection):
     sys.dont_write_bytecode = True
     sys.path.insert(0, str(ROOT / "tests")); sys.path.insert(0, str(ROOT / "src"))
-    os.environ.update(PYTHONDONTWRITEBYTECODE="1", PYTHONUTF8="1", PYTHONPATH=str(ROOT / "src"))
+    os.environ.update(PYTHONDONTWRITEBYTECODE="1", PYTHONUTF8="1", PYTHONPATH=str(ROOT / "src"), SOZLESME_DEVELOPMENT="1")
     manifest = json.loads((ROOT / "tests/manifest.json").read_text(encoding="utf-8"))
     before = snapshot(ROOT)
     suite = unittest.TestSuite()
@@ -191,6 +191,7 @@ def run_child(output, suite_name, selection):
               "skipped": len(result.skipped), "records": result.records + excluded,
               "acceptance_not_run": manifest["acceptance_not_run"], "production_approved": False,
               "scope": manifest["scope"], "suite": suite_name, "classes": classes,
+              "execution_profile": "DEVELOPMENT_WITH_ISOLATED_NATIVE_ACCEPTANCE_TESTS",
               "test_selection": selection, "unselected_not_run": sorted(available - set(selection)) if selection else [],
               "classes_not_run": manifest.get("classes_not_run", {}),
               "release_acceptance": "BLOCKED", "full_product_acceptance": "NOT_GRANTED"}

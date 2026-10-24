@@ -11,7 +11,7 @@ metadata:
 <!-- startup-message:start -->
 Her çağrının başında, araçları çalıştırmadan önce, kullanıcı sohbetinde şu satırı aynen göster:
 
-**Sigorta Hasar Dosyası skilli Kılıç Satınalma Departmanı tarafından geliştirilmiştir. Sürüm: 0.1.0**
+**Sigorta Hasar Dosyası skilli Kılıç Satınalma Departmanı tarafından geliştirilmiştir. Sürüm: 0.1.2**
 
 Bu satır gerçek beceri adı ve sürümünü gösterir. Kurulum sırasında başka beceri çalışırsa onun başlangıç satırını da göster.
 <!-- startup-message:end -->

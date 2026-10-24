@@ -1,7 +1,7 @@
 ---
 title: Sözleşme Yönetimi bilinen sınırlar
 created: 2026-10-04
-modified: 2026-10-05
+modified: 2026-10-17
 type: development
 status: 🟡 devam ediyor
 tags: [is, sozlesme, plugin]
@@ -31,9 +31,9 @@ Bu tercih [[tasks/karar-kilic-sozlesme-s20-kapsami]] içinde `waiting`, sorumlu 
 - Okuyucu kodu/profili değişince kayıtlı okumalar eskir. `context-rebind` yalnız aynı birim ve birebir aynı metindeki SOURCE_UNIT düğümlerini ve bağlantılarını taşır; eski kayıtlar tarih olarak kalır. Kaynağı değişen düğüm, CONTROL/CANDIDATE düğümleri ve iş bilgisi/yükümlülük kayıtları otomatik taşınmaz, raporlanır. Her taşıma düğüm sayısını artırır; 512 düğüm sınırı geçerlidir.
 - Kaynak nesnesi bağı yerel NTFS ve OneDrive'da yerel tutulan dosyada sınandı. Eşlenmiş ağ sürücüsü harfi (ör. `O:`), SUBST ve yalnız bulutta duran OneDrive dosyası gerçek host'ta NOT_RUN; sürücü harfi UNC son yoluyla eşleşmeyebilir, kapalı ret beklenir.
 - Okuma profili belge türüne göredir: DOCX/EML yalnız okuyucu dosyaları ve zorunlu paketlere, XLSX ayrıca numpy/defusedxml'e, PDF cryptography ve numpy'ye bağlıdır. PDF okuma yolu numpy kullanmaz; numpy'si farklı iki Python ortamı arasında PDF okumaları gereksiz yere yeniden incelemeye düşebilir. Yanlış sonuç üretmez, `context-rebind` gerektirir.
-- Codex otomatik onay denetimi `-AutoInstallMissing` ile eksik paket kurulumunu reddedebilir. Ortam hazırsa beceri kurulumsuz sürer; değilse ilk kurulum onaylı bir oturumda yapılır.
+- Work akışı ayrı Windows kurucusuna bağlıdır; 0.1.2 ajan girişi eksik ortamda sabit kurucuyu otomatik indirip doğrular, çalıştırıp kurar ve native READY sonucunu denetler. 0.1.1 EXE'si imzasızdır; temiz ikinci standart kullanıcı/SmartScreen kabulü NOT_RUN'dır. Dev.2 aynı bilgisayarda Work masaüstü/Bulut ve web bağlantısını geçti; bu kanıt 0.1.1'in yeni baytlarında host testi yerine geçmez.
 - Kaynak dosyanın çekirdek dışından (zip/XML, python-docx, pypdf vb.) okunmaması host modele verilen bir talimattır (skill-runtime madde 10), teknik engel değildir. Sohbet yanıtındaki bir bulgu kaynak düğüm kimliği ve birebir metin taşımıyorsa doğrulanmış sayılmaz.
-- 0.1.0'da normal üretim Word çıktısı kurum kararıyla kapalıdır; cevaplar sohbette verilir. E-posta gönderimi kapsam dışıdır.
+- 0.1.1'de normal üretim Word çıktısı kurum kararıyla kapalıdır; cevaplar sohbette verilir. E-posta gönderimi kapsam dışıdır.
 - Codex'te aynı adlı eklenti iki ayrı katalogdan kuruluysa host eski sürümün becerisini seçebilir. Komut satırındaki `-c ...enabled=false` bunu güvenilir biçimde önlemedi. Yeni sürümü kurmadan önce eski aday kaldırılır. Claude Code yerel katalogdan kurulan eklentiyi kapalı başlatır; `claude plugin enable` gerekir.
 - Live model/token/ücret ölçümü, SharePoint geçişi ve kurum çapında yayın. E-posta gönderimi son kullanıcı talimatıyla tamamen kapsam dışıdır.
 
@@ -90,7 +90,7 @@ Native Word kabul/ret ve açık iç/dış nüsha kararları iki sentetik probe'd
 
 ## Dev.2 kapsam güncellemesi
 
-Kaynaklı normalleştirme/karşılaştırma ve yükümlülük/olay ledger'ı çalışıyor; uzman anlam/ifa onayı değildir. Güncelleyici2.3.0/13 paket/özel signed PDF/aynı talebe dönüş gerçek boş-ortam testindePASS. Yeni Python kurucusuNOT_RUN, uzun venv kökü yazmadanBLOCKED, mevcut bozuk shared bileşen otomatik onarılmaz. Yerel Windows shell olmayan cloudhost kurulum yapamaz.31 becerinin gerçek ad/sürüm/geliştirici mesajı paket/çıktı düzeyinde testli; uygulama içinde modelin her çağrıda sohbet satırını aktarması ve gerçek kullanıcı keşfiNOT_RUN. Eski P5 yeni yorum/temiz taslak maddeleri ilk faz sınırıdır; sınırlı klasik yorum/iç-dış taslak P5 ikinci dilimde testli, tam onaylı/karmaşık nüsha açık. Üretim yayın engeli bağımsız geliştirmeyi durdurmaz.
+Tarihsel P6 ölçümü (0.1.1 Work akışına taşınmaz): Kaynaklı normalleştirme/karşılaştırma ve yükümlülük/olay ledger'ı çalışıyor; uzman anlam/ifa onayı değildir. Güncelleyici2.3.0/13 paket/özel signed PDF/aynı talebe dönüş gerçek boş-ortam testindePASS. Yeni Python kurucusuNOT_RUN, uzun venv kökü yazmadanBLOCKED, mevcut bozuk shared bileşen otomatik onarılmaz. Yerel Windows shell olmayan cloudhost kurulum yapamaz.31 becerinin gerçek ad/sürüm/geliştirici mesajı paket/çıktı düzeyinde testli; uygulama içinde modelin her çağrıda sohbet satırını aktarması ve gerçek kullanıcı keşfiNOT_RUN. Eski P5 yeni yorum/temiz taslak maddeleri ilk faz sınırıdır; sınırlı klasik yorum/iç-dış taslak P5 ikinci dilimde testli, tam onaylı/karmaşık nüsha açık. Üretim yayın engeli bağımsız geliştirmeyi durdurmaz.
 
 
 ## Dev.3 güncel kapsam

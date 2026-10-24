@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "kilic-sozlesme-yonetimi",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "Satınalma sözleşmeleri için kaynaklı ön inceleme, kaynak koruma ve yerel kayıt çekirdeği.",
   "homepage": "https://github.com/ozanbesinci/plugins/tree/main/kilic-sozlesme-yonetimi",
   "author": {
@@ -16,7 +16,7 @@
       "interface": {
         "displayName": "Kılıç Sözleşme Yönetimi",
         "shortDescription": "Kaynaklı sözleşme desteği",
-        "longDescription": "Türkçe kaynaklı sözleşme desteği, EML belge okuma, iş bilgisi ve kesin para/tarih hesabı. E-posta gönderimi yok; yazışma taslakları sohbet içinde hazırlanır. Geliştirme sürümü; üretim Word yetki/QA ve tam kabulü sürüyor.",
+        "longDescription": "Türkçe kaynaklı sözleşme desteği, EML belge okuma, iş bilgisi ve kesin para/tarih hesabı. E-posta gönderimi yok; yazışma taslakları sohbet içinde hazırlanır. Kararlı sürüm 0.1.2. Eksik Windows ortamı otomatik indirilip kurulur. Üretim Word yetki/QA kapısı kapalıdır; yanıtlar sohbet içinde hazırlanır.",
         "developerName": "Ozan Beşinci",
         "websiteURL": "https://github.com/ozanbesinci/plugins/tree/main/kilic-sozlesme-yonetimi",
         "category": "Productivity",

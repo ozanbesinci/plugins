@@ -16,6 +16,7 @@ def _reader_files(root=ROOT):
     root = Path(root)
     paths = list((root / "src/sozlesme_cekirdek/readers").glob("*.py"))
     paths += [root / "src/sozlesme_cekirdek/verification.py", root / "src/sozlesme_cekirdek/runtime_identity.py",
+              root / "scripts/worker_entry.py",
               root / "schemas/p2_reading.schema.json", root / "requirements-core.txt", root / "requirements-readers.txt"]
     return {p.relative_to(root).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(paths)}
 
@@ -59,8 +60,7 @@ def component_policy(root=ROOT):
     root = Path(root)
     policy = json.loads((root / "references/component-identity.json").read_text(encoding="utf-8"))
     plugin = json.loads((root / "plugin.json").read_text(encoding="utf-8"))
-    vendor = (root / "vendor/guncelleyici/VERSION").read_text().strip()
-    if policy["schema"] != "contract-component-policy/v1" or policy["plugin_version"] != plugin["version"] or policy["vendor_version"] != vendor:
+    if policy["schema"] != "contract-component-policy/v2" or policy["plugin_version"] != plugin["version"]:
         raise CoreError("PAKET_KIMLIGI", "Bileşen manifesti gerçek paketle uyuşmuyor")
     return policy
 
@@ -68,11 +68,11 @@ def component_policy(root=ROOT):
 def component_identity(root=ROOT):
     root = Path(root)
     policy = component_policy(root)
-    paths = [p for group in ["src", "schemas", "references", "skills", "scripts", "vendor"] for p in (root / group).rglob("*")
+    paths = [p for group in ["src", "schemas", "references", "skills", "scripts"] for p in (root / group).rglob("*")
              if p.is_file() and "__pycache__" not in p.parts and p.suffix not in {".md", ".png", ".svg"}]
     paths += [root / name for name in ["plugin.json", "requirements-core.txt", "requirements-readers.txt"]]
     files = {p.relative_to(root).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(paths)}
-    return {"schema": "contract-component-identity/v1", "plugin_version": policy["plugin_version"],
+    return {"schema": "contract-component-identity/v2", "plugin_version": policy["plugin_version"],
             "core_version": policy["core_version"], "result_schema_version": policy["result_schema_version"],
-            "vendor_version": policy["vendor_version"], "source_digest": hash_value(files),
+            "runtime_profile": policy["runtime_profile"], "source_digest": hash_value(files),
             "source_commit": None, "source_commit_attestation": "UNVERIFIED", "python_abi": sys.implementation.cache_tag}

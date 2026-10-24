@@ -7,12 +7,12 @@
     {
       "name": "kilic-sozlesme-yonetimi",
       "source": "./plugins/kilic-sozlesme-yonetimi",
-      "description": "Kaynaklı sözleşme ön incelemesi; e-posta gönderimi ve Word çıktısı yok. Kararlı sürüm 0.1.0.",
-      "version": "0.1.0",
+      "description": "Kaynaklı sözleşme ön incelemesi; Work ve ayrı Windows ortamı. Kararlı sürüm 0.1.2.",
+      "version": "0.1.2",
       "author": {
         "name": "Ozan Beşinci"
       }
     }
   ],
-  "description": "Kılıç Sözleşme Yönetimi; kaynaklı sözleşme desteği ve Güncelleyici. E-posta gönderimi yok."
+  "description": "Kılıç Sözleşme Yönetimi: Work için 30 sözleşme becerisi ve ayrı Windows kurulumu."
 }

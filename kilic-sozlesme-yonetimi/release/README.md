@@ -1,12 +1,18 @@
 ---
 title: Sözleşme eklentisi kararlı sürüme geçiş yapısı
 created: 2026-10-14
-modified: 2026-10-15
+modified: 2026-10-24
 type: development
-status: 🟢 0.1.0 yayımlandı; sonraki sürüm 0.2.0
+status: 🟢 0.1.2 GitHub ve Business yayını
 tags: [is, sozlesme, mimari]
-tazele: 2026-10-15
+tazele: 2026-10-25
 ---
+
+## Güncel yayın — 24.10.2026
+
+Business'taki sürüm ve [GitHub kararlı paketi](https://github.com/ozanbesinci/plugins/releases/tag/kilic-sozlesme-yonetimi-v0.1.2) 0.1.2'dir. Ana daldaki ürünün 263 dosyası yayımlanan ZIP ile bayt bayt eşittir. ZIP SHA-256: `87d442bc3e56b10aa2e1926048ffe8ee79cd053192250464da17d4411ad32beb`.
+
+0.1.2 mevcut 0.1.1 kurucusunu sabit hash ve boyutla indirir; bu sürüm sayfası korunur. Ana dalın eşitlenmesi yeni ürün/kurucu yayını veya ikinci cihaz kabulü değildir. Aşağıdaki eski yerel teslim ve yayın kararları tarihsel kayıttır.
 
 Ürün yolu `plugins/kilic-sozlesme-yonetimi/`, geliştirme/kabul aracı `tools/release.py`.
 Teknik durum kanıttan yeniden üretilir; rapora elle PASS yazılmaz. Kişisel/kurumsal
@@ -104,3 +110,8 @@ kendi kontrolleri ayrıca yapılır. Dağıtım ZIP'i dış proje dosyalarını 
 ZIP hash'i ayrıca yenilenmelidir; aynı ürün digest'i eski ZIP ile bayt eşliği
 iddiası değildir. Ürün koduna değişiklikler mümkün olduğunca tek adayda toplanır;
 son ürün değişince kurulum/host ve ilgili iş kabulü yeniden değerlendirilir.
+
+
+## 17.10.2026 — 0.1.1 yerel kararlı teslim
+
+Kullanıcı kararlı sürümün çıkarılmasını istedi. Plugin ve 30 beceri 0.1.1, çekirdek 0.2.1 olarak birlikte sürümlenir. Güncelleyici kaldırılmıştır; ayrı Windows kurucusu kullanılır. Son baytlarda tam teknik koşu ve gerçek izole kurucu sınaması teslim kanıtına bağlanır. Dosyaları yerelde tutma kararı geçerlidir; GitHub veya Business yayını yapılmaz. İmzasız kurucu, ikinci cihaz ve normal üretim Word kapısının mevcut sınırları korunur. Aşağıdaki 0.1.0/0.2.0 iş planı tarihsel bağlamdır.

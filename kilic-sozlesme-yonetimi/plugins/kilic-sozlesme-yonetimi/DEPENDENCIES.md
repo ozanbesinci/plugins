@@ -1,7 +1,7 @@
 ---
 title: Sözleşme Yönetimi bağımlılık incelemesi
 created: 2026-10-04
-modified: 2026-10-05
+modified: 2026-10-17
 type: development
 status: 🟡 devam ediyor
 tags: [is, sozlesme, bagimlilik]
@@ -9,6 +9,16 @@ tazele: 2026-11-04
 ---
 
 # Bağımlılıklar
+
+## Güncel dağıtım — 0.1.1
+
+Work için ayrı EXE, CPython 3.14.8 embedded x64 ve requirements-win-cp314.lock içindeki 13 sabit wheel'i taşır. Runtime profili references/runtime-profile.json; wheel URL/SHA-256 kanıtı references/windows-wheel-manifest.json içindedir. Derlemede resmi CPython arşiv hash'i ve wheel hash'leri kontrol edilir. Kullanıcı kurulumunda ağ/pip kullanılmaz. Microsoft VC++ DLL'leri app-local paketlenir; kurucuda .NET Framework 4.x kullanılır. Üçüncü taraf lisans metinleri pakette korunur; ticari yeniden dağıtım kabulü ve imzalama ayrıca tamamlanmalıdır.
+
+DuckDB SQL gereklidir. DuckDB PDF uzantısı kurulmaz ve READY koşulu değildir; gerçek PDF yolu pypdf/PDFium'dur. Word/pywin32, numpy, pdfplumber ve python-docx bu 13 paketlik ürün ortamında yoktur. Eski Python/venv/paketler değiştirilmez. Ayrıntılı güncel akış references/runtime-integration.md içindedir.
+
+## Önceki faz envanteri — tarihsel
+
+Aşağıdaki ölçümler önceki ürün sürümlerine aittir. Eski otomatik kurulum/güncelleyici ifadeleri mevcut Work akışında uygulanmaz.
 
 Kurulum yapılmadı. P0 mevcut ortamı ölçtü; çekirdek sürümleri `requirements-core.txt`, P2 okuyucu sürümleri `requirements-readers.txt` içinde sabitlendi. Tam binary dağıtım/SBOM/NOTICE kabulü henüz yok; aşağıdaki lisanslar kurulu paket metadata ve lisans dosyası envanterine dayanır.
 

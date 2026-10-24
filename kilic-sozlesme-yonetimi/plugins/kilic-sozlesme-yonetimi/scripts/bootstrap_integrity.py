@@ -1,80 +1,67 @@
-"""Stdlib-only vendor verification BEFORE loading any vendor helper.
-
-An optional out-of-package manifest digest provides a pinned trust input.
-Self-consistency alone does not authenticate a publisher or isolate the OS user.
+"""Verify shipped bytes before importing runtime or business helpers.
+Self-consistency is not publisher authentication; a trusted release pin is optional.
 """
-from __future__ import annotations
 import hashlib
 import json
-import os
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 import re
 import stat
-
 
 class BootstrapIntegrityError(ValueError):
     pass
 
-
-def _unique(pairs):
+def unique(pairs):
     result = {}
-    for name, value in pairs:
-        if name in result:
-            raise BootstrapIntegrityError('Duplicate manifest key')
-        result[name] = value
+    for key, value in pairs:
+        if key in result:
+            raise BootstrapIntegrityError("Duplicate JSON key")
+        result[key] = value
     return result
 
-
-def _plain(path, root):
-    for node in [path, *path.parents]:
+def plain(path):
+    path = Path(path).absolute()
+    for node in (path, *path.parents):
         if node.exists() or node.is_symlink():
             info = node.lstat()
-            if stat.S_ISLNK(info.st_mode) or getattr(info, 'st_file_attributes', 0) & 0x400:
-                raise BootstrapIntegrityError('Vendor reparse/symlink path rejected')
-        if node == root:
-            break
-    if not path.resolve().is_relative_to(root.resolve()):
-        raise BootstrapIntegrityError('Vendor file outside fixed package root')
+            if stat.S_ISLNK(info.st_mode) or getattr(info, "st_file_attributes", 0) & 0x400:
+                raise BootstrapIntegrityError("Reparse/symlink path rejected")
+    return path.resolve(strict=False)
 
+def sha(path):
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
-def verify_vendor(root, expected_manifest_digest=None):
-    root = Path(root).absolute()
-    _plain(root, root)
-    manifest_path = root/'MANIFEST.sha256.json'
-    _plain(manifest_path, root)
+def package_files(root):
+    root = Path(root)
+    result = {}
+    for group in ("scripts", "src", "schemas", "references", "skills"):
+        for p in (root/group).rglob("*"):
+            if p.is_file() and "__pycache__" not in p.parts and p.name != "bootstrap-manifest.json":
+                result[p.relative_to(root).as_posix()] = sha(p)
+    for name in ("plugin.json", "requirements-core.txt", "requirements-readers.txt", "requirements-win-cp314.lock"):
+        result[name] = sha(root/name)
+    return dict(sorted(result.items()))
+
+def verify_package(root, expected_manifest_digest=None):
+    root = plain(root)
+    manifest_path = plain(root/"references/bootstrap-manifest.json")
     raw = manifest_path.read_bytes()
-    if len(raw) > 65536:
-        raise BootstrapIntegrityError('Vendor manifest exceeds bound')
-    actual_digest = hashlib.sha256(raw).hexdigest()
-    if expected_manifest_digest is not None:
-        if not re.fullmatch('[a-f0-9]{64}', expected_manifest_digest) or actual_digest != expected_manifest_digest:
-            raise BootstrapIntegrityError('External vendor manifest digest mismatch')
-    manifest = json.loads(raw.decode('utf-8-sig'), object_pairs_hook=_unique)
-    if manifest.get('schema') != 'guncelleyici-source-manifest/v1' or manifest.get('version') != '2.3.0':
-        raise BootstrapIntegrityError('Vendor manifest version/schema mismatch')
-    entries = manifest.get('files')
-    if not isinstance(entries, dict) or len(entries) != 42:
-        raise BootstrapIntegrityError('Closed vendor manifest requires exactly 42 entries')
-    if len({name.casefold() for name in entries}) != len(entries):
-        raise BootstrapIntegrityError('Case-insensitive vendor path collision')
-    for name, expected in entries.items():
-        if not isinstance(name, str) or '\\' in name or ':' in name or not name or name.startswith('/'):
-            raise BootstrapIntegrityError('Invalid manifest path')
-        relative = PurePosixPath(name)
-        if any(part in {'.', '..'} for part in name.split('/')) or relative.is_absolute():
-            raise BootstrapIntegrityError('Manifest path traversal rejected')
-        if not isinstance(expected, str) or not re.fullmatch('[a-f0-9]{64}', expected):
-            raise BootstrapIntegrityError('Invalid vendor SHA256')
-        path = root/name
-        _plain(path, root)
-        if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != expected:
-            raise BootstrapIntegrityError('Vendor bytes do not match manifest')
-    actual = {path.relative_to(root).as_posix() for path in root.rglob('*')
-              if path.is_file() and '__pycache__' not in path.parts and path.name != 'MANIFEST.sha256.json'}
-    if actual != set(entries):
-        raise BootstrapIntegrityError('Extra or missing vendor file')
-    if (root/'VERSION').read_text().strip() != '2.3.0':
-        raise BootstrapIntegrityError('Vendor VERSION mismatch')
-    return {'manifest_sha256': actual_digest, 'files_verified': 42,
-            'trust': 'EXTERNAL_PIN_MATCHED' if expected_manifest_digest else 'PACKAGE_SELF_CONSISTENCY_ONLY',
-            'corporate_authority': 'NOT_VERIFIED'}
+    if len(raw) > 2*1024*1024:
+        raise BootstrapIntegrityError("Manifest too large")
+    digest = hashlib.sha256(raw).hexdigest()
+    if expected_manifest_digest is not None and digest != expected_manifest_digest:
+        raise BootstrapIntegrityError("External manifest pin differs")
+    value = json.loads(raw.decode("utf-8-sig"), object_pairs_hook=unique)
+    if value.get("schema") != "contract-bootstrap/v1" or not isinstance(value.get("files"), dict):
+        raise BootstrapIntegrityError("Unknown bootstrap manifest")
+    for name, expected in value["files"].items():
+        if (not name or "\\" in name or ":" in name or name.startswith("/")
+                or any(part in ("", ".", "..") for part in name.split("/"))
+                or not re.fullmatch("[a-f0-9]{64}", expected)):
+            raise BootstrapIntegrityError("Invalid manifest entry")
+        p = plain(root/name)
+        if not p.is_relative_to(root) or not p.is_file() or sha(p) != expected:
+            raise BootstrapIntegrityError("Package bytes differ: " + name)
+    if package_files(root) != value["files"]:
+        raise BootstrapIntegrityError("Package inventory differs")
+    return {"manifest_sha256": digest, "files_verified": len(value["files"]),
+            "trust": "EXTERNAL_PIN_MATCHED" if expected_manifest_digest else "PACKAGE_SELF_CONSISTENCY_ONLY"}

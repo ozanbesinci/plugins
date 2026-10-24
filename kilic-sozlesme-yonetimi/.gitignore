@@ -5,3 +5,4 @@ __pycache__/
 *.lock
 !plugins/kilic-sozlesme-yonetimi/requirements-win-cp314.lock
 .venv/
+.auto-tests/

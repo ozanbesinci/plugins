@@ -39,6 +39,12 @@ class BuildIdentityTests(unittest.TestCase):
         path.write_text(json.dumps(value), encoding="utf-8")
         self.assertNotEqual(before, reader_build_identity(self.root))
 
+    def test_worker_entry_changes_reader_fingerprint(self):
+        before=reader_build_identity(self.root)
+        path=self.root/"scripts/worker_entry.py"
+        path.write_bytes(path.read_bytes()+b"\n# synthetic worker entry change\n")
+        self.assertNotEqual(before,reader_build_identity(self.root))
+
     def test_instruction_document_does_not_change_reader_build(self):
         before = reader_build_identity(self.root)
         (self.root / "README.md").write_text("Instruction-only change", encoding="utf-8")
@@ -75,10 +81,15 @@ class BuildIdentityTests(unittest.TestCase):
 
     def test_component_versions_are_distinct_and_commit_is_not_invented(self):
         identity = component_identity()
-        self.assertEqual("0.1.0", identity["plugin_version"])
-        self.assertEqual("0.2.0", identity["core_version"])
+        self.assertEqual("0.1.2", identity["plugin_version"])
+        primary=json.loads((ROOT/"plugin.json").read_text(encoding="utf-8"))
+        compatible=json.loads((ROOT/".claude-plugin/plugin.json").read_text(encoding="utf-8"))
+        self.assertEqual(primary["version"],identity["plugin_version"])
+        self.assertEqual(primary["version"],compatible["version"])
+        self.assertEqual(primary["name"],compatible["name"])
+        self.assertEqual("0.2.1", identity["core_version"])
         self.assertEqual("p6-1.2", identity["result_schema_version"])
-        self.assertEqual("2.3.0", identity["vendor_version"])
+        self.assertEqual("sozlesme-win-cp314-embedded-v1", identity["runtime_profile"])
         self.assertIsNone(identity["source_commit"])
         self.assertEqual("UNVERIFIED", identity["source_commit_attestation"])
         self.assertEqual(64, len(identity["source_digest"]))
@@ -97,6 +108,10 @@ class ReaderNamespaceTests(unittest.TestCase):
             shutil.copytree(ROOT, changed, ignore=shutil.ignore_patterns(".runtime", "__pycache__"))
             code = changed / "src/sozlesme_cekirdek/readers/common.py"
             code.write_bytes(code.read_bytes() + b"\n# synthetic changed code, identical declared reader version\n")
+            import importlib.util
+            spec=importlib.util.spec_from_file_location("changed_bootstrap",changed/"scripts/bootstrap_integrity.py")
+            helper=importlib.util.module_from_spec(spec);spec.loader.exec_module(helper)
+            (changed/"references/bootstrap-manifest.json").write_text(json.dumps({"schema":"contract-bootstrap/v1","files":helper.package_files(changed)}),encoding="utf-8")
             env = dict(os.environ, PYTHONPATH=str(changed / "src"), PYTHONDONTWRITEBYTECODE="1", PYTHONUTF8="1")
             command = [sys.executable, "-X", "utf8", "-m", "sozlesme_cekirdek", "--workspace", str(self.store.root),
                        "--output-root", str(self.area), "--source-root", str(self.sources), "document-read", "--case-id", self.case,
@@ -107,7 +122,7 @@ class ReaderNamespaceTests(unittest.TestCase):
             self.assertNotEqual(old, output["result"]["processing_id"])
             self.assertFalse(output["result"]["reused"])
             self.assertEqual(source_sha, output["result"]["result"]["sha256"])
-            self.assertEqual("0.2.0", output["tool_version"])
+            self.assertEqual("0.2.1", output["tool_version"])
             self.assertIsNone(output["components"]["source_commit"])
         self.assertEqual(source_sha, hash_file(self.path))
 

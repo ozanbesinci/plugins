@@ -68,15 +68,15 @@ class QualityInventoryTests(unittest.TestCase):
         for path in skills:
             self.assertIn('skill-runtime.md', path.read_text(encoding='utf-8'), path.parent.name)
 
-    def test_vendor_80_methods_are_explicitly_31_static_49_fixture(self):
-        counts = {'STATIC_SOURCE': 0, 'FIXTURE_OR_MOCK': 0}
-        for path in (ROOT/'vendor/guncelleyici/tests').glob('test_*.py'):
-            tree = ast.parse(path.read_text(encoding='utf-8-sig'))
-            for cls in (node for node in tree.body if isinstance(node, ast.ClassDef)):
-                self.assertIn(cls.name, STATIC_CLASSES | FIXTURE_CLASSES, 'New evidence class requires explicit review')
-                category = 'STATIC_SOURCE' if cls.name in STATIC_CLASSES else 'FIXTURE_OR_MOCK'
-                counts[category] += sum(isinstance(node, ast.FunctionDef) and node.name.startswith('test_') for node in cls.body)
-        self.assertEqual({'STATIC_SOURCE': 31, 'FIXTURE_OR_MOCK': 49}, counts)
+    def test_updater_is_absent_and_only_30_business_skills_are_registered(self):
+        import json
+        registry=json.loads((ROOT/"references/skill-versions.json").read_text(encoding="utf-8"))
+        self.assertEqual({f"K{i:02d}" for i in range(30)},set(registry))
+        self.assertFalse((ROOT/"skills/guncelleyici").exists())
+        self.assertFalse((ROOT/"vendor/guncelleyici").exists())
+        protocol=(ROOT/"references/skill-runtime.md").read_text(encoding="utf-8")
+        self.assertNotIn("AutoInstallMissing",protocol)
+        self.assertIn("sozlesme.exe",protocol)
 
 
 class NativeSchemaInventoryTests(unittest.TestCase):

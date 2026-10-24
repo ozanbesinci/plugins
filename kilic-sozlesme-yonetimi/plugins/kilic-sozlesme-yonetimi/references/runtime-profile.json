@@ -1,0 +1,27 @@
+{
+  "schema": "contract-runtime-profile/v1",
+  "profile_id": "sozlesme-win-cp314-embedded-v1",
+  "python_version": [
+    3,
+    14,
+    8
+  ],
+  "lock_sha256": "9d5091b5be2dbbfcbda182224346bd4047976e56b5ad41e25cc73dd2d0357816",
+  "packages": {
+    "duckdb": "1.5.6",
+    "jsonschema": "4.26.0",
+    "attrs": "26.1.0",
+    "jsonschema-specifications": "2025.9.1",
+    "referencing": "0.37.0",
+    "rpds-py": "2026.5.1",
+    "typing-extensions": "4.16.0",
+    "lxml": "6.1.3",
+    "openpyxl": "3.1.5",
+    "et-xmlfile": "2.0.0",
+    "pypdf": "6.13.2",
+    "pypdfium2": "5.10.1",
+    "pillow": "12.2.0"
+  },
+  "python_download": "https://www.python.org/ftp/python/3.14.8/python-3.14.8-embed-amd64.zip",
+  "python_archive_sha256": "a93abe456ab01bd96d7a085b3cdb6566b3063f4241360d114142fbdb07f0a310"
+}

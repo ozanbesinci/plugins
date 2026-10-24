@@ -68,6 +68,10 @@ def run_bounded_worker(command, data, environment, *, timeout=30,
                        memory_limit=512 * 1024 * 1024):
     started = time.monotonic()
     command = list(command)
+    if len(command)>=3 and command[1]=="-m" and command[2] in {
+            "sozlesme_cekirdek.readers.worker","sozlesme_cekirdek.verification_worker"}:
+        entry=Path(__file__).resolve().parents[3]/"scripts/worker_entry.py"
+        command=[command[0],"-I","-B","-X","utf8",str(entry),*command[2:]]
     environment = dict(environment)
     environment.pop("__PYVENV_LAUNCHER__", None)
     # CPython's Windows venv redirector creates another process. Launch the

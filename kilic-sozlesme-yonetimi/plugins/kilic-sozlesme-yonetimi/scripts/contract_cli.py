@@ -51,6 +51,16 @@ def main():
         print(json.dumps(blocked('PLATFORM_CONFIG_REQUIRED'),ensure_ascii=False))
         return 2
     sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'src'))
+    sys.path.insert(0,str(Path(__file__).resolve().parent))
+    try:
+        from bootstrap_integrity import verify_package
+        verify_package(Path(__file__).resolve().parents[1])
+        from runtime_registry import entry_gate
+        entry_gate()
+    except Exception as exc:
+        value=blocked(getattr(exc,'code','PAKET_BUTUNLUK'))
+        value['message']=str(exc)
+        print(json.dumps(value,ensure_ascii=False));return 2
     output = BoundedOutput()
     exit_code, failure = 0, None
     try:

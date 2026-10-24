@@ -19,6 +19,18 @@ def inventory(data):
 def main():
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
+    from pathlib import Path
+    import os
+    sys.path.insert(0,str(Path(__file__).resolve().parents[2]/"scripts"))
+    try:
+        from bootstrap_integrity import verify_package
+        verify_package(Path(__file__).resolve().parents[2])
+        from runtime_registry import entry_gate
+        runtime_binding=entry_gate()
+    except Exception as exc:
+        print(json.dumps({"status":"BLOCKED","error_code":getattr(exc,"code","PAKET_BUTUNLUK"),
+            "message":str(exc),"business_acceptance":"NOT_GRANTED"},ensure_ascii=False))
+        raise SystemExit(2)
     parser = argparse.ArgumentParser()
     parser.add_argument("--workspace", required=True)
     parser.add_argument("--output-root", required=True)
@@ -103,7 +115,7 @@ def main():
     operation_id=str(uuid4())
     components = None
     try:
-        components = component_identity()
+        components = dict(component_identity(), execution_profile=runtime_binding['execution_profile'])
         store = Store(args.workspace, source_roots=args.source_root, output_root=args.output_root)
         if args.command == "case-create":
             result = {"case_id": store.create_case(args.title)}
@@ -210,8 +222,14 @@ def main():
             path=native_path(confined(args.request,store.source_roots))
             if path.suffix.lower()!=".json" or not path.is_file() or path.stat().st_size>65536:
                 raise CoreError("GECERSIZ_GIRDI","Skill isteği izinli kökte küçük JSON dosyası olmalı")
-            try:request=json.loads(path.read_text(encoding="utf-8-sig"))
+            try:
+                request_bytes=path.read_bytes()
+                request=json.loads(request_bytes.decode("utf-8-sig"))
             except (ValueError,UnicodeError) as exc:raise CoreError("SEMA_HATASI","Skill JSON isteği geçersiz") from exc
+            if runtime_binding["execution_profile"] != "DEVELOPMENT":
+                from runtime_registry import claim_execution, RuntimeErrorDetail
+                try:claim_execution(path, request, runtime_binding, store.root, store.output_root, store.source_roots, request_bytes)
+                except RuntimeErrorDetail as exc:raise CoreError(exc.code,str(exc)) from exc
             result=evaluate(store,request,operation_id=operation_id)
         else:
             result = store.reconcile()

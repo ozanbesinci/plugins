@@ -50,7 +50,9 @@
     "test_migration_acceptance.LegacyCompatibilityTests",
     "test_request_receipt_inspector.RequestReceiptInspectorTests",
     "test_test_receipt_interruptions.TestReceiptInterruptionTests",
-    "test_process_fixtures.ProcessFixtureTests"
+    "test_process_fixtures.ProcessFixtureTests",
+    "test_automatic_setup.AutomaticSetupPolicyTests",
+    "test_automatic_setup.AutomaticSetupNativeTests"
   ],
   "suites": {
     "bootstrap": [
@@ -129,7 +131,9 @@
     "startup": [
       "test_cli_startup_contract.CLIStartupContractTests",
       "test_cli_startup_contract.CLIBusinessStatusTests",
-      "test_runtime.NativeStartupTests"
+      "test_runtime.NativeStartupTests",
+      "test_automatic_setup.AutomaticSetupPolicyTests",
+      "test_automatic_setup.AutomaticSetupNativeTests"
     ],
     "capacity": [
       "test_capacity.CapacityTests",

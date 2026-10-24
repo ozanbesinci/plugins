@@ -1,42 +1,17 @@
 # Kılıç Sözleşme Yönetimi
 
-Kaynaklı Türkçe sözleşme desteği için 30 iş becerisi ve Güncelleyici 2.3.0. **Kararlı sürüm 0.1.0** (2026-10-15): satınalma ve ithalat personelinin sözleşme ön incelemesi için yayımlandı. Mail gönderimi yok; Word çıktısı 0.1.0'da kapalı, cevaplar sohbette verilir.
+**0.1.2 otomatik Windows kurulumu:** ChatGPT Work için 30 sözleşme becerisi ve ayrı Windows kurulumu. Plugin/beceriler 0.1.2, çekirdek 0.2.1, P6 sonuç p6-1.2. Güncelleyici becerisi ve gömülü güncelleyici motoru kaldırıldı.
 
-Kurulum notları:
+Business üyeleri Windows'ta tek EXE ile kullanıcı alanına kurulum yapar, ardından Work içinde doğal dilde çalışır. Kurucu Python'u ve 13 sabit paketi içinde taşır; mevcut Python veya PATH'i değiştirmez. Work bütün iş komutlarını aynı kayıtlı ortamda yürütür. Webden devam, desteklenen ve çevrimiçi Windows bağlantısına bağlıdır. Kullanıcıdan terminal veya Python komutu beklenmez.
 
-- Claude Code yerel katalogdan kurulan eklentiyi kapalı başlatır; kurulumdan sonra `claude plugin enable kilic-sozlesme-yonetimi@<katalog>` gerekir.
-- Codex'te aynı adlı eski bir deneme adayı kuruluysa, eski sürümün becerisi seçilmesin diye önce o kaldırılır.
-- Codex korumalı alanda vaka klasörüne erişim için bir kez kullanıcı onayı isteyebilir.
+Kurucu kaynakları [kurulum](kurulum/README.md), ajan protokolü [runtime-integration](plugins/kilic-sozlesme-yonetimi/references/runtime-integration.md). [Kararlı 0.1.2 paketi](https://github.com/ozanbesinci/plugins/releases/tag/kilic-sozlesme-yonetimi-v0.1.2) 22.10.2026'da GitHub ve Kılıç Holding Business'ta yayımlandı. Ana daldaki ürünün 263 dosyası bu ZIP ile aynı baytları taşır. Kurucu imzasızdır; SmartScreen ve ikinci gerçek Windows cihazında kurulum kabulü açık kalır. Önceki dev.2 aynı bilgisayarda Work masaüstü/Bulut ve web bağlantı kontrolünü geçti; bu sonuç yeni baytların host testi olarak sunulmaz.
 
-Güncel sürüm hazırlığı için tek giriş: [kararlı sürüme geçiş yapısı](release/README.md).
-`tools/release.py status` ürünün mevcut baytlarına bağlı makbuzları doğrular;
-`tools/release.py test` aynı test manifestini çakışmasız gruplarla yürütür.
-Geliştirme/kabul aracı ürün paketinin dışında, özel kanıtlar deponun dışında kalır.
-Tarihsel faz raporları güncel durumun yerine kullanılmaz.
+Kaynak depo [ozanbesinci/plugins](https://github.com/ozanbesinci/plugins), proje kilic-sozlesme-yonetimi/, ürün plugins/kilic-sozlesme-yonetimi/. Kurulu eski paket veya başka eklentinin kabul sonucu bu yeni adayın kabulü sayılmaz. Eski yerel geliştirme kaynakları ayrı korunur.
 
-Plugin ve30 beceri0.1.0, çekirdek0.2.0, ortak sonuç şemasıp6-1.2; Güncelleyici2.3.0 değişmedi. Bileşen/build kimlikleri ayrı tutulur. Beceri başlangıcında gerçek ad, sürüm ve Kılıç Satınalma Departmanı geliştirici bildirimi görünür. Depo sahibi Ozan Beşinci'dir.
+K29 yalnız sohbet içinde yazışma taslağıdır. Mail gönderme/mailbox taslağı yoktur. Normal üretim Word kapısı CONFIG_REQUIRED olarak kalır. Teknik başarı, iş/uzman/şirket onayı değildir. Kaynak hash'i, vaka revizyonu, erişim ve bağlam kapanımı kontrolleri geçerlidir.
 
-## Kaynak ve kurulum kaydı
+Ürün testleri gerçek Windows/DuckDB/OS kilidiyle izole sentetik ortamda çalışır. Native kurucu testleri ayrıca ayrı USERPROFILE klasöründe yürütülür. Test makbuzu kaynak/manifest SHA, ortam ve gerçek sonucu taşır; başka baytların eski PASS'i güncel kabul sayılmaz. [Test stratejisi](plugins/kilic-sozlesme-yonetimi/references/product-test-strategy.md), [bileşen kimliği](plugins/kilic-sozlesme-yonetimi/references/component-identity.md), [bilinen sınırlar](plugins/kilic-sozlesme-yonetimi/KNOWN_LIMITATIONS.md).
 
-Güncel depo [ozanbesinci/plugins](https://github.com/ozanbesinci/plugins), proje alt dizini `kilic-sozlesme-yonetimi/`, ürün paketi `plugins/kilic-sozlesme-yonetimi/`. Proje pazar yeri tanımı `.claude-plugin/marketplace.json` dosyasında bulunur. Eski bağımsız depo adı ve hareketli `main` ref'i bu adayın kurulum kanıtı değildir.
+Önceki 0.1.0 sürümünün 2026-10-15 yayın kararı tarihseldir. 0.1.1, ayrı Windows kurulumuna geçen sürümdür. Yayın kaydı, üyelerin gerçek iş denemesi ve ikinci cihaz kabulünden ayrıdır. Gerçek şirket belgeleri, kişisel kayıtlar ve erişim anahtarları açık test/kurulum paketine konulmaz.
 
-Kurulum/kabul kaydı, onaylanmış40 karakterli commit SHA'sını veya hash'i doğrulanmış değişmez paket kimliğini, gerçek host/sürümü ve test makbuzunu taşımalıdır. Bu çalışma ağacında değişiklikler commit/release/host kurulumuna bağlanmadı; kurulu kaynak commit'i bilinmiyorsa kimlikte null/UNVERIFIED kalır. Bu README kurulum veya yayın başarısı iddia etmez.
-
-Yerel motor Windows ve izinli native Python yürütümü gerektirir. Shell bulunmayan cloud host'ta bağımlılık/kurulum veya Windows motoru çalıştı sayılmaz. Eksik kaynak ve yapılandırmada kapalı ret verilir. Gerçek ChatGPT/Claude host kabulü ayrı ve henüz NOT_RUN'dır.
-
-## Ürün sınırları
-
-- K29 yalnız sohbet içinde yazışma taslağıdır. E-posta gönderimi, mailbox taslağı veya başka connector ile gönderim yoktur.
-- Normal üretim Word yazıcı/kimlik/QA kapıları CONFIG_REQUIRED ile kapalıdır. Sentetik Word testleri üretim yetkisi değildir.
-- Kaynak baytları korunur; case/sürüm/CAS, erişim, locator ve son hash kontrolleri yeniden uygulanır. Tarihsel kaynak güncel karar kanıtına yükseltilmez.
-- Teknik SUCCEEDED/COMPLETED, iş tamamlanması veya şirket onayı değildir. İş durumu ve NOT_GRANTED kabulü ayrı gösterilir.
-
-## Güncel test ve kabul
-
-Ürün testleri gerçek Windows/DuckDB/OS kilidiyle, kurulum yapmadan izole sentetik staging'de yürütülür. Her koşu kaynak/manifest SHA, ortam, test kimliği ve gerçek terminal sonucu taşır. Kaynak değişince eski PASS yeni kabul değildir. Çalıştırılmayan testler NOT_RUN; yarım/timeout koşusu tam PASS değildir.
-
-Önceki345/345 kod testi,90/90 paket kontrolü,214/214 beceri kontrolü ve120/296 senaryo sayıları **tarihsel faz kayıtlarıdır**. Bu adayın güncel test başarısı veya gerçek ekip kabulü olarak kullanılmaz. Eski219 dosyalı ZIP/hash de bu değişmiş kaynak için paket kabulü değildir.
-
-Test koşucusu ve kapsam: [ürün test stratejisi](plugins/kilic-sozlesme-yonetimi/references/product-test-strategy.md). Bileşenler: [kimlik sözleşmesi](plugins/kilic-sozlesme-yonetimi/references/component-identity.md). Sınırlar: [KNOWN_LIMITATIONS](plugins/kilic-sozlesme-yonetimi/KNOWN_LIMITATIONS.md).
-
-Kararlı kabul; aynı aday üzerinde güncel teknik kanıtların yanı sıra gerçek iş denemesi ve ilgili bağımsız uzman kabulü tamamlandığında verilir. 0.1.0 için bu kayıtlar yayın kararından önce aynı ürün baytlarına bağlandı. Gerçek şirket belgeleri, kişisel kayıtlar ve erişim anahtarları açık kaynak test/release paketine konulmaz.
+0.1.2 ilk kullanımda eksik Windows ortamını otomatik indirip kurar; kurucu sabit hash/boyutla doğrulanır ve aynı talebe yalnız gerçek native READY sonrası dönülür. Kullanıcıya indirme bağlantısı veya kurulum görevi verilmez; kişisel izin istenmez. Windows ortamı ve uyumlu 0.1.1 kurucusu değiştirilmedi.
