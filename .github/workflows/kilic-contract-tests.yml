@@ -47,7 +47,18 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $installer = (Get-Content -LiteralPath (Join-Path $build 'BUILD.json') -Raw | ConvertFrom-Json).installer
           if (-not (Test-Path -LiteralPath $installer -PathType Leaf)) { throw 'Derlenen kurucu bulunamadı.' }
-          "SOZLESME_TEST_INSTALLER=$installer" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "SOZLESME_BUILT_INSTALLER=$installer" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Otomatik kurulumun hash bağlı yayımlanmış kurucusu
+        shell: pwsh
+        run: |
+          # 0.1.2 uses the published 0.1.1 runtime installer. A fresh build has
+          # different bytes and must not replace this pinned acceptance fixture.
+          $package = 'kilic-sozlesme-yonetimi/plugins/kilic-sozlesme-yonetimi'
+          . "$package/scripts/ortam-hazirla.ps1" -LibraryOnly
+          $published = Join-Path $env:RUNNER_TEMP $script:SetupInstallerName
+          Receive-SetupInstaller $published
+          Assert-SetupInstaller $published
+          "SOZLESME_TEST_INSTALLER=$published" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
       - name: Sürüm aracının kanıt ve kapsam kontrolleri
         shell: pwsh
         run: |
