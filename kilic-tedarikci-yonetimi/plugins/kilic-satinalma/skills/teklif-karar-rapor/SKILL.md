@@ -3,7 +3,7 @@ name: teklif-karar-rapor
 description: Doğrulanmış teklif analizinden tek gerekçeli satınalma eylemi önerisi, aynı snapshot bağlı Excel/PDF ve çıktı QA üretimini yönetir. Ana teklif akışının rapor/kapanışında kullan; eksik girdiyi tamamlamaz ve kullanıcı adına satınalma onayı vermez.
 ---
 
-# Karar ve Rapor — 5.2.0
+# Karar ve Rapor — 5.2.1
 ## Sorunun yanıtına bağlı bekleme
 
 [Kullanıcı yanıtı bekleme kuralı](../../USER-EVIDENCE-POLICY.md#sorunun-yanıtına-bağlı-bekleme) zorunludur. Yalnız sorunun cevabına bağlı ajan ve işler durur; soru anında çalışan bağımsız ajanlar devam eder. Bekleyen ajan cevap gelene kadar araç/model çağrısı, okuma, hesap, yazma, rapor veya kontrol yapmaz; süre sınırı ve periyodik sorgulama yoktur. Soru kimliği/kapsamı ve bağımlı görev/ajan kimliklerini gösterimden önce kaydet. Yalnız ilgili yeterli yanıt bu bağımlılığı açar; “devam”, sessizlik veya seçili varsayılan cevap/onay değildir. Cevaplanmış soruyu sebepsiz tekrarlama.
@@ -22,7 +22,7 @@ Karar ve Excel/PDF kullanıcı teyidine dayalı geçerli girdiyi gösterir. Daya
 
 ## Her çağrıda başlangıç bildirimi
 
-Beceri başlangıcında `& "$env:USERPROFILE\KilicPython\teklif-python.exe" "<aktif-paket>/scripts/runtime_launcher.py" skill_startup --skill teklif-karar-rapor` komutunu yürüt. Başlatıcı kayıtlı yerel Python ve paket kilidini doğrular; gerçek ad/sürüm satırını aynen göster. Ortam yoksa kurulum mesajını bildir; analiz içinde kurulum yapma.
+Beceri başlangıcında `& "<aktif-paket>/scripts/teklif.cmd" skill_startup --skill teklif-karar-rapor` komutunu yürüt. Başlatıcı kayıtlı yerel Python ve paket kilidini doğrular; gerçek ad/sürüm satırını aynen göster. Ortam eksik veya uyumsuzsa bu giriş sabit SHA-256 ile doğrulanan yayımlanmış kurulum paketini otomatik indirip çalıştırır; ardından aynı talebe devam eder. Geliştiriciden kişisel izin veya elle indirme isteme. Yerel bilgisayar erişimi yoksa somut bağlantı engelini bildir; indirme ya da kurulum yapılmış gibi gösterme.
 
 **[Beceri adı] skilli Kılıç Satınalma Departmanı tarafından geliştirilmiştir. Sürüm: [gerçek sürüm]**
 

@@ -1,7 +1,7 @@
 {
   "name": "kilic-satinalma",
-  "version": "1.4.0",
-  "description": "Hazır yerel Python ortamında kaynak kanıtlı teklif değerlendirme, çok kriterli senaryo ve Excel/PDF raporlama.",
+  "version": "1.4.1",
+  "description": "Eksik yerel ortamı otomatik indirip doğrulayarak kuran, kaynak kanıtlı teklif değerlendirme ve Excel/PDF raporlama.",
   "author": {
     "name": "Ozan Beşinci"
   },
@@ -9,7 +9,7 @@
   "interface": {
     "displayName": "Kılıç Tedarikçi Yönetimi",
     "shortDescription": "Teklif değerlendirme ve Excel/PDF raporlama",
-    "longDescription": "Doğrulanmış teklifleri kapsam, maliyet, ticari koşul ve risk açısından değerlendirir. Kullanıcı bilgisayarındaki ayrı kurulmuş Python ortamını doğrular; gerekçeli öneri ve kaynaklardan ayrılmış Excel/PDF senaryoları üretir.",
+    "longDescription": "Doğrulanmış teklifleri kapsam, maliyet, ticari koşul ve risk açısından değerlendirir. Yerel ortam eksikse sabit SHA-256 ile doğrulanan kurucuyu otomatik indirip çalıştırır; hazır ortamda gerekçeli öneri ve Excel/PDF senaryoları üretir.",
     "developerName": "Ozan Beşinci",
     "category": "Productivity",
     "capabilities": [
