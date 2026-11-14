@@ -168,9 +168,18 @@ class Package:
         if len(roots) != 1 or roots[0]["resolved_part"] not in self.roots:
             raise CoreError("DOSYA_TURU", "Tek ana belge ilişkisi gerekli")
         name = roots[0]["resolved_part"]
-        overrides = self.roots["[Content_Types].xml"]
-        content_type = next((x.get("ContentType", "") for x in overrides
-                             if x.get("PartName") == "/" + name), "")
+        types = self.roots["[Content_Types].xml"]
+        namespace = '{http://schemas.openxmlformats.org/package/2006/content-types}'
+        if types.tag != namespace + 'Types':
+            raise CoreError('DOSYA_TURU', 'İçerik türü namespace/kökü geçersiz')
+        overrides = [x.get('ContentType', '') for x in types
+                     if x.tag == namespace + 'Override' and x.get('PartName') == '/' + name]
+        extension = posixpath.splitext(name)[1].lstrip('.').casefold()
+        defaults = [x.get('ContentType', '') for x in types
+                    if x.tag == namespace + 'Default' and x.get('Extension', '').casefold() == extension]
+        if len(overrides) > 1 or len(defaults) > 1:
+            raise CoreError('DOSYA_TURU', 'Ana parça içerik türü birden çok bildirilmiş')
+        content_type = overrides[0] if overrides else defaults[0] if defaults else ''
         expected = {"DOCX": "application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml",
                     "XLSX": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"}
         if content_type != expected[family]:

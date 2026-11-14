@@ -52,6 +52,7 @@ def main():
     ingest.add_argument("--source", required=True)
     ingest.add_argument("--expected-revision", required=True, type=int)
     ingest.add_argument("--parent-version-id")
+    ingest.add_argument("--acquisition-key")
     context = commands.add_parser("context")
     context.add_argument("--case-id", required=True)
     capacity=commands.add_parser("capacity")
@@ -101,6 +102,11 @@ def main():
     action_status.add_argument("--operation-id", required=True)
     docx_history = commands.add_parser("docx-output-history")
     docx_history.add_argument("--case-id", required=True)
+    draft_status = commands.add_parser("internal-draft-status")
+    draft_status.add_argument("--case-id", required=True)
+    draft_status.add_argument("--draft-id", required=True)
+    draft_reconcile = commands.add_parser("internal-draft-reconcile")
+    draft_reconcile.add_argument("--case-id")
     skill=commands.add_parser("skill-evaluate")
     skill.add_argument("--request",required=True)
     for name in ("business-fact-register", "obligation-register", "business-event-register", "business-overview"):
@@ -135,7 +141,7 @@ def main():
                                       session_ref=request.get("session_ref"), message_ref=request.get("message_ref"))
             result = {"statement_id": rid, "trust": "UNVERIFIED_LOCAL_STATEMENT", "authority": "NOT_VERIFIED"}
         elif args.command == "source-ingest":
-            result = store.ingest(args.case_id, args.document_id, args.source, expected_revision=args.expected_revision,parent_version_id=args.parent_version_id)
+            result = store.ingest(args.case_id, args.document_id, args.source, expected_revision=args.expected_revision,parent_version_id=args.parent_version_id,acquisition_key=args.acquisition_key)
         elif args.command == "context":
             result = store.context(args.case_id)
         elif args.command == "capacity":
@@ -200,6 +206,10 @@ def main():
             result = store.action_status(args.case_id, args.operation_id)
         elif args.command == "docx-output-history":
             result = store.docx_output_history(args.case_id)
+        elif args.command == "internal-draft-status":
+            result = store.internal_draft_status(args.case_id, args.draft_id)
+        elif args.command == "internal-draft-reconcile":
+            result = {"drafts": store.reconcile_internal_drafts(args.case_id)}
         elif args.command in {"business-fact-register", "obligation-register", "business-event-register", "business-overview"}:
             from .context import checked
             path = native_path(confined(args.request, store.source_roots))
@@ -236,7 +246,7 @@ def main():
         print(json.dumps({"schema_version":"1.0","operation_id":operation_id,"status":"SUCCEEDED","technical_status":"SUCCEEDED",
                           "business_status":result.get("status","NOT_RUN") if args.command=="skill-evaluate" else "NOT_RUN",
                           "business_acceptance":"NOT_GRANTED","result":result,
-                          "result_refs":[],"evidence_refs":[],"warnings":[],"limitations":["P1/P2/P3/P4/P5 teknik kayıt; kritik sadakat PARTIAL, üretim eylemleri kapalı, hukuki doğrulama NOT_RUN."],
+                          "result_refs":[],"evidence_refs":[],"warnings":[],"limitations":["K28 yalnız QA bağlı iç çalışma taslağı üretir; kritik sadakat PARTIAL, kurumsal imza/onay ve P4/P5 genel üretim eylemleri kapalı, hukuki doğrulama NOT_RUN."],
                           "error_code":None,"retry_safety":"READ_ONLY" if args.command in {"context","capacity","version-compare","output-inspect","portfolio-overview"} else "NO_BLIND_RETRY",
                           "tool_version":TOOL_VERSION,"components":components,"case_id":getattr(args,"case_id",None),"analysis_status":"NOT_RUN","authority":"NOT_VERIFIED"}, ensure_ascii=False))
     except CoreError as exc:

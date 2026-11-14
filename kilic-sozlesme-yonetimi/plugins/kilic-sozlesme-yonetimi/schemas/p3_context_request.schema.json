@@ -29,6 +29,9 @@
     },
     "include_related": {
       "type": "boolean"
+    },
+    "allow_partial_review": {
+      "type": "boolean"
     }
   },
   "required": [

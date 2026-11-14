@@ -7,8 +7,8 @@
     {
       "name": "kilic-sozlesme-yonetimi",
       "source": "./plugins/kilic-sozlesme-yonetimi",
-      "description": "Kaynaklı sözleşme ön incelemesi; Work ve ayrı Windows ortamı. Kararlı sürüm 0.1.2.",
-      "version": "0.1.2",
+      "description": "Kaynaklı sözleşme ön incelemesi ve QA bağlı iç çalışma taslağı Word üretimi. Kararlı sürüm0.2.0.",
+      "version": "0.2.0",
       "author": {
         "name": "Ozan Beşinci"
       }

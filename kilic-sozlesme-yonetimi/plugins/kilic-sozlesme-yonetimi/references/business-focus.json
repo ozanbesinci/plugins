@@ -112,8 +112,8 @@
     "Nicel hesap ile yorum/iyileştirme önerisini ayır; erişilemeyen dosyayı kapsama sayma."
   ],
   "K28": [
-    "Açık çıktı talebi, kesin hedef, kaynak hash ve değişiklik/iç-dış nüsha planını belirle.",
-    "P4 eylem muhafızı ve P5 yapısal/native/görsel QA olmadan final verme; orijinal korunur."
+    "Açık iç çalışma taslağı kapsamı, kaynak bağı ve yeni dosya hedefini belirle.",
+    "İki aşamalı yapısal/native/görsel QA olmadan son dosya verme; orijinal korunur, şirket imza/onay kararı yaratılmaz."
   ],
   "K29": [
     "Yalnız sohbet içinde kaynaklı yazışma taslağı hazırla.",

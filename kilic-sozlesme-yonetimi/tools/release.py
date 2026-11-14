@@ -114,6 +114,7 @@ def partition(found, excluded, count):
 
 
 def verify_receipts(receipts, current, manifest, found, digest):
+    expected_environment = product_runner(PACKAGE).expected_environment(PACKAGE)
     """Require exact current bytes and every effective test exactly once."""
     expected = set(found) - set(manifest["excluded"])
     seen = set()
@@ -132,11 +133,13 @@ def verify_receipts(receipts, current, manifest, found, digest):
                            and len(selection) == len(set(selection)) and set(selection) <= available)
         selected = set(selection or []) if valid_selection else set()
         expected_local = selected if selected else available
-        environment = {key: receipt.get(key) for key in ("platform", "python", "python_abi", "dependencies")}
+        environment = {key: receipt.get(key) for key in ("platform", "python", *expected_environment)}
         valid_environment = (all(isinstance(environment[key], str) and environment[key] for key in ("platform", "python", "python_abi"))
                              and environment["platform"].startswith("Windows")
                              and isinstance(environment["dependencies"], dict) and bool(environment["dependencies"])
-                             and all(isinstance(k, str) and isinstance(v, str) and v for k, v in environment["dependencies"].items()))
+                             and all(isinstance(k, str) and isinstance(v, str) and v for k, v in environment["dependencies"].items())
+                             and all(environment[key] == value for key, value in expected_environment.items())
+                             and environment['python'].startswith('.'.join(map(str, expected_environment['python_version'])) + ' '))
         if first_environment is None:
             first_environment = environment
         checks = {

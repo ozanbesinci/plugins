@@ -455,8 +455,8 @@ class GuardTests(unittest.TestCase):
         upgraded = Store(root, source_roots=[self.sources], output_root=self.area)
         self.assertEqual(0, upgraded.case_revision(self.case))
         with upgraded._db() as db:
-            self.assertEqual([1, 2, 3, 4, 5, 6], [x[0] for x in db.execute("SELECT migration_no FROM sema_gecmisi ORDER BY migration_no").fetchall()])
-            self.assertEqual(23, db.execute("SELECT count(*) FROM information_schema.tables WHERE table_schema='main'").fetchone()[0])
+            self.assertEqual([1, 2, 3, 4, 5, 6, 7, 8], [x[0] for x in db.execute("SELECT migration_no FROM sema_gecmisi ORDER BY migration_no").fetchall()])
+            self.assertEqual(26, db.execute("SELECT count(*) FROM information_schema.tables WHERE table_schema='main'").fetchone()[0])
         changed = self.area / "changed-004.sql"; changed.write_text("-- drift", encoding="utf-8")
         with patch("sozlesme_cekirdek.store.MIGRATION_GUARD", changed):
             self.error("SEMA_DRIFT", lambda: Store(self.area / "work", source_roots=[self.sources], output_root=self.area))

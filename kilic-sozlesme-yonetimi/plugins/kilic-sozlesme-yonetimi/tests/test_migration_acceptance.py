@@ -53,14 +53,16 @@ class MigrationFixture(unittest.TestCase):
 class MigrationAcceptanceTests(MigrationFixture):
     def test_001_through_005_upgrade_preserves_case_statement_and_adds_only_006(self):
         self.fixture();before=self.logical();store=self.open();after=self.logical()
-        self.assertEqual(2,store.case_revision(self.case));self.assertEqual(23,len(after))
+        self.assertEqual(2,store.case_revision(self.case));self.assertEqual(26,len(after))
         for table,rows in before.items():
             if table!='sema_gecmisi':self.assertEqual(rows,after[table],table)
         with store._db() as db:
-            self.assertEqual(list(range(1,7)),[r[0] for r in db.execute('SELECT migration_no FROM sema_gecmisi ORDER BY migration_no').fetchall()])
+            self.assertEqual(list(range(1,9)),[r[0] for r in db.execute('SELECT migration_no FROM sema_gecmisi ORDER BY migration_no').fetchall()])
             self.assertEqual('Kaynak beyanı İı',db.execute('SELECT excerpt FROM beyanlar').fetchone()[0])
     def test_reopening_clean_006_is_idempotent_without_new_history_or_records(self):
-        self.fixture(6);before=self.logical();self.open();self.open();self.assertEqual(before,self.logical())
+        self.fixture(6);before=self.logical();self.open();upgraded=self.logical();self.open();self.assertEqual(upgraded,self.logical())
+        for name, rows in before.items():
+            if name != 'sema_gecmisi':self.assertEqual(rows, upgraded[name])
     def test_history_digest_drift_is_rejected_without_deleting_or_rewriting_rows(self):
         self.fixture()
         with duckdb.connect(str(self.database)) as db:db.execute('UPDATE sema_gecmisi SET change_digest=? WHERE migration_no=2',['0'*64])
@@ -73,7 +75,25 @@ class MigrationAcceptanceTests(MigrationFixture):
         self.fixture();before=self.logical();broken=self.area/'broken-006.sql'
         broken.write_text((MIGRATIONS/'006.sql').read_text(encoding='utf-8')+'\nSELECT * FROM missing_fault_fixture_table;',encoding='utf-8')
         with patch.object(store_module,'MIGRATION_BUSINESS',broken),self.assertRaises(duckdb.Error):self.open()
-        self.assertEqual(before,self.logical());self.open();self.assertEqual(23,len(self.logical()))
+        self.assertEqual(before,self.logical());self.open();self.assertEqual(26,len(self.logical()))
+
+    def test_007_rebuild_failure_rolls_back_data_and_self_foreign_keys(self):
+        self.fixture(6)
+        with duckdb.connect(str(self.database)) as db:
+            db.execute('INSERT INTO kayitlar VALUES(?,?,?,?,?)', [self.case, str(uuid4()), 'STATEMENT', datetime.now(timezone.utc), self.statement])
+        before = self.logical()
+        broken = self.area / 'broken-007.sql'
+        broken.write_text((MIGRATIONS/'007.sql').read_text(encoding='utf-8') + '\nSELECT * FROM missing_fault_fixture_table;', encoding='utf-8')
+        with patch.object(store_module, 'MIGRATION_INGESTION', broken), self.assertRaises(duckdb.Error):
+            self.open()
+        self.assertEqual(before, self.logical())
+        self.open()
+        after = self.logical()
+        for name, rows in before.items():
+            if name != 'sema_gecmisi':self.assertEqual(rows, after[name], name)
+        with duckdb.connect(str(self.database)) as db:
+            with self.assertRaises(duckdb.ConstraintException):
+                db.execute('INSERT INTO kayitlar VALUES(?,?,?,?,?)', [self.case, str(uuid4()), 'STATEMENT', datetime.now(timezone.utc), str(uuid4())])
 
 
 class LegacyCompatibilityTests(MigrationFixture):
@@ -109,12 +129,12 @@ except CoreError as exc:print(json.dumps({'status':'BLOCKED','error':exc.code}))
                            env=dict(os.environ,PYTHONPATH=str(self.legacy/'src')),capture_output=True,timeout=40)
         self.assertEqual(0,run.returncode,run.stderr.decode('utf-8',errors='replace'))
         return json.loads(run.stdout)
-    def test_real_audit_code_opens_current_db_and_reads_source_without_data_loss(self):
+    def test_real_audit_code_rejects_007_db_without_data_loss(self):
         self.sources.joinpath('kaynak.txt').write_text('Sentetik kaynak İı',encoding='utf-8')
         store=self.open();case=store.create_case('Uyum');doc=store.create_document(case,'Kaynak',expected_revision=0)
         version=store.ingest(case,doc,self.sources/'kaynak.txt',expected_revision=store.case_revision(case))['version_id']
         before=self.logical();old=self.old('read',case,version)
-        self.assertEqual('OPENED',old['status']);self.assertEqual('Sentetik kaynak İı',old['result']['source_text'])
+        self.assertEqual({'status':'BLOCKED','error':'SEMA_DRIFT'},old)
         self.assertEqual(before,self.logical());self.assertEqual('Sentetik kaynak İı',(self.sources/'kaynak.txt').read_text(encoding='utf-8'))
     def test_real_audit_code_rejects_future_db_without_downgrade_or_data_loss(self):
         self.fixture(6)
@@ -126,6 +146,6 @@ except CoreError as exc:print(json.dumps({'status':'BLOCKED','error':exc.code}))
         document=store.create_document(self.case,'Kaynak',expected_revision=store.case_revision(self.case))
         version=store.ingest(self.case,document,source,expected_revision=store.case_revision(self.case))['version_id']
         before=self.logical();result=self.old('evaluate',self.case,version)
-        self.assertEqual({'status':'BLOCKED','error':'SEMA_HATASI'},result)
+        self.assertEqual({'status':'BLOCKED','error':'SEMA_DRIFT'},result)
         self.assertEqual(before,self.logical())
 

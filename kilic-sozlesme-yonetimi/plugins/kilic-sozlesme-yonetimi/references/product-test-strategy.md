@@ -1,3 +1,5 @@
+0.2.0 eki: word test grubu iç taslak durum/kaynak/QA/yayım ve renderer testlerini tam gruba da ekler. Gerçek Word çıktısının sayfa incelemesi bu sentetik test grubundan ayrı kanıttır.
+
 # Ürün test ve kabul sözleşmesi
 
 0.1.1: geliştirici koşucusu alt test sürecini SOZLESME_DEVELOPMENT=1 ile açıkça etiketler. NativeStartupTests ise bu işareti kaldırır, SOZLESME_TEST_INSTALLER ile verilen gerçek EXE'yi ayrı USERPROFILE klasörüne kurar ve REGISTERED yolunu sınar. Kurucu yolu verilmezse native kabul NOT_RUN olur; tam PASS sayılmaz. Kurucunun asInvoker olması temiz standart kullanıcı/SmartScreen veya gerçek Work kabulünün yerine geçmez. CI Python patch sürümü3.14.8'e sabittir; eski zorunlu DuckDB PDF kurulumu kaldırılmıştır.

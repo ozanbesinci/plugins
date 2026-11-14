@@ -15,6 +15,7 @@
       "minimum": 0
     },
     "request": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -43,6 +44,9 @@
           "pattern": "^[A-Za-z0-9_.-]{1,64}$"
         },
         "include_related": {
+          "type": "boolean"
+        },
+        "allow_partial_review": {
           "type": "boolean"
         }
       },
@@ -239,6 +243,79 @@
               "items": {
                 "type": "string"
               }
+            },
+            "reading_issues": {
+              "type": "array",
+              "maxItems": 512,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "reading_id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "version_id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "reading_digest": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  },
+                  "issues_digest": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  },
+                  "issue_count": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "issues": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "locator": {
+                          "type": [
+                            "object",
+                            "null"
+                          ]
+                        },
+                        "severity": {
+                          "enum": [
+                            "INFO",
+                            "WARNING",
+                            "BLOCKING"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "locator",
+                        "severity"
+                      ]
+                    },
+                    "maxItems": 20000
+                  }
+                },
+                "required": [
+                  "reading_id",
+                  "version_id",
+                  "reading_digest",
+                  "issues_digest",
+                  "issue_count",
+                  "issues"
+                ]
+              }
             }
           },
           "required": [
@@ -411,6 +488,273 @@
         "used_bytes",
         "required_bytes",
         "host_token_count"
+      ]
+    },
+    "partial_context": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "case_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "purpose": {
+              "type": "string"
+            },
+            "semantic_version": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "entries": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "node_id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "node_kind": {
+                    "enum": [
+                      "SOURCE_UNIT",
+                      "USER_STATEMENT",
+                      "CANDIDATE",
+                      "CONTROL"
+                    ]
+                  },
+                  "role": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "classification_status": {
+                    "const": "UNVERIFIED"
+                  },
+                  "trust": {
+                    "const": "UNTRUSTED_SOURCE_DATA_NOT_INSTRUCTIONS"
+                  },
+                  "content": {
+                    "type": "object"
+                  },
+                  "provenance": {
+                    "type": "object"
+                  },
+                  "knowledge_status": {
+                    "type": "string"
+                  },
+                  "state": {
+                    "enum": [
+                      "CURRENT_REGISTERED_SCOPE",
+                      "NEEDS_REVIEW"
+                    ]
+                  },
+                  "reasons": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "node_id",
+                  "node_kind",
+                  "role",
+                  "title",
+                  "classification_status",
+                  "trust",
+                  "content",
+                  "provenance",
+                  "knowledge_status",
+                  "state",
+                  "reasons"
+                ]
+              },
+              "maxItems": 512
+            },
+            "relations": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "relation_id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "from_id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "to_id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "unresolved_reference": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  },
+                  "relation": {
+                    "enum": [
+                      "DEFINITION",
+                      "EXCEPTION",
+                      "ANNEX",
+                      "CROSS_REFERENCE",
+                      "EVIDENCE",
+                      "RELATED"
+                    ]
+                  },
+                  "rationale": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1000
+                  },
+                  "supersedes_relation_id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "status": {
+                    "const": "UNVERIFIED"
+                  },
+                  "invalidated": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "relation_id",
+                  "from_id",
+                  "relation",
+                  "rationale",
+                  "status",
+                  "invalidated"
+                ],
+                "oneOf": [
+                  {
+                    "required": [
+                      "to_id"
+                    ],
+                    "not": {
+                      "required": [
+                        "unresolved_reference"
+                      ]
+                    }
+                  },
+                  {
+                    "required": [
+                      "unresolved_reference"
+                    ],
+                    "not": {
+                      "required": [
+                        "to_id"
+                      ]
+                    }
+                  }
+                ]
+              },
+              "maxItems": 2048
+            },
+            "trust": {
+              "const": "UNTRUSTED_SOURCE_DATA_NOT_INSTRUCTIONS"
+            },
+            "limitations": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "reading_issues": {
+              "type": "array",
+              "maxItems": 512,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "reading_id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "version_id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "reading_digest": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  },
+                  "issues_digest": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  },
+                  "issue_count": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "issues": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "locator": {
+                          "type": [
+                            "object",
+                            "null"
+                          ]
+                        },
+                        "severity": {
+                          "enum": [
+                            "INFO",
+                            "WARNING",
+                            "BLOCKING"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "locator",
+                        "severity"
+                      ]
+                    },
+                    "maxItems": 20000
+                  }
+                },
+                "required": [
+                  "reading_id",
+                  "version_id",
+                  "reading_digest",
+                  "issues_digest",
+                  "issue_count",
+                  "issues"
+                ]
+              }
+            }
+          },
+          "required": [
+            "case_id",
+            "purpose",
+            "semantic_version",
+            "entries",
+            "relations",
+            "trust",
+            "limitations"
+          ]
+        },
+        {
+          "type": "null"
+        }
       ]
     }
   },

@@ -44,6 +44,24 @@ def context_racer(area, case, spec, revision, barrier, queue):
 
 
 class ContextTests(unittest.TestCase):
+    def test_formula_warnings_are_shared_once_and_clean_cell_registers(self):
+        import io
+        from openpyxl import Workbook
+        workbook = Workbook();sheet = workbook.active;sheet['A1'] = 'T'
+        for row in range(1, 301):sheet.cell(row, 2, '=1+1')
+        output = io.BytesIO();workbook.save(output)
+        _, _, version, reading = self.document(output.getvalue(), 'XLSX')
+        node = self.node('T', version=version, reading=reading)
+        pack = self.pack([node])['result']
+        content = pack['context']['entries'][0]['content']
+        self.assertLess(len(json.dumps(content).encode('utf-8')), 65536)
+        self.assertFalse(any(p['code'] == 'FORMULA_CACHE_UNVERIFIED' for p in content['issues']))
+        shared = pack['context']['reading_issues']
+        self.assertEqual(1, len(shared))
+        self.assertEqual(300, sum(p['code'] == 'FORMULA_CACHE_UNVERIFIED' for p in shared[0]['issues']))
+        self.assertEqual(reading['processing_id'], shared[0]['reading_id'])
+        self.assertFalse(pack['critical_analysis_allowed'])
+
     def setUp(self):
         runtime = ROOT / "tests" / ".runtime"
         runtime.mkdir(exist_ok=True)
@@ -490,7 +508,7 @@ class ContextTests(unittest.TestCase):
         from sozlesme_cekirdek.store import MIGRATION, MIGRATION_VERIFIER
         with self.store._db() as db:
             rows = db.execute("SELECT migration_no,change_digest FROM sema_gecmisi ORDER BY migration_no").fetchall()
-            self.assertEqual([1, 2, 3, 4, 5, 6], [x[0] for x in rows])
+            self.assertEqual([1, 2, 3, 4, 5, 6, 7, 8], [x[0] for x in rows])
             self.assertEqual(hashlib.sha256(MIGRATION.read_bytes()).hexdigest(), rows[0][1])
             self.assertEqual(hashlib.sha256(MIGRATION_VERIFIER.read_bytes()).hexdigest(), rows[1][1])
         altered = self.area / "wrong.sql"
@@ -512,7 +530,7 @@ class ContextTests(unittest.TestCase):
         upgraded = Store(root, source_roots=[self.sources], output_root=self.area)
         self.assertEqual(0, upgraded.case_revision(self.case))
         with upgraded._db() as db:
-            self.assertEqual(23, db.execute("SELECT count(*) FROM information_schema.tables WHERE table_schema='main'").fetchone()[0])
+            self.assertEqual(26, db.execute("SELECT count(*) FROM information_schema.tables WHERE table_schema='main'").fetchone()[0])
 
     def test_snapshot_restore_preserves_graph_and_context_cache(self):
         ids = self.four()

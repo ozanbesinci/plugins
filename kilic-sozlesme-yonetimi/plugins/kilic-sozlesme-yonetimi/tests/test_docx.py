@@ -355,8 +355,8 @@ class DocxStoreTests(unittest.TestCase):
             db.execute("INSERT INTO dosyalar VALUES(?,?,0,'NEW',?)",[self.case,"Existing",NOW()])
         upgraded=Store(self.area/"older",source_roots=[self.sources],output_root=self.area)
         with upgraded._db() as db:
-            self.assertEqual([1,2,3,4,5,6],[x[0] for x in db.execute("SELECT migration_no FROM sema_gecmisi ORDER BY migration_no").fetchall()])
-            self.assertEqual(23,db.execute("SELECT count(*) FROM information_schema.tables WHERE table_schema='main'").fetchone()[0])
+            self.assertEqual([1,2,3,4,5,6,7,8],[x[0] for x in db.execute("SELECT migration_no FROM sema_gecmisi ORDER BY migration_no").fetchall()])
+            self.assertEqual(26,db.execute("SELECT count(*) FROM information_schema.tables WHERE table_schema='main'").fetchone()[0])
         path=self.area/"drift.sql";path.write_text("-- drift",encoding="utf-8")
         with patch("sozlesme_cekirdek.store.MIGRATION_DOCX",path):
             with self.assertRaises(CoreError) as error:Store(self.store.root,source_roots=[self.sources],output_root=self.area)

@@ -1,0 +1,30 @@
+{
+  "interface": {
+    "displayName": "K\u0131l\u0131\u00e7 S\u00f6zle\u015fme Y\u00f6netimi",
+    "shortDescription": "Kaynakl\u0131 s\u00f6zle\u015fme deste\u011fi",
+    "longDescription": "Kaynakl\u0131 s\u00f6zle\u015fme deste\u011fi. Kararl\u0131 s\u00fcr\u00fcm 0.2.0: K28 i\u00e7 \u00e7al\u0131\u015fma tasla\u011f\u0131 Word \u00fcretimi, yap\u0131sal/native/g\u00f6rsel QA ile. \u015eirket imzas\u0131 ve kurumsal onay verilmez; e-posta g\u00f6nderimi kapal\u0131d\u0131r.",
+    "developerName": "Ozan Be\u015finci",
+    "websiteURL": "https://github.com/ozanbesinci/plugins/tree/main/kilic-sozlesme-yonetimi",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Read"
+    ],
+    "brandColor": "#163E70",
+    "composerIcon": "./assets/kilic-logo.svg",
+    "logo": "./assets/kilic-logo.svg",
+    "defaultPrompt": "Se\u00e7ilmi\u015f s\u00f6zle\u015fme ve ekleri kaynaklar\u0131yla de\u011ferlendir."
+  },
+  "name": "kilic-sozlesme-yonetimi",
+  "version": "0.2.0",
+  "description": "Sat\u0131nalma s\u00f6zle\u015fmeleri i\u00e7in kaynakl\u0131 \u00f6n inceleme, kaynak koruma ve yerel kay\u0131t \u00e7ekirde\u011fi.",
+  "author": {
+    "name": "Ozan Be\u015finci"
+  },
+  "keywords": [
+    "sozlesme",
+    "satinalma"
+  ],
+  "homepage": "https://github.com/ozanbesinci/plugins/tree/main/kilic-sozlesme-yonetimi",
+  "skills": "./skills"
+}

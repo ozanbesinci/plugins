@@ -55,6 +55,62 @@ class CalculationTests(unittest.TestCase):
 
 
 class WorkflowTests(unittest.TestCase):
+    def test_comparison_budget_includes_shared_reading_warnings(self):
+        from reader_fixtures import unpack, package_bytes
+        from sozlesme_cekirdek.safety import canonical
+        parts = unpack(self.path.read_bytes())
+        parts['word/document.xml'] = parts['word/document.xml'].decode('utf-8').replace('Avans oranı %20.', 'Avans oranı %30.')
+        self.path.write_bytes(package_bytes(parts))
+        target = self.store.ingest(self.case,self.doc,self.path,expected_revision=self.rev(),parent_version_id=self.version)['version_id']
+        reading = self.store.read_document(self.case,target,format='DOCX')
+        node = self.register(self.spec(version=target,reading=reading))
+        request = self.req('K04',roots=[node]);request['selected_versions']=[target]
+        preview = evaluate(self.store,request)
+        findings_size = len(canonical(preview['findings']).encode('utf-8'))
+        self.assertGreater(preview['context_budget']['used_bytes'] - findings_size, 100)
+        comparison = self.store.compare_source_roles(self.case,self.version,target,format='DOCX')
+        request['revision_comparison']={'reference_version_id':self.version,'target_version_id':target,'format':'DOCX','view':'RAW'}
+        request['max_context_bytes']=len(canonical(comparison).encode('utf-8')) + findings_size + 100
+        with self.assertRaises(CoreError) as caught:evaluate(self.store,request)
+        self.assertEqual('BAGLAM_SINIRI',caught.exception.code)
+
+    def test_explicit_partial_review_keeps_missing_annex_and_returns_available_evidence(self):
+        node = self.node();self.link(node, relation='ANNEX', unresolved_reference='Ek 7 bulunamadı')
+        request = self.req(roots=[node]);request['partial_review'] = True
+        result = evaluate(self.store, request)
+        self.assertEqual('KISMI', result['status'])
+        self.assertEqual(node, result['findings'][0]['node_id'])
+        self.assertFalse(result['partial_review']['registered_closure_complete'])
+        self.assertIn('Ek 7', result['partial_review']['missing_dependencies'][0]['reference'])
+        self.assertFalse(result['critical_analysis_allowed']);self.assertEqual([], result['output_ids'])
+        request['max_context_bytes'] = 64
+        self.assertEqual([], evaluate(self.store, request)['findings'])
+        request['max_context_bytes'] = 65536;request['policy_version'] = '2'
+        self.assertEqual([], evaluate(self.store, request)['findings'])
+
+    def test_revision_comparison_exposes_old_text_only_as_reference(self):
+        from reader_fixtures import unpack, package_bytes
+        parts = unpack(self.path.read_bytes())
+        parts['word/document.xml'] = parts['word/document.xml'].decode('utf-8').replace('Avans oranı %20.', 'Avans oranı %30.')
+        self.path.write_bytes(package_bytes(parts))
+        target = self.store.ingest(self.case, self.doc, self.path, expected_revision=self.rev(), parent_version_id=self.version)['version_id']
+        request = self.req('K04')
+        request['selected_versions'] = [target]
+        request['revision_comparison'] = {'reference_version_id': self.version, 'target_version_id': target, 'format': 'DOCX', 'view': 'RAW'}
+        result = evaluate(self.store, request)
+        comparison = result['revision_comparison']
+        self.assertEqual('REFERENCE_ONLY', comparison['reference']['role'])
+        self.assertEqual('NONE', comparison['reference']['decision_authority'])
+        self.assertEqual('EXTRACTED_TEXT_ONLY', comparison['comparison_scope'])
+        self.assertTrue(any('%20' in u['text'] for u in comparison['text_comparison']['reference_units']))
+        self.assertTrue(any('%30' in u['text'] for u in comparison['text_comparison']['target_units']))
+        self.assertTrue(comparison['text_comparison']['changes'])
+        self.assertEqual('KISMI', result['status'])
+        self.assertEqual([], result['output_ids'])
+        self.assertFalse(result['critical_analysis_allowed'])
+        request['requested_output'] = 'DOCX'
+        self.assertEqual('TEKNIK_ENGEL', evaluate(self.store, request)['status'])
+
     setUp=fixtures.ContextTests.setUp;rev=fixtures.ContextTests.rev;document=fixtures.ContextTests.document
     spec=fixtures.ContextTests.spec;node=fixtures.ContextTests.node;register=fixtures.ContextTests.register
     link=fixtures.ContextTests.link

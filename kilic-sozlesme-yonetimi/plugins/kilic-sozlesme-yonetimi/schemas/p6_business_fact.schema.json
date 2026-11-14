@@ -31,7 +31,8 @@
         "DECIMAL_TR",
         "INTEGER",
         "PERCENT_TR",
-        "DATE_ISO"
+        "DATE_ISO",
+        "DATE_TR"
       ]
     },
     "value_span": {
@@ -146,6 +147,145 @@
     "supersedes_id": {
       "type": "string",
       "format": "uuid"
+    },
+    "number_format_source": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "source_node_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "locale": {
+          "enum": [
+            "TR",
+            "CANONICAL"
+          ]
+        },
+        "span": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "start": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "end": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "text": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2000
+            }
+          },
+          "required": [
+            "start",
+            "end",
+            "text"
+          ]
+        },
+        "applies_to_source_node_id": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "required": [
+        "source_node_id",
+        "locale",
+        "span"
+      ]
+    },
+    "unit_source": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "source_node_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "span": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "start": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "end": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "text": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2000
+            }
+          },
+          "required": [
+            "start",
+            "end",
+            "text"
+          ]
+        },
+        "relationship": {
+          "enum": [
+            "SAME_ROW",
+            "COLUMN_HEADER"
+          ]
+        }
+      },
+      "required": [
+        "source_node_id",
+        "span",
+        "relationship"
+      ]
+    },
+    "currency_source": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "source_node_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "span": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "start": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "end": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "text": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2000
+            }
+          },
+          "required": [
+            "start",
+            "end",
+            "text"
+          ]
+        },
+        "relationship": {
+          "enum": [
+            "SAME_ROW",
+            "COLUMN_HEADER"
+          ]
+        }
+      },
+      "required": [
+        "source_node_id",
+        "span",
+        "relationship"
+      ]
     }
   },
   "required": [

@@ -1,3 +1,7 @@
+# Kararlı sürüm 0.2.0 — iç çalışma taslağı Word
+
+K28 iç çalışma taslağı üretimi açıldı: ayrı iki aşamalı yapısal/native/görsel QA ve kaynak/sürüm bağı. Çekirdek 0.4.0, P6 p6-1.4, migration008. Şirket imzası/kurumsal onay verilmez; P4/P5 genel üretim eylemleri ve e-posta gönderimi kapalıdır. [Kullanım ve sınırlar](references/internal-drafts.md). Önceki sürüm kayıtları aşağıda tarihseldir.
+
 ---
 title: Sözleşme Yönetimi bilinen sınırlar
 created: 2026-10-04

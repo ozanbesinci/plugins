@@ -20,6 +20,7 @@ from .context import ContextMixin
 from .guard import GuardMixin
 from .outputs import OutputMixin
 from .business import BusinessMixin
+from .internal_drafts import InternalDraftMixin
 
 NOW = lambda: datetime.now(timezone.utc)
 MIGRATION = Path(__file__).parent / "migrations" / "001.sql"
@@ -28,9 +29,11 @@ MIGRATION_CONTEXT = Path(__file__).parent / "migrations" / "003.sql"
 MIGRATION_GUARD = Path(__file__).parent / "migrations" / "004.sql"
 MIGRATION_DOCX = Path(__file__).parent / "migrations" / "005.sql"
 MIGRATION_BUSINESS = Path(__file__).parent / "migrations" / "006.sql"
+MIGRATION_INGESTION = Path(__file__).parent / "migrations" / "007.sql"
+MIGRATION_INTERNAL_DRAFT = Path(__file__).parent / "migrations" / "008.sql"
 
 
-class Store(BusinessMixin, OutputMixin, GuardMixin, ContextMixin, VerificationMixin):
+class Store(InternalDraftMixin, BusinessMixin, OutputMixin, GuardMixin, ContextMixin, VerificationMixin):
     """Short-lived sequential coordinator. Application boundary, NOT host sandbox/identity."""
     def __init__(self, workspace, *, source_roots, output_root, lock_timeout=5):
         self.output_root = Path(output_root).absolute()
@@ -50,7 +53,7 @@ class Store(BusinessMixin, OutputMixin, GuardMixin, ContextMixin, VerificationMi
         self.lock_timeout = lock_timeout
         with self._db() as db:
             exists = db.execute("SELECT count(*) FROM information_schema.tables WHERE table_name='sema_gecmisi'").fetchone()[0]
-            paths = [MIGRATION, MIGRATION_VERIFIER, MIGRATION_CONTEXT, MIGRATION_GUARD, MIGRATION_DOCX, MIGRATION_BUSINESS]
+            paths = [MIGRATION, MIGRATION_VERIFIER, MIGRATION_CONTEXT, MIGRATION_GUARD, MIGRATION_DOCX, MIGRATION_BUSINESS, MIGRATION_INGESTION, MIGRATION_INTERNAL_DRAFT]
             scripts = [path.read_text(encoding="utf-8") for path in paths]
             expected = [(i + 1, hashlib.sha256(script.encode("utf-8")).hexdigest())
                         for i, script in enumerate(scripts)]
@@ -58,8 +61,11 @@ class Store(BusinessMixin, OutputMixin, GuardMixin, ContextMixin, VerificationMi
             if rows != expected[:len(rows)] or len(rows) > len(expected):
                 raise CoreError("SEMA_DRIFT", "Migration geçmişi bu kaynakla eşleşmiyor")
             for i in range(len(rows), len(scripts)):
+                if i == 6:
+                    from .migrations_upgrade import separate_content_from_version
+                    separate_content_from_version(db, scripts[:6])
                 db.execute(scripts[i])
-                db.execute("INSERT INTO sema_gecmisi VALUES(?,?,?,?)", [i + 1, ["1.0", "p2-verifier-1.0", "p3-context-1.0", "p4-guard-1.0", "p5-docx-1.0", "p6-business-1.0"][i], expected[i][1], NOW()])
+                db.execute("INSERT INTO sema_gecmisi VALUES(?,?,?,?)", [i + 1, ["1.0", "p2-verifier-1.0", "p3-context-1.0", "p4-guard-1.0", "p5-docx-1.0", "p6-business-1.0", "p7-version-acquisition-1.0", "internal-draft-1.0"][i], expected[i][1], NOW()])
 
     @contextmanager
     def _db(self):
@@ -146,10 +152,12 @@ class Store(BusinessMixin, OutputMixin, GuardMixin, ContextMixin, VerificationMi
         return rid
 
     def ingest(self, case_id, document_id, source, *, expected_revision, parent_version_id=None,
-               business_status="UNKNOWN", _fault=None):
+               business_status="UNKNOWN", acquisition_key=None, _fault=None):
         case_id, document_id = uuid_text(case_id), uuid_text(document_id)
         if business_status not in {"UNKNOWN", "DRAFT", "SUPPLIER_PROPOSAL", "PURCHASING_PROPOSAL", "SIGNED"}:
             raise CoreError("GECERSIZ_DURUM", "Bilinmeyen belge iş durumu")
+        if acquisition_key is not None and (not isinstance(acquisition_key, str) or not acquisition_key.strip() or len(acquisition_key) > 128):
+            raise CoreError('GECERSIZ_GIRDI', 'Edinim işlem anahtarı 1–128 karakter olmalı')
         path = confined(source, self.source_roots)
         if not native_path(path).is_file() or path.name.lower() in {"auth.json", "config.toml", "settings.local.json"} or path.name.startswith(".env"):
             raise CoreError("ERISIM_YOK", "Kaynak dosya uygun değil")
@@ -176,7 +184,28 @@ class Store(BusinessMixin, OutputMixin, GuardMixin, ContextMixin, VerificationMi
             if before.st_size != after.st_size or before.st_mtime_ns != after.st_mtime_ns or hash_file(path) != digest:
                 native_path(staging).unlink()
                 raise CoreError("KAYNAK_DEGISTI", "Alım sırasında kaynak değişti")
-            row = db.execute("SELECT record_id,storage_key FROM belge_surumu WHERE case_id=? AND document_id=? AND sha256=?", [case_id, document_id, digest]).fetchone()
+            requested_parent = uuid_text(parent_version_id) if parent_version_id else None
+            if requested_parent:
+                self._source(db, case_id, requested_parent, {'VERSION'})
+                parent_doc = db.execute('SELECT document_id FROM belge_surumu WHERE case_id=? AND record_id=?', [case_id, requested_parent]).fetchone()[0]
+                if str(parent_doc) != document_id:
+                    raise CoreError('KAYNAK_KAPSAMI', 'Ebeveyn aynı mantıksal belgeye ait olmalı')
+            request_digest = hash_value({'source': str(path), 'sha256': digest, 'parent': requested_parent, 'status': business_status})
+            if acquisition_key:
+                prior_request = db.execute('SELECT request_digest,version_id FROM surum_edinim_islemleri WHERE case_id=? AND document_id=? AND request_key=?', [case_id, document_id, acquisition_key]).fetchone()
+                if prior_request:
+                    native_path(staging).unlink()
+                    if prior_request[0] != request_digest:
+                        raise CoreError('EDINIM_CAKISMASI', 'Aynı edinim anahtarı farklı istekle kullanıldı')
+                    self._check_version_access(db, case_id, str(prior_request[1]))
+                    return {'version_id': str(prior_request[1]), 'sha256': digest, 'reused': True}
+            heads = db.execute('SELECT record_id,storage_key,sha256,original_path,business_status FROM belge_surumu v WHERE case_id=? AND document_id=? AND NOT EXISTS (SELECT 1 FROM surum_ebeveynleri e WHERE e.case_id=v.case_id AND e.parent_id=v.record_id)', [case_id, document_id]).fetchall()
+            reusable = []
+            for head in heads:
+                parents = {str(r[0]) for r in db.execute('SELECT parent_id FROM surum_ebeveynleri WHERE case_id=? AND child_id=?', [case_id, head[0]]).fetchall()}
+                if head[2:] == (digest, str(path), business_status) and (requested_parent in parents if requested_parent else True):
+                    reusable.append(head)
+            row = reusable[0] if len(reusable) == 1 and acquisition_key is None else None
             if row:
                 existing = confined(self.system / row[1], [self.output_root])
                 if hash_file(existing) != digest:
@@ -184,6 +213,9 @@ class Store(BusinessMixin, OutputMixin, GuardMixin, ContextMixin, VerificationMi
                 native_path(staging).unlink()
                 return {"version_id": str(row[0]), "sha256": digest, "reused": True}
             has_prior = db.execute("SELECT count(*) FROM belge_surumu WHERE case_id=? AND document_id=?", [case_id,document_id]).fetchone()[0]
+            if has_prior and not parent_version_id and len(heads) == 1 and heads[0][2] == digest:
+                # Same bytes re-acquired from a new permitted source: a new event, not an old path.
+                parent_version_id = str(heads[0][0])
             if has_prior and not parent_version_id:
                 native_path(staging).unlink()
                 raise CoreError("SURUM_TEMELI_GEREKLI", "Değişen belgenin ebeveyn sürümünü açıkça seç; dosya adından son sürüm varsayılmadı")
@@ -209,6 +241,8 @@ class Store(BusinessMixin, OutputMixin, GuardMixin, ContextMixin, VerificationMi
                 db.execute("INSERT INTO surum_ebeveynleri VALUES(?,?,?,'REVISION')", [case_id, version_id, parent_version_id])
                 self._invalidate(db, case_id, parent_version_id, version_id, "SOURCE_VERSION_CHANGED")
             self._event(db, case_id, "SOURCE_INGESTED", {"version_id": version_id, "sha256": digest})
+            if acquisition_key:
+                db.execute('INSERT INTO surum_edinim_islemleri VALUES(?,?,?,?,?)', [case_id, document_id, acquisition_key, request_digest, version_id])
             self._bump(db, case_id)
         record["state"] = "COMMITTED"
         atomic_json(journal, record)
@@ -252,9 +286,9 @@ class Store(BusinessMixin, OutputMixin, GuardMixin, ContextMixin, VerificationMi
                 "same_bytes":old==new,"old_size":len(old),"new_size":len(new),"first_changed_byte":first,
                 "comparison_scope":"BYTES_ONLY","semantic_comparison":"NOT_RUN"}
 
-    def compare_source_roles(self,case_id,reference_version_id,current_target_version_id):
+    def compare_source_roles(self,case_id,reference_version_id,current_target_version_id, **options):
         from .source_roles import compare_source_roles
-        return compare_source_roles(self,case_id,reference_version_id,current_target_version_id)
+        return compare_source_roles(self,case_id,reference_version_id,current_target_version_id, **options)
 
     def add_parent(self, case_id, child, parent, *, expected_revision):
         case_id, child, parent = map(uuid_text, (case_id, child, parent))
@@ -520,6 +554,8 @@ class Store(BusinessMixin, OutputMixin, GuardMixin, ContextMixin, VerificationMi
         with FileLock(self.lock_path, self.lock_timeout):
             db = duckdb.connect(str(native_path(self.db_path)), config={"enable_external_access": False, "threads": 1})
             try:
+                if db.execute("SELECT count(*) FROM ic_taslaklar").fetchone()[0]:
+                    raise CoreError("SNAPSHOT_KAPSAMI", "İç taslak çıktı/QA yollarını taşıma bu snapshot biçiminde desteklenmiyor")
                 versions = db.execute("SELECT storage_key,sha256 FROM belge_surumu").fetchall()
                 db.execute("CHECKPOINT")
             finally:

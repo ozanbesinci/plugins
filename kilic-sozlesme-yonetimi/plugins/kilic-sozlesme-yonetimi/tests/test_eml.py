@@ -30,6 +30,21 @@ def attrs(row):
 
 
 class MailReaderTests(unittest.TestCase):
+    def test_html_table_cells_preserve_numeric_and_empty_boundaries(self):
+        message = mail()
+        message.set_content('<table><tr><th>Malzeme</th><th>Adet</th><th>Fiyat</th></tr>'
+                            '<tr><td>Pompa</td><td>2</td><td>500</td></tr>'
+                            '<tr><td>Yedek</td><td></td><td>600</td></tr></table>Son', subtype='html')
+        data = message.as_bytes()
+        report = validate_reading(read_eml(data), data)
+        text = ''.join(row['views']['RAW'] for row in report['units'] if row['kind'] == 'EMAIL_BODY')
+        self.assertIn('Pompa\t2\t500', text)
+        self.assertIn('Yedek\t\t600', text)
+        self.assertNotIn('2500', text)
+        self.assertNotIn('600Son', text)
+        self.assertTrue(any(x['code'] == 'MAIL_HTML_VISUAL_NOT_RUN' for x in report['issues']))
+        self.assertFalse(report['verification']['critical_analysis_allowed'])
+
     def test_utf8_headers_dates_body_quotes_and_no_authority(self):
         data = mail().as_bytes(policy=policy.SMTP)
         report = validate_reading(read_eml(data), data)

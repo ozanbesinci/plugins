@@ -2,8 +2,8 @@
   {
     "id": "PRODUCT",
     "lane": "Ürün ve gerçek kaynak",
-    "next_action": "0.1.1: giriş betiği çekirdeğin somut ret nedenini (error_code/mesaj) host'a iletsin; yama ve testi hazır, ayrı aday kanıtı gerekir. 0.2.0 hedefi (depo sahibi, 2026-10-15): normal üretim Word çıktısını aç. Önce kurum kuralı: onaylayan, şirket kimliği, görsel QA ve iç/dış nüsha. Sonra mevcut P4/P5 Word motorunu üretim kimlik/izin/QA adaptörüne bağla (yaklaşık 1 gün). 0.1.0'da Word kapalı. Ayrıca: eşlenmiş ağ sürücüsü (O:) ve yalnız bulutta duran OneDrive kaynağını gerçek host'ta sına (CR-06); PDF profilindeki gereksiz numpy bağını (CR-12) ve 8.3 kısa yol reddini (CR-18) bir sonraki okuyucu değişikliğiyle ele al.",
-    "done_when": "0.2.0: kurum Word kuralı kayıtlı; gerçek Word çıktı/geri alma ve görsel QA kanıtı. O:/bulut dosyası host sonucu. Mevcut 104 tanımın etkin kapsamı korunur; mail gönderimi kaldırılmış kapsamdır."
+    "next_action": "0.2.0: K28 iç çalışma taslağı Word üretimi, kaynak/revizyon bağı ve yapısal/native/görsel QA ile açıldı. Şirket imzası/kurumsal onay ve P4/P5 genel revizyon/dış nüsha bu kapsamda değildir. Eşlenmiş ağ sürücüsü ve yalnız bulutta duran OneDrive kaynağı için gerçek host kapsamı ile ikinci cihaz kabulü ayrıca açıktır; okuyucu profilindeki gereksiz numpy bağı ve8.3 kısa yol reddinin kapsamı kendi kanıtıyla değerlendirilir.",
+    "done_when": "Seçilen INTERNAL_DRAFT kapsamında aynı son kaynakta teknik testler, gerçek Word ve tüm sayfaların görsel inceleme/teslim kanıtı. Diğer kaynak/cihaz sınırları ayrıca açıkça raporlanır; e-posta gönderimi kapsam dışıdır."
   },
   {
     "id": "EXPERT",
@@ -14,13 +14,13 @@
   {
     "id": "CORPORATE",
     "lane": "Kurum ve kullanım ortamı",
-    "next_action": "Depo sahibinin kurum kararı (kullanıcılar, yerel çıktı alanı, saklama/silme, salt okunur kaynak, mail ve Word kapalı, kurulum/geri alma sorumlusu) ve BT'nin Python/paket kurulum onayı kaydedildi. BT onayının yazılı kaydı gelirse eklenir.",
+    "next_action": "Önceki kurum kararı USER_DECISION/USER_REPORTED olarak korunur.14.11.2026 açık kullanıcı seçimi yalnız iç çalışma taslağı Word üretimini açtı; şirket imzası/kurumsal onay iddiası yok.15.11.2026 mevcut Business kaydı ve GitHub kararlı sürüm yayını açıkça istendi. Paylaşım ve erişim değiştirilmez; yazılı kurum/BT kaynakları ayrıca kanıta bağlı kalır.",
     "done_when": "Özel kanıt kaydında USER_DECISION ve USER_REPORTED olarak kayıtlı."
   },
   {
     "id": "FINAL",
     "lane": "Son aday",
-    "next_action": "0.1.0 yayımlandı (2026-10-15): aynı baytlarda tam koşu, native kurulum dönüşü, iki Python ortamında gerçek pilot vakada K03, Claude ve Codex host denemesi, uzman ve kurum kayıtları kanıt dizinine bağlandı; yayın kararını depo sahibi verdi. Sonraki ürün değişikliği 0.2.0 adayıdır.",
-    "done_when": "0.2.0 için aynı kurallar: aynı son adayın teknik kanıtı, host denemeleri, uzman ve kurum kayıtları; yayın kararı yetkili tarafından. Araç kendiliğinden kararlı sürüm ilan etmez."
+    "next_action": "0.2.0 kararlı yayın kararı depo sahibi tarafından15.11.2026 verildi. Son paket kaynak/hash,660 etkin ürün testi,24 araç testi, gerçek Word/native görsel teslim ve aynı Business/GitHub paketinin geri okumasıyla doğrulanır. Önceki0.1.0/0.1.2 kayıtları tarihsel; yeni baytların veya bütün üyelerin saha kabulü sayılmaz.",
+    "done_when": "Aynı0.2.0 son paketin teknik kanıtı ve seçilen iç taslak kapsamının gerçek Word kanıtı; mevcut Business kaydı ve GitHub kararlı yayınına uygulama, sürüm/dosya bütünlüğü geri okuması. Kurumsal imza veya genel uzman kabulü verilmez."
   }
 ]

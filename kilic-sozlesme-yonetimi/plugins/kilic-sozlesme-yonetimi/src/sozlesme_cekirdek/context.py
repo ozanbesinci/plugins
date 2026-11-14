@@ -11,7 +11,7 @@ from .schemas import validate
 from .verification import reading_profile, validate_policy
 
 VERSION = "p3-1.0"
-CACHE_VERSION = "registered-subgraph-revalidation/v1"
+CACHE_VERSION = "registered-subgraph-revalidation/v3-shared-issues"
 MAX_NODES = 512
 MAX_RELATIONS = 2048
 MAX_PACKS = 512
@@ -43,7 +43,8 @@ def context_bytes(value):
 def validate_pack(report):
     checked("p3_context_pack", report)
     budget = report["budget"]
-    if context_bytes(report["context"]) != budget["used_bytes"] or budget["used_bytes"] > budget["max_context_bytes"]:
+    partial = report.get('partial_context')
+    if context_bytes(report["context"]) + context_bytes(partial) != budget["used_bytes"] or budget["used_bytes"] > budget["max_context_bytes"]:
         raise CoreError("BAGLAM_BOZUK", "Bağlam bayt bütçesi farklı")
     complete = report["status"] == "COMPLETE_REGISTERED_SCOPE"
     if complete != (report["context"] is not None) or complete != report["registered_closure_complete"]:
@@ -61,6 +62,15 @@ def validate_pack(report):
             raise CoreError("BAGLAM_BOZUK", "Tamamlanan kapanımın kapsamı farklı/eksik")
     elif report["included"]:
         raise CoreError("BAGLAM_BOZUK", "Eksik pakette kullanılabilir içerik yok")
+    if partial is not None:
+        if (complete or report['status'] != 'INCOMPLETE_DEPENDENCIES' or not report['request'].get('allow_partial_review')
+                or not report['missing_dependencies'] or report['stale_dependencies']):
+            raise CoreError('BAGLAM_BOZUK', 'Kısmi kanıt görünümü tam/güncel kapanım gibi sunulamaz')
+        ids = [entry['node_id'] for entry in partial['entries']]
+        if (ids != sorted(set(report['required_nodes'])) or any(e['state'] != 'CURRENT_REGISTERED_SCOPE' for e in partial['entries'])
+                or partial['case_id'] != report['case_id'] or partial['semantic_version'] != report['semantic_version']
+                or partial['purpose'] != report['request']['purpose']):
+            raise CoreError('BAGLAM_BOZUK', 'Kısmi görünümün kayıtlı kanıt kapsamı farklı/eski')
     if budget["max_context_bytes"] != report["request"]["max_context_bytes"]:
         raise CoreError("BAGLAM_BOZUK", "İstek bütçesi farklı")
     return report
@@ -76,7 +86,7 @@ class ContextMixin:
             reasons.append("DEPENDENCY_INVALIDATED")
         return data, sha, document, reasons
 
-    def _context_basis(self, db, case, spec, policy):
+    def _context_basis(self, db, case, spec, policy, *, legacy_issues=False):
         kind = spec["node_kind"]
         deps, reasons = [], []
         if kind == "SOURCE_UNIT":
@@ -94,6 +104,20 @@ class ContextMixin:
                                     "reading_id": reading_id, "reading_digest": hash_value(reading),
                                     "reader_profile_digest": profile, "locator": unit["locator"], "target": spec["target"]},
                      "knowledge_status": "EXTRACTED_TEXT_PARTIAL"}
+            if not legacy_issues:
+                location = unit['locator']
+                def relevant(problem):
+                    where = problem['locator']
+                    if where is None:
+                        return True
+                    for key in ('part', 'page', 'sheet', 'cell'):
+                        if where[key] not in (None, '') and where[key] != location[key]:
+                            return False
+                    path = where['path']
+                    return not path or path == location['path'] or location['path'].startswith(path + '/')
+                basis['content']['issues'] = [problem for problem in reading['issues'] if relevant(problem)]
+                basis['content']['reading_issues_ref'] = {'reading_id': reading_id, 'reading_digest': hash_value(reading),
+                    'issues_digest': hash_value(reading['issues']), 'issue_count': len(reading['issues'])}
         elif kind == "USER_STATEMENT":
             ref = spec["record_id"]
             self._source(db, case, ref, {"STATEMENT"})
@@ -171,7 +195,8 @@ class ContextMixin:
         spec = checked("p3_context_node", payload["spec"])
         if row[0] != spec["node_kind"]:
             raise CoreError("BAGLAM_BOZUK", "Bağlam kayıt türü farklı")
-        basis, deps, reasons = self._context_basis(db, case, spec, policy)
+        legacy_issues = spec['node_kind'] == 'SOURCE_UNIT' and 'reading_issues_ref' not in payload['basis']['content']
+        basis, deps, reasons = self._context_basis(db, case, spec, policy, legacy_issues=legacy_issues)
         if basis != payload["basis"] or deps != payload["dependencies"]:
             raise CoreError("BAGLAM_BOZUK", "Bağlam kaynağı/kanıt kaydı değişmiş")
         if self._invalid(db, case, [rid]):
@@ -259,6 +284,7 @@ class ContextMixin:
             required, edges, missing = self._closure(request["root_ids"], graph)
             considered = dict(edges)
             loaded = {}
+            issue_records = {}
             def load(ids):
                 for rid in sorted(ids):
                     if rid not in loaded:
@@ -266,8 +292,22 @@ class ContextMixin:
             load(required)
             stale = [{"node_id": rid, "reasons": loaded[rid]["reasons"]} for rid in sorted(required) if loaded[rid]["state"] == "NEEDS_REVIEW"]
             def payload(ids, links):
+                shared = {}
+                for rid in sorted(ids):
+                    entry = loaded[rid]
+                    ref = entry['content'].get('reading_issues_ref')
+                    if ref is not None:
+                        reading_id = ref['reading_id']
+                        if reading_id not in issue_records:
+                            raw = db.execute('SELECT result FROM isleme_calismalari WHERE case_id=? AND record_id=?', [case, reading_id]).fetchone()
+                            reading = json.loads(raw[0]) if raw else None
+                            if reading is None or hash_value(reading) != ref['reading_digest'] or hash_value(reading['issues']) != ref['issues_digest'] or len(reading['issues']) != ref['issue_count']:
+                                raise CoreError('BAGLAM_BOZUK', 'Ortak okuma uyarısı referansı farklı')
+                            issue_records[reading_id] = dict(ref, version_id=entry['provenance']['version_id'], issues=reading['issues'])
+                        shared[reading_id] = issue_records[reading_id]
                 return {"case_id": case, "purpose": request["purpose"], "semantic_version": revision,
                         "entries": [loaded[rid] for rid in sorted(ids)], "relations": [links[rid] for rid in sorted(links)],
+                        'reading_issues': [shared[key] for key in sorted(shared)],
                         "trust": TRUST, "limitations": LIMITATIONS}
             needed = context_bytes(payload(required, edges))
             maximum = request["max_context_bytes"]
@@ -299,6 +339,7 @@ class ContextMixin:
                         links = proposed
             included = sorted(selected)
             context = payload(selected, links) if status == "COMPLETE_REGISTERED_SCOPE" else None
+            partial_context = payload(required, edges) if (request.get('allow_partial_review') and missing and not stale and needed <= maximum) else None
             # All graph envelopes were checked above. Only evaluated dependencies
             # affect this context; unrelated case events do not consume a new pack.
             dependency_digest = hash_value({"nodes": loaded, "edges": considered, "missing": missing, "stale": stale})
@@ -307,16 +348,17 @@ class ContextMixin:
                                 "selection": selection, "version": VERSION, "cache_version": CACHE_VERSION})
             old = db.execute("SELECT record_id,payload_digest,payload,semantic_version FROM baglam_paketleri WHERE case_id=? AND cache_digest=?", [case, cache]).fetchone()
             report = {"schema_version": VERSION, "case_id": case, "semantic_version": revision, "request": request,
-                      "status": status, "context": context, "included": included, "required_nodes": sorted(required), "omitted": omitted,
+                      "status": status, "context": context, "partial_context": partial_context, "included": included, "required_nodes": sorted(required), "omitted": omitted,
                       "missing_dependencies": missing, "stale_dependencies": stale, "dependency_digest": dependency_digest,
                       "registered_closure_complete": status == "COMPLETE_REGISTERED_SCOPE", "semantic_completeness": "UNVERIFIED",
                       "critical_analysis_allowed": False, "authority": "NOT_VERIFIED", "limitations": LIMITATIONS,
                       "budget": {"method": "CANONICAL_JSON_UTF8_BYTES", "scope": "CONTEXT_FIELD_ONLY", "max_context_bytes": maximum,
-                                 "used_bytes": context_bytes(context), "required_bytes": needed, "host_token_count": None}}
+                                 "used_bytes": context_bytes(context) + context_bytes(partial_context), "required_bytes": needed, "host_token_count": None}}
             validate_pack(report)
-            if selected:
-                placeholders = ",".join("?" for _ in selected)
-                versions = db.execute("SELECT DISTINCT k.source_id FROM kanit_baglari k JOIN belge_surumu v ON k.case_id=v.case_id AND k.source_id=v.record_id WHERE k.case_id=? AND k.target_id IN (" + placeholders + ")", [case, *sorted(selected)]).fetchall()
+            checked_ids = selected | (required if partial_context is not None else set())
+            if checked_ids:
+                placeholders = ",".join("?" for _ in checked_ids)
+                versions = db.execute("SELECT DISTINCT k.source_id FROM kanit_baglari k JOIN belge_surumu v ON k.case_id=v.case_id AND k.source_id=v.record_id WHERE k.case_id=? AND k.target_id IN (" + placeholders + ")", [case, *sorted(checked_ids)]).fetchall()
                 for version, in versions:
                     # Recheck after assembly, including candidate version dependencies.
                     self._verification_source(db, case, str(version), current=True)
@@ -329,7 +371,9 @@ class ContextMixin:
                 historical["semantic_version"] = basis_revision
                 if historical["context"] is not None:
                     historical["context"]["semantic_version"] = basis_revision
-                historical["budget"]["used_bytes"] = context_bytes(historical["context"])
+                if historical.get('partial_context') is not None:
+                    historical['partial_context']['semantic_version'] = basis_revision
+                historical["budget"]["used_bytes"] = context_bytes(historical["context"]) + context_bytes(historical.get('partial_context'))
                 historical["budget"]["required_bytes"] += len(str(basis_revision)) - len(str(revision))
                 validate_pack(historical)
                 if (hash_value(stored) != old[1] or stored != historical or basis_revision > revision

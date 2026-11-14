@@ -12,6 +12,22 @@ FIXTURE_CLASSES = {'PackageTests', 'PdfTests', 'ClaudeCliTests', 'CliTests', 'Co
 
 
 class QualityInventoryTests(unittest.TestCase):
+    def test_real_staging_path_rejects_credential_canaries_before_copy(self):
+        import importlib.util
+        import tempfile
+        spec = importlib.util.spec_from_file_location('tested_staging_runner', ROOT / 'scripts/run_product_tests.py')
+        runner = importlib.util.module_from_spec(spec);spec.loader.exec_module(runner)
+        with tempfile.TemporaryDirectory() as area:
+            source = Path(area) / 'source';source.mkdir();(source / 'module.py').write_text('safe', encoding='utf-8')
+            for name in ('auth.json', 'config.toml', 'settings.local.json', '.env.production', 'AUTH.JSON'):
+                canary = source / name;canary.write_text('SYNTHETIC-CANARY-NEVER-COPY', encoding='utf-8')
+                target = Path(area) / 'target'
+                with self.assertRaises(ValueError):runner.stage_product(source, target)
+                self.assertFalse(target.exists())
+                canary.unlink()
+            runner.stage_product(source, Path(area) / 'clean-target')
+            self.assertEqual('safe', (Path(area) / 'clean-target/module.py').read_text(encoding='utf-8'))
+
     def test_all_original_104_definitions_have_explicit_effective_scope(self):
         scope = effective_test_scope()
         rows = {row['original_id']: row for row in scope['records']}
@@ -84,16 +100,16 @@ class NativeSchemaInventoryTests(unittest.TestCase):
     rev = fixtures.ContextTests.rev
     document = fixtures.ContextTests.document
 
-    def test_real_duckdb_has_23_named_tables_and_six_immutable_migrations(self):
+    def test_real_duckdb_has_24_named_tables_and_seven_immutable_migrations(self):
         expected = {'sema_gecmisi', 'dosyalar', 'kayitlar', 'belgeler', 'belge_surumu', 'surum_ebeveynleri',
                     'isleme_calismalari', 'beyanlar', 'bilgiler', 'kanit_baglari', 'gecersizlestirmeler', 'islem_olaylari',
                     'dogrulamalar', 'icerik_birimleri', 'iliskiler', 'baglam_paketleri', 'islemler', 'islem_izinleri',
-                    'eylem_kararlari', 'docx_turevleri', 'is_bilgisi_baglari', 'yukumlulukler', 'gerceklesmeler'}
+                    'eylem_kararlari', 'docx_turevleri', 'is_bilgisi_baglari', 'yukumlulukler', 'gerceklesmeler', 'surum_edinim_islemleri', 'ic_taslaklar', 'ic_taslak_istekleri'}
         with self.store._db() as db:
             self.assertEqual('_duckdb', type(db).__module__)
             actual = {row[0] for row in db.execute("SELECT table_name FROM information_schema.tables WHERE table_schema='main' AND table_type='BASE TABLE'").fetchall()}
             self.assertEqual(expected, actual)
-            self.assertEqual(list(range(1, 7)), [row[0] for row in db.execute('SELECT migration_no FROM sema_gecmisi ORDER BY migration_no').fetchall()])
+            self.assertEqual(list(range(1, 9)), [row[0] for row in db.execute('SELECT migration_no FROM sema_gecmisi ORDER BY migration_no').fetchall()])
 
 
 if __name__ == '__main__':

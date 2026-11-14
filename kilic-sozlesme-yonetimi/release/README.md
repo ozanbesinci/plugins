@@ -1,14 +1,20 @@
 ---
 title: Sözleşme eklentisi kararlı sürüme geçiş yapısı
 created: 2026-10-14
-modified: 2026-10-24
+modified: 2026-11-15
 type: development
-status: 🟢 0.1.2 GitHub ve Business yayını
+status: 🟢 0.2.0 kararlı sürüm paketi
 tags: [is, sozlesme, mimari]
-tazele: 2026-10-25
+tazele: 2026-11-29
 ---
 
-## Güncel yayın — 24.10.2026
+## Kararlı sürüm0.2.0 — 15.11.2026
+
+Depo sahibi, iç çalışma taslağı Word kapsamını ve Business/GitHub kararlı yayınını açıkça seçti. [0.2.0 paketi](https://github.com/ozanbesinci/plugins/releases/tag/kilic-sozlesme-yonetimi-v0.2.0): plugin/beceriler0.2.0, çekirdek0.4.0, P6p6-1.4, migration008.660 etkin ürün testi,24 araç testi ve gerçek yerel Word/native inceleme kanıtı ayrı tutulur.661 keşiften bir tarihsel P0 fixture testi açıkça kapsam dışıdır. İş/uzman/şirket kabulü test başarısından türetilmez.
+
+K28 yalnız yeni iç çalışma taslağı üretir; kaynak değişmez, bütün sayfalar görülmeden son dosya verilmez. Kurumsal imza/onay ve P4/P5 genel revizyon/dış nüsha eylemleri açılmaz. [Word protokolü](../plugins/kilic-sozlesme-yonetimi/references/internal-drafts.md). Aynı0.1.1 Windows kurucusu sabit hash/boyutuyla korunur.
+
+## Önceki yayın — 24.10.2026
 
 Business'taki sürüm ve [GitHub kararlı paketi](https://github.com/ozanbesinci/plugins/releases/tag/kilic-sozlesme-yonetimi-v0.1.2) 0.1.2'dir. Ana daldaki ürünün 263 dosyası yayımlanan ZIP ile bayt bayt eşittir. ZIP SHA-256: `87d442bc3e56b10aa2e1926048ffe8ee79cd053192250464da17d4411ad32beb`.
 

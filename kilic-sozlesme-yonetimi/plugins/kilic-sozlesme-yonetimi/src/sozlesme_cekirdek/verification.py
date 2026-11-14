@@ -317,11 +317,31 @@ class VerificationMixin:
                 raise CoreError("KAYNAK_KONUMU", "PDF kaynak sayfası gerekli")
             if db.execute("SELECT count(*) FROM dogrulamalar WHERE case_id=? AND document_version_id=?", [case_id, version_id]).fetchone()[0] >= MAX_CONTROLS:
                 raise CoreError("DOGRULAMA_BUTCESI", "Render başlamadan sürüm kontrol bütçesi doldu")
-            png = bounded_render(data, unit["locator"]["page"])
-            width, height = png_info(png)
-            artifact = {"sha256": hashlib.sha256(png).hexdigest(), "size_bytes": len(png), "page": unit["locator"]["page"], "width": width, "height": height, "mime_type": "image/png", "renderer_profile": renderer_profile()}
-            # Recheck source after the native worker, before any control is published.
-            self._verification_source(db, case_id, version_id, current=True)
+            frozen = (sha, document, hash_value(reading), profile, unit['locator']['page'])
+            frozen_renderer = renderer_profile()
+        # Native rendering and image decoding must not hold the workspace DB lock.
+        png = bounded_render(data, frozen[4])
+        width, height = png_info(png)
+        if renderer_profile() != frozen_renderer:
+            raise CoreError('YENIDEN_INCELE', 'Render sırasında görüntüleyici profili değişti')
+        artifact = {"sha256": hashlib.sha256(png).hexdigest(), "size_bytes": len(png), "page": frozen[4], "width": width, "height": height, "mime_type": "image/png", "renderer_profile": frozen_renderer}
+        with self._db() as db:
+            self._case(db, case_id, expected_revision)
+            current_data, current_sha, document, _ = self._verification_source(db, case_id, version_id, current=True)
+            reading, profile = self._verification_reading(db, case_id, version_id, processed['processing_id'], current_data)
+            if ((current_sha, document, hash_value(reading), profile) != frozen[:4]
+                    or profile != reading_profile(request['format'], policy_version)[1]
+                    or self._invalid(db, case_id, [version_id, processed['processing_id']])):
+                raise CoreError('YENIDEN_INCELE', 'Render sırasında kaynak/okuma/profil değişti')
+            unit, _ = self._target(reading, request, allow_empty=True)
+            # A concurrent producer may have filled this exact cache slot.
+            existing = db.execute("SELECT record_id FROM dogrulamalar WHERE case_id=? AND document_version_id=? AND method='PDF_PAGE_RENDER'", [case_id, version_id]).fetchall()
+            for rid, in existing:
+                saved, state, reasons, _ = self._load_control(db, case_id, version_id, str(rid), current_data, True, policy_version)
+                if not reasons and saved['processing_id'] == processed['processing_id'] and all(saved['scope'][k] == request[k] for k in ('unit_id', 'view', 'start', 'end', 'expected_text', 'field_kind')):
+                    return {'verification_id': str(rid), 'result': saved, 'reused': True, 'state': state}
+            if db.execute('SELECT count(*) FROM dogrulamalar WHERE case_id=? AND document_version_id=?', [case_id, version_id]).fetchone()[0] >= MAX_CONTROLS:
+                raise CoreError('DOGRULAMA_BUTCESI', 'Render sonrasında sürüm kontrol bütçesi doldu')
             return self._write_control(db, case_id, version_id, processed["processing_id"], reading, profile, document, unit, request, policy_version, "PDF_PAGE_RENDER", artifact=artifact, png=png)
 
     def verify_excerpt(self, case_id, version_id, *, request, expected_revision, policy_version="1"):

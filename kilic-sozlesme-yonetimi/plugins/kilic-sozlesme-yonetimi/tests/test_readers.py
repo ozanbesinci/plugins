@@ -22,6 +22,60 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class ReaderTests(unittest.TestCase):
+    def test_xlsx_default_main_content_type_and_conflicts(self):
+        from lxml import etree
+        parts = unpack(xlsx_bytes());root = xml(parts['[Content_Types].xml'])
+        namespace = '{http://schemas.openxmlformats.org/package/2006/content-types}'
+        main_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml'
+        for child in list(root):
+            if child.get('PartName') == '/xl/workbook.xml':root.remove(child)
+            if child.tag == namespace + 'Default' and child.get('Extension') == 'xml':child.set('ContentType', main_type)
+        parts['[Content_Types].xml'] = etree.tostring(root)
+        data = package_bytes(parts)
+        from openpyxl import load_workbook
+        workbook = load_workbook(io.BytesIO(data), read_only=True)
+        try:self.assertTrue(workbook.sheetnames)
+        finally:workbook.close()
+        self.assertTrue(validate_reading(read_xlsx(data), data)['units'])
+        duplicate = etree.SubElement(root, namespace + 'Default', Extension='xml', ContentType=main_type)
+        parts['[Content_Types].xml'] = etree.tostring(root)
+        self.error('DOSYA_TURU', lambda:read_xlsx(package_bytes(parts)))
+        root.remove(duplicate)
+        etree.SubElement(root, namespace + 'Override', PartName='/xl/workbook.xml', ContentType='application/xml')
+        parts['[Content_Types].xml'] = etree.tostring(root)
+        self.error('DOSYA_TURU', lambda:read_xlsx(package_bytes(parts)))
+
+    def test_pdf_direct_and_indirect_annotation_arrays_are_readable(self):
+        from pypdf import PdfReader, PdfWriter
+        from pypdf.generic import ArrayObject, DictionaryObject, NameObject, RectangleObject, TextStringObject
+        for indirect in (False, True):
+            writer = PdfWriter(clone_from=PdfReader(io.BytesIO(pdf_bytes())))
+            annotation = DictionaryObject({NameObject('/Type'):NameObject('/Annot'), NameObject('/Subtype'):NameObject('/Text'),
+                NameObject('/Rect'):RectangleObject([0,0,10,10]), NameObject('/Contents'):TextStringObject('Sentetik not')})
+            annotations = ArrayObject([writer._add_object(annotation)])
+            writer.pages[0][NameObject('/Annots')] = writer._add_object(annotations) if indirect else annotations
+            output = io.BytesIO();writer.write(output);writer.close()
+            data = output.getvalue();report = validate_reading(read_pdf(data), data)
+            self.assertEqual(1, next(r['count'] for r in report['inventory'] if r['feature'] == 'annotations:page:1'))
+            self.assertTrue(report['units'])
+            self.assertFalse(report['verification']['critical_analysis_allowed'])
+
+    def test_direct_strike_ranges_preserved_without_accepting_deletion(self):
+        parts = docx_parts()
+        extra = ('<w:p><w:r><w:t>Vade </w:t></w:r><w:r><w:rPr><w:strike/></w:rPr><w:t>30</w:t></w:r>'
+                 '<w:r><w:t> 60 gün</w:t></w:r><w:r><w:rPr><w:dstrike w:val="0"/></w:rPr><w:t>.</w:t></w:r></w:p>')
+        parts['word/document.xml'] = parts['word/document.xml'].replace('<w:sectPr>', extra + '<w:sectPr>')
+        data = package_bytes(parts)
+        report = validate_reading(read_docx(data), data)
+        row = next(x for x in report['units'] if x['views']['RAW'] == 'Vade 30 60 gün.')
+        ranges = json.loads(next(x['value'] for x in row['attributes'] if x['key'] == 'direct_formatting_ranges'))
+        for view in ('RAW', 'BEFORE', 'AFTER'):
+            self.assertEqual([('strike', 5, 7, '30')], [(m['kind'], m['start'], m['end'], m['text']) for m in ranges[view]])
+            self.assertEqual('30', row['views'][view][ranges[view][0]['start']:ranges[view][0]['end']])
+        self.assertTrue(any(x['code'] == 'DOCX_STRIKE_FORMATTING' and x['locator'] == row['locator'] for x in report['issues']))
+        self.assertFalse(report['verification']['revision_acceptance'])
+        self.assertFalse(report['verification']['critical_analysis_allowed'])
+
     def error(self, code, fn):
         with self.assertRaises(CoreError) as context:
             fn()

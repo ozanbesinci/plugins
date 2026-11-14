@@ -3,7 +3,7 @@ name: belge-hazirlama-duzenleme
 description: "Belge Hazırlama ve Düzenleme: Word/PDF/Excel oluştur; Word'e işle. Kaynak ezme; izinsiz dosya üretme; QA yoksa nihai teslim yok."
 metadata:
   catalog_id: K28
-  implementation: "DRAFT_PROTOCOL_WITH_COMMON_SOURCE_GATES"
+  implementation: "INTERNAL_DRAFT_WITH_STRUCTURAL_NATIVE_VISUAL_QA"
 ---
 
 # Belge Hazırlama ve Düzenleme
@@ -11,7 +11,7 @@ metadata:
 <!-- startup-message:start -->
 Her çağrının başında, araçları çalıştırmadan önce, kullanıcı sohbetinde şu satırı aynen göster:
 
-**Belge Hazırlama ve Düzenleme skilli Kılıç Satınalma Departmanı tarafından geliştirilmiştir. Sürüm: 0.1.2**
+**Belge Hazırlama ve Düzenleme skilli Kılıç Satınalma Departmanı tarafından geliştirilmiştir. Sürüm: 0.2.0**
 
 Bu satır gerçek beceri adı ve sürümünü gösterir. Kurulum sırasında başka beceri çalışırsa onun başlangıç satırını da göster.
 <!-- startup-message:end -->
@@ -19,7 +19,7 @@ Bu satır gerçek beceri adı ve sürümünü gösterir. Kurulum sırasında ba�
 Önce [ortak çalışma protokolünü](../../references/skill-runtime.md) oku. Bu beceri K28 sözleşmesini uygular; yalnız gerekli kaynakları yükle.
 
 - Açık çıktı talebi, kesin hedef, kaynak hash ve değişiklik/iç-dış nüsha planını belirle.
-- P4 eylem muhafızı ve P5 yapısal/native/görsel QA olmadan final verme; orijinal korunur.
+- İç çalışma taslağı için [iki aşamalı Word üretimini](../../references/internal-drafts.md) uygula. Bütün sayfaları görmeden son dosya verme. Orijinal korunur. Kurumsal onay/imza ve P5 revizyon/dış nüsha eylemleri bu ayrı yoldan açılmaz.
 
 Girdi: Açık istek, kaynak sürüm, içerik/değişiklik planı. Çıktı: Doğrulanmış yeni dosya ve sürüm kaydı. Varsayılan sohbet yanıtı; aynı izin kapsamını gereksiz tekrar sorma.
 

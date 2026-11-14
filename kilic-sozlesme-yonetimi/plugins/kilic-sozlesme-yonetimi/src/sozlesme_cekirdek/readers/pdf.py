@@ -78,8 +78,14 @@ def read_pdf(data):
                     if text_page is not None:
                         text_page.close()
                     pdf_page.close()
-                feature(report, "annotations:page:" + str(index + 1), len(page.get("/Annots", [])), "PARTIAL")
                 dereference = lambda value: value.get_object() if hasattr(value, "get_object") else value
+                from pypdf.generic import ArrayObject, NullObject
+                annotations = dereference(page.get('/Annots', ArrayObject()))
+                if isinstance(annotations, NullObject):
+                    annotations = ArrayObject()
+                if not isinstance(annotations, ArrayObject):
+                    raise CoreError('BELGE_BOZUK', 'PDF açıklama alanı dizi olmalı')
+                feature(report, "annotations:page:" + str(index + 1), len(annotations), "PARTIAL")
                 resources = dereference(page.get("/Resources", {}))
                 xobjects = dereference(resources.get("/XObject", {}))
                 images = sum(str(ref.get_object().get("/Subtype")) == "/Image" for ref in xobjects.values())

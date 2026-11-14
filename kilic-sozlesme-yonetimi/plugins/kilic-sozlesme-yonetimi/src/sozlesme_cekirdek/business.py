@@ -29,6 +29,10 @@ UNITS = {
 LIMITS = {"is_bilgisi_baglari": 512, "yukumlulukler": 256, "gerceklesmeler": 1024}
 
 
+def folded(text):
+    return ' '.join(text.casefold().replace('i\u0307', 'i').split())
+
+
 def span_text(excerpt, span):
     if span is None:
         return None
@@ -37,28 +41,43 @@ def span_text(excerpt, span):
     return span["text"]
 
 
-def normalize(spec, excerpt):
+def normalize(spec, excerpt, *, number_format_source=None, auxiliary_sources=None):
     raw = span_text(excerpt, spec["value_span"])
-    unit_raw = span_text(excerpt, spec["unit_span"])
-    currency_raw = span_text(excerpt, spec["currency_span"])
+    auxiliary_sources = auxiliary_sources or {}
+    unit_raw = auxiliary_sources['unit']['text'] if 'unit' in auxiliary_sources else span_text(excerpt, spec["unit_span"])
+    currency_raw = auxiliary_sources['currency']['text'] if 'currency' in auxiliary_sources else span_text(excerpt, spec["currency_span"])
     if (spec["unit"] is None) != (unit_raw is None) or (spec["currency"] is None) != (currency_raw is None):
         raise CoreError("BIRIM_KAYNAGI", "Birim/para kodu ayrı kaynak aralığı gerektirir")
-    if unit_raw is not None and unit_raw.casefold() not in UNITS[spec["unit"]]:
+    if unit_raw is not None and folded(unit_raw) not in UNITS[spec["unit"]]:
         raise CoreError("BIRIM_KAYNAGI", "Kaynak birimi seçilen normalleştirmeye uymuyor")
     if currency_raw is not None:
-        aliases = {spec["currency"]}
-        if spec["currency"] == "TRY":
-            aliases |= {"TL", "₺"}
-        if currency_raw not in aliases:
+        aliases = {'TRY': {'TRY', 'TL', '₺'}, 'EUR': {'EUR', 'Euro', '€'},
+                   'USD': {'USD', 'ABD Doları', 'US Dollar', 'US Dollars', 'US$'}}.get(spec['currency'], {spec['currency']})
+        if folded(currency_raw) not in {folded(a) for a in aliases}:
             raise CoreError("PARA_BIRIMI", "Para kodu kaynakta yok; kur dönüşümü yapılmadı")
     method = spec["normalization"]
     if method == "TEXT":
         return {"type": "text", "value": raw}
-    if method == "DATE_ISO":
-        if spec["unit"] is not None or spec["currency"] is not None or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", raw):
-            raise CoreError("TARIH_KAYNAGI", "Tarih yalnız tam ISO kaynak ifadesinden alınır")
+    if method in {"DATE_ISO", "DATE_TR"}:
+        if spec["unit"] is not None or spec["currency"] is not None:
+            raise CoreError("TARIH_KAYNAGI", "Tarih para veya süre birimi taşımaz")
         try:
-            return {"type": "date", "value": date.fromisoformat(raw).isoformat()}
+            if method == 'DATE_ISO':
+                if not re.fullmatch(r'\d{4}-\d{2}-\d{2}', raw):
+                    raise ValueError('ISO tarih gerekli')
+                value = date.fromisoformat(raw)
+            else:
+                numeric = re.fullmatch(r'([0-9]{1,2})\.([0-9]{1,2})\.([0-9]{4})', raw)
+                months = {name.replace('ı', 'i'): i + 1 for i, name in enumerate(('ocak','şubat','mart','nisan','mayıs','haziran','temmuz','ağustos','eylül','ekim','kasım','aralık'))}
+                named = re.fullmatch(r'([0-9]{1,2}) ([^ ]+) ([0-9]{4})', folded(raw).replace('ı', 'i'))
+                if numeric:
+                    day, month, year = map(int, numeric.groups())
+                elif named and named[2] in months:
+                    day, month, year = int(named[1]), months[named[2]], int(named[3])
+                else:
+                    raise ValueError('Açık Türkçe tarih gerekli')
+                value = date(year, month, day)
+            return {"type": "date", "value": value.isoformat()}
         except ValueError as exc:
             raise CoreError("TARIH_KAYNAGI", "Kaynak tarihi geçersiz") from exc
     pattern = r"-?(0|[1-9][0-9]*)(\.[0-9]+)?"
@@ -68,6 +87,10 @@ def normalize(spec, excerpt):
         pattern = r"-?(0|[1-9][0-9]*|[1-9][0-9]{0,2}(\.[0-9]{3})+)(,[0-9]+)?"
     if not re.fullmatch(pattern, raw):
         raise CoreError("SAYI_KAYNAGI", "Sayı biçimi açık normalleştirmeyle uyuşmuyor")
+    if method in {"DECIMAL_TR", "DECIMAL_CANONICAL", "PERCENT_TR"} and re.fullmatch(r"-?[1-9][0-9]{0,2}\.[0-9]{3}", raw):
+        required_locale = "TR" if method in {'DECIMAL_TR', 'PERCENT_TR'} else "CANONICAL"
+        if number_format_source is None or number_format_source['locale'] != required_locale:
+            raise CoreError("SAYI_BICIMI_BELIRSIZ", "Binlik/ondalık ayrımı için kaynaklı sayı biçimi veya kullanıcı teyidi gerekli")
     canonical_number = raw.replace(".", "").replace(",", ".") if method in {"DECIMAL_TR", "PERCENT_TR"} else raw
     number = Decimal(canonical_number)
     if method == "PERCENT_TR":
@@ -82,6 +105,48 @@ def normalize(spec, excerpt):
 
 
 class BusinessMixin:
+    def _auxiliary_fact_sources(self, db, case, spec, primary, policy, *, require_current=True):
+        sources = {}
+        for name in ('unit', 'currency'):
+            link = spec.get(name + '_source')
+            if link is None:
+                continue
+            if spec[name + '_span'] is not None:
+                raise CoreError('KAYNAK_ILISKISI', 'Aynı birim için hem yerel hem ayrı kaynak verilmez')
+            node = self._business_source(db, case, link['source_node_id'], policy, require_current=require_current)
+            if any(n['node_kind'] != 'SOURCE_UNIT' or n['provenance']['target']['format'] != 'XLSX' for n in (primary, node)):
+                raise CoreError('KAYNAK_ILISKISI', 'Ayrı birim kaynağı aynı Excel tablosuna bağlı olmalı')
+            left, right = primary['provenance'], node['provenance']
+            if left['version_id'] != right['version_id'] or left['locator']['sheet'] != right['locator']['sheet'] or left['locator']['part'] != right['locator']['part']:
+                raise CoreError('KAYNAK_ILISKISI', 'Değer/birim aynı kaynak sürümü ve sayfada olmalı')
+            cells = [re.fullmatch(r'([A-Z]+)([1-9][0-9]*)', p['locator']['cell'] or '') for p in (left, right)]
+            if not all(cells):
+                raise CoreError('KAYNAK_ILISKISI', 'Tam Excel hücre konumları gerekli')
+            a, b = cells
+            same_row = a[2] == b[2]
+            header = a[1] == b[1] and int(b[2]) < int(a[2])
+            if not (same_row if link['relationship'] == 'SAME_ROW' else header):
+                raise CoreError('KAYNAK_ILISKISI', 'Birim hücresi bildirilen satır/başlık ilişkisine uymuyor')
+            sources[name] = {'relationship': link['relationship'], 'text': span_text(self._excerpt(node), link['span']), 'source': node}
+        return sources
+
+    def _number_format_source(self, db, case, spec, primary, policy, *, require_current=True):
+        basis = spec.get('number_format_source')
+        if basis is None:
+            return None
+        node = self._business_source(db, case, basis['source_node_id'], policy, require_current=require_current)
+        if node['node_kind'] == 'SOURCE_UNIT':
+            if primary['node_kind'] != 'SOURCE_UNIT' or node['provenance']['version_id'] != primary['provenance']['version_id']:
+                raise CoreError('KAYNAK_KAPSAMI', 'Sayı biçimi dayanağı aynı kaynak sürümüne bağlı olmalı')
+        elif basis.get('applies_to_source_node_id') != primary['node_id']:
+            raise CoreError('KAYNAK_KAPSAMI', 'Kullanıcı sayı biçimi teyidi açık değer düğümüne bağlanmalı')
+        text = span_text(self._excerpt(node), basis['span'])
+        explicit = {'TR': {'tr-tr', 'türkçe sayı biçimi', 'ondalık ayırıcı virgül'},
+                    'CANONICAL': {'en-us', 'canonical', 'ondalık ayırıcı nokta'}}
+        if text.casefold() not in explicit[basis['locale']]:
+            raise CoreError('SAYI_BICIMI_BELIRSIZ', 'Biçim dayanağı açık sayı biçimi ifadesine bağlı olmalı')
+        return {'locale': basis['locale'], 'text': text, 'source': node}
+
     def _business_source(self, db, case, node_id, policy, *, require_current=True):
         node = self._context_node(db, case, uuid_text(node_id), policy)
         if node["node_kind"] not in {"SOURCE_UNIT", "USER_STATEMENT"}:
@@ -131,11 +196,17 @@ class BusinessMixin:
             if statement != (spec["plane"] in {"USER_POSITION", "REPORTED_EVENT"}):
                 raise CoreError("BILGI_DUZLEMI", "Beyan yazılı hüküm veya belgeli olay yerine geçemez")
             source = node["provenance"]["record_id" if statement else "version_id"]
+            number_format = self._number_format_source(db, case, spec, node, policy_version)
+            auxiliary = self._auxiliary_fact_sources(db, case, spec, node, policy_version)
             candidate = {"schema_version": "1.0", "case_id": case, "source_record_id": source,
                 "field": spec["field"], "knowledge_kind": "USER_STATEMENT" if statement else "DOCUMENT_TEXT",
-                "value": normalize(spec, self._excerpt(node)), "unit": spec["unit"], "currency": spec["currency"],
+                "value": normalize(spec, self._excerpt(node), number_format_source=number_format, auxiliary_sources=auxiliary), "unit": spec["unit"], "currency": spec["currency"],
                 "source_excerpt": self._excerpt(node), "meaning_status": "UNCERTAIN"}
             payload = {"spec": spec, "policy_version": policy_version, "candidate": candidate, "source": node}
+            if number_format is not None:
+                payload['number_format_source'] = number_format
+            if auxiliary:
+                payload['auxiliary_sources'] = auxiliary
             digest = hash_value(payload)
             old = db.execute("SELECT record_id FROM is_bilgisi_baglari WHERE case_id=? AND fact_digest=?", [case, digest]).fetchone()
             if old:
@@ -152,7 +223,7 @@ class BusinessMixin:
             self._business_limit(db, "is_bilgisi_baglari", case)
             record = self._add_candidate_locked(db, case, source, candidate, {"source_node_id": spec["source_node_id"], "spans": spec}, prior)
             db.execute("INSERT INTO is_bilgisi_baglari VALUES(?,?,?,?,?,?,?,?)", [case, record, spec["source_node_id"], spec["scope_key"], spec["plane"], digest, canonical(payload), digest])
-            self._business_links(db, case, record, [spec["source_node_id"]])
+            self._business_links(db, case, record, [spec["source_node_id"]] + ([spec['number_format_source']['source_node_id']] if number_format else []) + [spec[name + '_source']['source_node_id'] for name in auxiliary])
             self._business_source(db, case, spec["source_node_id"], policy_version)
             return {"fact_id": record, "reused": False}
 
@@ -162,19 +233,34 @@ class BusinessMixin:
         node = self._business_source(db, case, spec["source_node_id"], policy, require_current=False)
         row = db.execute("SELECT payload FROM bilgiler WHERE case_id=? AND record_id=?", [case, record]).fetchone()
         candidate = payload["candidate"]
-        if json.loads(row[0]) != candidate or normalize(spec, self._excerpt(node)) != candidate["value"]:
+        number_format = self._number_format_source(db, case, spec, node, policy, require_current=False)
+        auxiliary = self._auxiliary_fact_sources(db, case, spec, node, policy, require_current=False)
+        for name, proof in auxiliary.items():
+            old = payload.get('auxiliary_sources', {}).get(name)
+            if old is None or any(old['source'][key] != proof['source'][key] for key in ('content', 'provenance', 'node_kind')):
+                raise CoreError('IS_KAYDI_BOZUK', 'Ayrı birim kaynağı kayıtla uyuşmuyor')
+        if number_format:
+            old_basis = payload.get('number_format_source')
+            if old_basis is None or any(old_basis['source'][key] != number_format['source'][key] for key in ('content', 'provenance', 'node_kind')):
+                raise CoreError('IS_KAYDI_BOZUK', 'Sayı biçimi kaynağı kayıtla uyuşmuyor')
+        if json.loads(row[0]) != candidate or normalize(spec, self._excerpt(node), number_format_source=number_format, auxiliary_sources=auxiliary) != candidate["value"]:
             raise CoreError("IS_KAYDI_BOZUK", "Normalleştirilmiş değer kaynak veya aday kayıtla farklı")
         old_source = payload["source"]
         if any(old_source[key] != node[key] for key in ("content", "provenance", "node_kind")):
             raise CoreError("IS_KAYDI_BOZUK", "İş bilgisinin kaynak kaydı farklı")
         state = self._business_freshness(db, case, record, node)
+        if number_format and number_format['source']['state'] != 'CURRENT_REGISTERED_SCOPE':
+            state = 'NEEDS_REVIEW'
+        if any(proof['source']['state'] != 'CURRENT_REGISTERED_SCOPE' for proof in auxiliary.values()):
+            state = 'NEEDS_REVIEW'
         if payload["policy_version"] != policy:
             state = "NEEDS_REVIEW"
         return {"fact_id": record, "scope_key": spec["scope_key"], "plane": spec["plane"], "field": spec["field"],
             "value": candidate["value"], "unit": candidate["unit"], "currency": candidate["currency"], "state": state,
             "source_node_id": spec["source_node_id"], "source_excerpt": self._excerpt(node), "provenance": node["provenance"],
             "normalization": spec["normalization"], "value_span": spec["value_span"], "meaning_status": "UNVERIFIED",
-            "classification_status": "UNVERIFIED", "source_verification": node["knowledge_status"], "business_approval": "NOT_GRANTED"}
+            "classification_status": "UNVERIFIED", "source_verification": node["knowledge_status"], "business_approval": "NOT_GRANTED",
+            "number_format_source": number_format, "auxiliary_sources": auxiliary}
 
     def _required_fact(self, db, case, record, scope, policy, *, plane=None, value_type=None):
         fact = self._business_fact(db, case, uuid_text(record), policy)

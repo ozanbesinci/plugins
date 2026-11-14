@@ -54,7 +54,7 @@ class P6ResultContractTests(unittest.TestCase):
         request["requested_output"] = "DOCX"
         result = evaluate(self.store, request)
         self.assertEqual("TEKNIK_ENGEL", result["status"])
-        self.assertIn("CONFIG_REQUIRED", result["chat_response"])
+        self.assertIn("INTERNAL_DRAFT", result["chat_response"])
         self.assertEqual([], result["output_ids"])
         self.assertEqual([], list(self.store.root.rglob("*.docx")))
 
@@ -65,7 +65,7 @@ def skill_test(skill):
         result = evaluate(self.store, self.req(skill))
         self.assertEqual(skill, result["skill_id"])
         self.assertEqual("Kılıç Satınalma Departmanı", result["developer"])
-        self.assertEqual("p6-1.2", result["schema_version"])
+        self.assertEqual("p6-1.4", result["schema_version"])
         self.assertEqual("UZMAN_GORUSU_GEREKLI" if skill == "K21" else "BILGI_GEREKLI", result["status"])
         self.assertTrue(result["chat_response"].startswith(result["startup_message"]))
         self.assertEqual([], result["output_ids"])

@@ -45,14 +45,17 @@ class InertHTML(HTMLParser):
         if tag in {'script', 'style', 'template'}:
             self.omitted.append(tag)
             self.blocked.append(tag)
-        if not self.blocked and tag in {'p', 'div', 'br', 'tr', 'li', 'blockquote'}:
+        if not self.blocked and tag in {'p', 'div', 'br', 'table', 'tr', 'li', 'blockquote'}:
             self.text.append('\n')
+        if not self.blocked and tag in {'td', 'th'}:
+            # Start boundaries also preserve empty cells and HTML's optional </td>.
+            self.text.append('\t')
         self.references += sum(k in {'src', 'href', 'action'} for k, _ in attrs)
 
     def handle_endtag(self, tag):
         if self.blocked and tag == self.blocked[-1]:
             self.blocked.pop()
-        if not self.blocked and tag in {'p', 'div', 'tr', 'li', 'blockquote'}:
+        if not self.blocked and tag in {'p', 'div', 'table', 'tr', 'li', 'blockquote'}:
             self.text.append('\n')
 
     def handle_data(self, data):

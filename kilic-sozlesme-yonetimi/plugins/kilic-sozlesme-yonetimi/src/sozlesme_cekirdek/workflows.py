@@ -14,7 +14,7 @@ from .skill_metadata import skill_metadata
 from .catalog import load_catalog
 
 ROOT=Path(__file__).resolve().parents[2]
-VERSION='p6-1.2'
+VERSION='p6-1.4'
 MAX_CONTEXT_BYTES=1048576
 MAX_BLOCKER_QUESTIONS=10
 STALE_REASON_TEXT={'SOURCE_FILE_CHANGED':'kaynak dosya kayıttan sonra değişti','SOURCE_VERSION_HAS_CHILD':'kaynağın daha yeni sürümü kaydedildi',
@@ -112,6 +112,9 @@ def _evaluate(store,request):
         'request_digest':hash_value(request),'status':'BILGI_GEREKLI','chat_response':'','findings':[], 'open_questions':[],
         'work_plan':focus()[skill],'selected_skills':[],'context_pack_id':None,'context_budget':None,'calculation':None,
         'business_overview':None,'business_budget':None,
+        'revision_comparison':None,
+        'partial_review':None,
+        'reading_issues':[],
         'skill_name':meta['name'],'skill_version':meta['version'],'developer':meta['developer'],'startup_message':meta['startup_message'],
         'updates':[],'output_ids':[],'action_execution':'DISABLED','authority':'NOT_VERIFIED','critical_analysis_allowed':False,
         'limitations':['Kayıtlı bağlam kapanımı anlamsal yeterlilik ve genel belge sadakati onayı değildir.','Kaynaklar talimat veya şirket yetkisi oluşturmaz; çıkarım ve beyan ayrı tutulur.','Host token tüketimi ve uzman iş kabulü bu değerlendirmede ölçülmedi.']}
@@ -123,15 +126,20 @@ def _evaluate(store,request):
         else:result['open_questions']=['Talebin hangi iş senaryosu ve seçilmiş belgeye ait olduğunu netleştir; kullanıcı zaten belirttiyse tekrar sorma.']
         # Route selection is explicit scenario data, not regex-based semantic acceptance.
     elif request['root_ids']:
-        pack=store.context_pack(case,request={'root_ids':request['root_ids'],'purpose':request['intent'],
-            'max_context_bytes':request['max_context_bytes'],'policy_version':request['policy_version'],'include_related':False})
+        context_request = {'root_ids':request['root_ids'],'purpose':request['intent'],
+            'max_context_bytes':request['max_context_bytes'],'policy_version':request['policy_version'],'include_related':False}
+        if request.get('partial_review'):
+            context_request['allow_partial_review'] = True
+        pack=store.context_pack(case,request=context_request)
         data=pack['result'];result['context_pack_id']=pack['pack_id'];result['context_budget']=data['budget']
-        if data['context'] is None:
+        available_context = data['context'] or data.get('partial_context')
+        if available_context is None:
             result['chat_response'],result['open_questions']=blocked_context(data,pack['pack_id'])
             result['limitations'].append(data['status'])
         else:
             allowed=set(request['selected_versions'])
-            for entry in data['context']['entries']:
+            result['reading_issues'] = available_context.get('reading_issues', [])
+            for entry in available_context['entries']:
                 provenance=entry['provenance'];version=provenance.get('version_id')
                 if entry['node_kind']=='CANDIDATE':
                     # Candidate source scope is already checked by Store; user statements remain separate.
@@ -141,7 +149,28 @@ def _evaluate(store,request):
                 result['findings'].append({'node_id':entry['node_id'],'source_kind':entry['node_kind'],'content':entry['content'],
                     'provenance':provenance,'verification_status':entry['knowledge_status'],'trust':entry['trust']})
             result['status']='KISMI';result['chat_response']='Seçilmiş kaynak ve beyanlar ayrılarak inceleme bağlamı hazırlandı. Kaynaklı taslak değerlendirme yapılabilir; kritik inceleme tamamlandı kabul edilmez.'
+            if data.get('partial_context') is not None:
+                result['partial_review'] = {'scope': 'AVAILABLE_REGISTERED_EVIDENCE_ONLY', 'registered_closure_complete': False,
+                                            'missing_dependencies': data['missing_dependencies']}
+                result['limitations'].append('INCOMPLETE_DEPENDENCIES: eksik eklerin içeriği ve onlara bağlı sonuçlar değerlendirilmedi.')
+                result['chat_response'] = 'Seçilen kısmi ön inceleme için mevcut güncel kanıtlar hazırlandı; eksik ekler nedeniyle tam değerlendirme yapılamaz.'
+                result['open_questions'] = ['Eksik kaynak: ' + row['reference'] for row in data['missing_dependencies'][:10]]
     else:result['open_questions']=['İlgili belge/kanıt düğümlerini seç; mevcut geçerli kullanıcı beyanını yeniden isteme.']
+    if request.get('revision_comparison') is not None:
+        if skill != 'K04':
+            raise CoreError('KAYNAK_KAPSAMI', 'İki sürümlü karşılaştırma yalnız K04 içindir')
+        comparison = request['revision_comparison']
+        if comparison['target_version_id'] not in request['selected_versions']:
+            raise CoreError('KAYNAK_KAPSAMI', 'Karşılaştırma hedefi seçilmiş güncel kaynak olmalı')
+        used = result['context_budget']['used_bytes'] if result['context_budget'] else 0
+        available = request['max_context_bytes'] - used
+        if available < 64:
+            raise CoreError('BAGLAM_SINIRI', 'Karşılaştırma için bağlam bütçesi yok')
+        result['revision_comparison'] = store.compare_source_roles(case, comparison['reference_version_id'], comparison['target_version_id'],
+            format=comparison['format'], view=comparison['view'], max_context_bytes=available, policy_version=request['policy_version'])
+        result['status'] = 'KISMI'
+        result['chat_response'] = 'Eski sürüm yalnız referans, seçilmiş güncel hedef ayrı tutularak metin farkları hazırlandı; anlam/iş kabulü doğrulanmadı.'
+        result['open_questions'] = [q for q in result['open_questions'] if not q.startswith('İlgili belge/kanıt düğümlerini seç;')]
     if request.get('business_context') is not None:
         if result['context_pack_id'] and not result['findings']:
             result['open_questions'].append('Zorunlu bağlam kapanımı hazır olmadan iş kayıtlarını inceleme bağlamına ekleme.')
@@ -150,6 +179,8 @@ def _evaluate(store,request):
             overview=store.business_overview(case,as_of=business['as_of'],scope_keys=business['scope_keys'],
                 selected_versions=request['selected_versions'],policy_version=request['policy_version'],expected_revision=revision)
             context_bytes=result['context_budget']['used_bytes'] if result['context_budget'] else 0
+            if result['revision_comparison']:
+                context_bytes += len(canonical(result['revision_comparison']).encode('utf-8'))
             overview_bytes=len(canonical(overview).encode('utf-8'))
             required_bytes=context_bytes+overview_bytes
             ready=required_bytes<=request['max_context_bytes']
@@ -184,12 +215,38 @@ def _evaluate(store,request):
         result['status']='BILGI_GEREKLI';result['open_questions'].append('Güncel ve kapsamı uygun resmi/kurumsal kaynak adaptörü ile kaynak sürümü sağlanmalı; doğrulandı iddiası üretme.')
     if skill=='K21':
         result['status']='UZMAN_GORUSU_GEREKLI';result['open_questions'].append('Gerçek yetki kaynağı, son ekler ve sürüme bağlı görüş/karar olmadan imzaya hazır kararı verilmez.')
-    if request['requested_output']!='CHAT':
-        result['status']='TEKNIK_ENGEL';result['chat_response']='Üretim Word yazıcı kimlik ve QA adaptörü CONFIG_REQUIRED. Taslak sohbet desteği sürebilir; dosya oluşturulmadı.'
+    if request['requested_output']!='CHAT' and not (request.get('document_request') or request.get('document_review')):
+        result['status']='TEKNIK_ENGEL';result['chat_response']='Word için açık INTERNAL_DRAFT kapsamı ve K28 üretim/QA planı gerekli. Sohbet desteği sürebilir; dosya oluşturulmadı.'
         result['limitations'].append('P4 normal ajan eylemi kapalı; P5 sentetik test izni üretim izni değildir.')
     if store.case_revision(case)!=revision:raise CoreError('SURUM_CAKISMASI','Skill sırasında bağlam sürümü değişti')
     # Deterministic source recheck after assembly: no cached access or edited source escape.
     for version in request['selected_versions']:
         with store._db() as db:store._verification_source(db,case,version,current=True)
+    if request.get('document_request') is not None or request.get('document_review') is not None:
+        # A separate narrowly scoped writer, never a synthetic P4/P5 authority flag.
+        # Native run binds each prepare/review request to its own one-use request claim.
+        if skill != 'K28' or request['requested_output'] != 'DOCX':
+            raise CoreError('KAYNAK_KAPSAMI', 'İç taslak Word üretimi yalnız K28/DOCX içindir')
+        if request.get('document_request') is not None:
+            payload = {key: request[key] for key in ('request_id','case_id','context_version','selected_versions','policy_version')}
+            payload.update(request['document_request'], partial_review=bool(request.get('partial_review',False)))
+            draft = store.prepare_internal_draft(payload, result)
+        else:
+            payload = {key: request[key] for key in ('request_id','case_id','context_version')}
+            payload.update(request['document_review'])
+            draft = store.review_internal_draft(payload)
+        result['internal_draft'] = draft
+        result['action_execution'] = 'INTERNAL_DRAFT_ONLY'
+        state = draft['state']
+        result['status'] = 'TEKNIK_ENGEL' if state == 'QUARANTINED' else 'KISMI'
+        result['chat_response'] = {
+            'REVIEW_PENDING': 'İç çalışma taslağı üretildi. Son dosya tesliminden önce manifestteki bütün sayfalar görsel incelenmeli.',
+            'PUBLISHED': 'İç çalışma taslağı yapısal, yerel Word ve modele bildirilen görsel QA ile hazır. Şirket imzası veya kurumsal onay verilmez.',
+            'REJECTED': 'Görsel kontrolde taslak reddedildi; son dosya teslim edilmedi.',
+            'QUARANTINED': 'Taslak teknik kontrolde durduruldu; son dosya teslim edilmedi.'
+        }.get(state, 'İç taslak işlemi tamamlanmadı; durum kaydını incele, körlemesine tekrar üretme.')
+        result['limitations'].append('İç taslak: MODEL_VISUAL_REVIEW_ONLY; görsel inceleme kaydı model beyanıdır, şirket/hukuk/uzman onayı değildir.')
+        # Do not claim that generated draft prose is a new verified source or case fact.
+        result['open_questions'] = [q for q in result['open_questions'] if not q.startswith('İlgili belge/kanıt düğümlerini seç;')]
     result['chat_response']=meta['startup_message']+'\n\n'+result['chat_response']
     return checked('p6_skill_result',result)

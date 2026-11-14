@@ -8,6 +8,37 @@ from sozlesme_cekirdek.source_roles import first_byte_difference
 
 
 class SourceRoleTests(unittest.TestCase):
+    def test_missing_text_view_cannot_be_reported_as_equal(self):
+        from reader_fixtures import pdf_bytes
+        path, doc, old, _ = self.document(pdf_bytes(), 'PDF')
+        path.write_bytes(path.read_bytes() + b'changed')
+        new = self.store.ingest(self.case, doc, path, expected_revision=self.rev(), parent_version_id=old)['version_id']
+        with self.assertRaises(CoreError) as caught:
+            self.store.compare_source_roles(self.case, old, new, format='PDF', view='BEFORE')
+        self.assertEqual('GORUNUM_GEREKLI', caught.exception.code)
+
+    def test_return_to_previous_bytes_is_a_new_current_version(self):
+        original = self.path.read_bytes()
+        child = self.child()
+        self.path.write_bytes(original)
+        returned = self.store.ingest(self.case, self.doc, self.path, expected_revision=self.rev(), parent_version_id=child, acquisition_key='return-A')
+        self.assertFalse(returned['reused'])
+        self.assertNotEqual(self.version, returned['version_id'])
+        roles = self.store.compare_source_roles(self.case, child, returned['version_id'])
+        self.assertEqual('SELECTED_CURRENT_TARGET', roles['target']['role'])
+        repeated = self.store.ingest(self.case, self.doc, self.path, expected_revision=self.rev(), parent_version_id=child, acquisition_key='return-A')
+        self.assertTrue(repeated['reused'])
+        self.assertEqual(returned['version_id'], repeated['version_id'])
+
+    def test_same_bytes_from_new_permitted_path_bind_new_acquisition(self):
+        new_path = self.path.with_name('relocated.docx')
+        self.path.rename(new_path)
+        result = self.store.ingest(self.case, self.doc, new_path, expected_revision=self.rev())
+        self.assertFalse(result['reused'])
+        self.assertNotEqual(self.version, result['version_id'])
+        self.assertEqual(new_path.read_bytes(), self.store.read_version(self.case, result['version_id']))
+        self.assertTrue(self.store.ingest(self.case, self.doc, new_path, expected_revision=self.rev())['reused'])
+
     setUp=fixtures.ContextTests.setUp
     rev=fixtures.ContextTests.rev
     document=fixtures.ContextTests.document

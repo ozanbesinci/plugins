@@ -33,6 +33,21 @@ def verification_racer(area, case, version, request, revision, barrier, queue):
 
 
 class VerificationTests(unittest.TestCase):
+    def test_render_releases_workspace_lock_for_independent_case(self):
+        from concurrent.futures import ThreadPoolExecutor
+        from sozlesme_cekirdek.verification import bounded_render
+        _, _, version, request = self.source('PDF')
+        independent_case = self.store.create_case('Independent during render')
+        other = Store(self.store.root, source_roots=self.store.source_roots, output_root=self.store.output_root, lock_timeout=0.2)
+        def concurrent(data, page):
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                self.assertEqual(0, executor.submit(other.case_revision, independent_case).result(timeout=2))
+            return bounded_render(data, page)
+        with patch('sozlesme_cekirdek.verification.bounded_render', side_effect=concurrent):
+            result = self.render(version, request)
+        self.assertEqual('PDF_PAGE_RENDER', result['result']['method'])
+        self.assertFalse(result['result']['critical_analysis_allowed'])
+
     def setUp(self):
         runtime = ROOT / "tests" / ".runtime"
         runtime.mkdir(exist_ok=True)
@@ -379,7 +394,7 @@ class VerificationTests(unittest.TestCase):
         self.assertEqual(7, upgraded.case_revision(legacy_case))
         self.assertEqual(original, MIGRATION.read_bytes())
         with upgraded._db() as db:
-            self.assertEqual([1, 2, 3, 4, 5, 6], [x[0] for x in db.execute("SELECT migration_no FROM sema_gecmisi ORDER BY migration_no").fetchall()])
+            self.assertEqual([1, 2, 3, 4, 5, 6, 7, 8], [x[0] for x in db.execute("SELECT migration_no FROM sema_gecmisi ORDER BY migration_no").fetchall()])
             self.assertEqual(0, db.execute("SELECT count(*) FROM dogrulamalar").fetchone()[0])
 
     def test_new_migration_digest_drift_is_rejected(self):

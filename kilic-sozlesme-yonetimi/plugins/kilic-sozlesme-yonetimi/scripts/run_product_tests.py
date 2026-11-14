@@ -14,7 +14,9 @@ import json
 import os
 from pathlib import Path
 import platform
+import re
 import shutil
+import struct
 import subprocess
 import tempfile
 import sys
@@ -25,6 +27,40 @@ from uuid import uuid4
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def expected_environment(root=ROOT):
+    root = Path(root)
+    profile_data = (root / 'references/runtime-profile.json').read_bytes()
+    profile = json.loads(profile_data)
+    lock = (root / 'requirements-win-cp314.lock').read_bytes()
+    pins = {}
+    for line in lock.decode('utf-8').splitlines():
+        if not line.strip():
+            continue
+        match = re.fullmatch(r'([A-Za-z0-9_.-]+)==([^ ]+) --hash=sha256:[a-f0-9]{64}', line)
+        if match is None:
+            raise ValueError('Invalid pinned test environment')
+        name = re.sub(r'[-_.]+', '-', match[1].lower())
+        if name in pins:
+            raise ValueError('Duplicate pinned dependency')
+        pins[name] = match[2]
+    if pins != profile['packages'] or hashlib.sha256(lock).hexdigest() != profile['lock_sha256']:
+        raise ValueError('Test environment lock/profile mismatch')
+    version = profile['python_version']
+    if not profile['python_download'].endswith('-embed-amd64.zip'):
+        raise ValueError('Unsupported test architecture profile')
+    return {'dependencies': pins, 'python_version': version,
+            'python_abi': f'cpython-{version[0]}{version[1]}', 'pointer_bits': 64,
+            'runtime_profile': profile['profile_id'], 'profile_sha256': hashlib.sha256(profile_data).hexdigest(),
+            'lock_sha256': hashlib.sha256(lock).hexdigest()}
+
+
+def actual_environment(root=ROOT):
+    expected = expected_environment(root)
+    return dict(expected, dependencies={name: importlib.metadata.version(name) for name in expected['dependencies']},
+                python_version=list(sys.version_info[:3]), python_abi=sys.implementation.cache_tag,
+                pointer_bits=struct.calcsize('P') * 8)
+
+
 def digest(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
@@ -33,6 +69,24 @@ def snapshot(root):
     return {p.relative_to(root).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
             for p in sorted(root.rglob("*")) if p.is_file()
             and not any(part in {"__pycache__", ".runtime"} for part in p.relative_to(root).parts)}
+
+
+def assert_stage_source(source):
+    source = Path(source)
+    for folder, directories, files in os.walk(source, followlinks=False):
+        directories[:] = [name for name in directories if name not in {'__pycache__', '.runtime'}]
+        for name in directories + files:
+            path = Path(folder) / name
+            info = path.lstat()
+            if path.is_symlink() or getattr(info, 'st_file_attributes', 0) & 0x400:
+                raise ValueError('Linked staging source rejected: ' + str(path.relative_to(source)))
+            if name.casefold() in {'auth.json', 'config.toml', 'settings.local.json'} or name.casefold().startswith('.env'):
+                raise ValueError('Credential/config staging source rejected: ' + str(path.relative_to(source)))
+
+
+def stage_product(source, target):
+    assert_stage_source(source)
+    return shutil.copytree(source, target, ignore=shutil.ignore_patterns('__pycache__', '.runtime'))
 
 
 def source_git_context(package=ROOT):
@@ -150,6 +204,7 @@ def run_child(output, suite_name, selection):
     sys.path.insert(0, str(ROOT / "tests")); sys.path.insert(0, str(ROOT / "src"))
     os.environ.update(PYTHONDONTWRITEBYTECODE="1", PYTHONUTF8="1", PYTHONPATH=str(ROOT / "src"), SOZLESME_DEVELOPMENT="1")
     manifest = json.loads((ROOT / "tests/manifest.json").read_text(encoding="utf-8"))
+    assert_stage_source(ROOT)
     before = snapshot(ROOT)
     suite = unittest.TestSuite()
     excluded = []
@@ -184,7 +239,7 @@ def run_child(output, suite_name, selection):
               "created_at": dt.datetime.now(dt.timezone.utc).isoformat(),
               "platform": platform.platform(), "python": sys.version, "python_abi": sys.implementation.cache_tag,
               "product_module": str(actual), "duckdb_connection_class": str(duckdb.DuckDBPyConnection),
-              "dependencies": {n: importlib.metadata.version(n) for n in ["duckdb", "jsonschema", "lxml", "openpyxl", "pypdf", "pypdfium2", "Pillow"]},
+              **actual_environment(),
               "manifest_digest": digest(manifest), "source_before": before, "source_after": after,
               "source_unchanged": before == after, "source_digest": digest(before),
               "methods_run": result.testsRun, "failures": len(result.failures), "errors": len(result.errors),
@@ -204,7 +259,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output-root", type=Path, required=True)
     parser.add_argument("--label", default="product")
-    parser.add_argument("--suite", choices=("full", "core", "a0", "identity", "quality", "bootstrap", "budget", "readers", "lifecycle", "objects", "publication", "processing", "startup", "capacity", "source_roles", "inspector", "recovery", "receipt_faults", "migration"), default="full")
+    parser.add_argument("--suite", choices=("full", "core", "a0", "identity", "quality", "bootstrap", "budget", "readers", "lifecycle", "objects", "publication", "processing", "startup", "capacity", "source_roles", "inspector", "recovery", "receipt_faults", "migration", "word"), default="full")
     parser.add_argument("--timeout-seconds", type=int, default=1800)
     parser.add_argument("--test", action="append", default=[], dest="selection")
     parser.add_argument("--child-report", type=Path, help=argparse.SUPPRESS)
@@ -228,7 +283,7 @@ def main():
     # Store/lock tests run outside the mirrored vault to avoid Drive temp writers
     # racing cleanup. Evidence still goes to the requested source-linked folder.
     stage = Path(tempfile.mkdtemp(prefix="cs-product-")) / "package"
-    shutil.copytree(ROOT, stage, ignore=shutil.ignore_patterns("__pycache__", ".runtime"))
+    stage_product(ROOT, stage)
     if snapshot(stage) != before:
         raise SystemExit("Staged source bytes differ")
     command = [sys.executable, "-X", "utf8", str(stage / "scripts/run_product_tests.py"),

@@ -26,6 +26,92 @@ def exact_span(text, literal):
 
 
 class BusinessTests(unittest.TestCase):
+    def test_user_format_confirmation_requires_explicit_value_node_binding(self):
+        value, _ = self.document('Bedel 1.500 TRY.')
+        statement = self.store.add_statement(self.case,'Türkçe sayı biçimi',expected_revision=self.rev())
+        basis = self.store.register_context_node(self.case,spec={'node_kind':'USER_STATEMENT','title':'Sayı biçimi teyidi','record_id':statement},expected_revision=self.rev())['node_id']
+        spec = self.fact_spec('1.500',node=value,field='price',method='DECIMAL_TR',unit='money',unit_literal='Bedel',currency='TRY')
+        spec['number_format_source']={'source_node_id':basis,'locale':'TR','span':exact_span('Türkçe sayı biçimi','Türkçe sayı biçimi')}
+        self.error('KAYNAK_KAPSAMI',lambda:self.store.register_business_fact(self.case,spec=spec,expected_revision=self.rev()))
+        spec['number_format_source']['applies_to_source_node_id']=value
+        self.store.register_business_fact(self.case,spec=spec,expected_revision=self.rev())
+        self.assertEqual('1500',self.overview()['facts'][0]['value']['value'])
+
+    def test_format_basis_cannot_come_from_an_unselected_other_document(self):
+        value, _ = self.document('Bedel 1.500 TRY.')
+        other, _ = self.document('Türkçe sayı biçimi')
+        spec = self.fact_spec('1.500', node=value, field='price', method='DECIMAL_TR', unit='money', unit_literal='Bedel', currency='TRY')
+        spec['number_format_source'] = {'source_node_id':other,'locale':'TR','span':exact_span(self.texts[other],'Türkçe sayı biçimi')}
+        self.error('KAYNAK_KAPSAMI', lambda:self.store.register_business_fact(self.case,spec=spec,expected_revision=self.rev()))
+
+    def test_percent_uses_same_ambiguous_number_gate(self):
+        node, _ = self.document('Oran %1.500. Türkçe sayı biçimi.')
+        spec = self.fact_spec('1.500', node=node, field='advance', method='PERCENT_TR', unit='ratio', unit_literal='%')
+        self.error('SAYI_BICIMI_BELIRSIZ', lambda:self.store.register_business_fact(self.case,spec=spec,expected_revision=self.rev()))
+
+    def test_turkish_dates_bind_real_obligation_and_invalid_dates_reject(self):
+        for literal in ('31.12.2026', '31 Aralık 2026', '31 ARALIK 2026'):
+            node, path = self.document('Son gün ' + literal + '.')
+            before = hash_file(path)
+            fact = self.fact(literal, node=node, field='deadline', method='DATE_TR', unit=None, unit_literal=None)
+            spec = self.obligation_spec(date_fact=fact);spec['source_node_id'] = node
+            self.store.register_obligation(self.case, spec=spec, expected_revision=self.rev())
+            self.assertEqual(before, hash_file(path))
+        self.assertEqual(['2026-12-31'] * 3, [o['due_date'] for o in self.overview()['obligations']])
+        node, _ = self.document('Son gün 31 Şubat 2026.')
+        self.error('TARIH_KAYNAGI', lambda:self.fact('31 Şubat 2026',node=node,field='deadline',method='DATE_TR',unit=None,unit_literal=None))
+
+    def test_currency_aliases_and_turkish_uppercase_units(self):
+        for literal, code in [('Euro', 'EUR'), ('€', 'EUR'), ('ABD Doları', 'USD')]:
+            node, _ = self.document(f'Bedel 1250 {literal}.')
+            spec = self.fact_spec('1250', node=node, field='price', method='INTEGER', unit='money', unit_literal='Bedel')
+            spec.update(currency=code, currency_span=exact_span(self.texts[node], literal))
+            self.store.register_business_fact(self.case, spec=spec, expected_revision=self.rev())
+        node, _ = self.document('Vade 30 İŞ GÜNÜ.')
+        self.fact('30', node=node, field='delivery_days', unit='business_days', unit_literal='İŞ GÜNÜ')
+        self.assertEqual(4, len(self.overview()['facts']))
+
+    def test_xlsx_value_currency_and_header_have_separate_bound_sources(self):
+        import io
+        from openpyxl import Workbook
+        workbook = Workbook();sheet = workbook.active
+        sheet['A1'] = 'Tutar';sheet['A2'] = 125000;sheet['B2'] = 'TL';sheet['B3'] = 'TL'
+        buffer = io.BytesIO();workbook.save(buffer)
+        path = self.sources / 'separate-cells.xlsx';path.write_bytes(buffer.getvalue())
+        doc = self.store.create_document(self.case, 'Tablo', expected_revision=self.rev())
+        version = self.store.ingest(self.case, doc, path, expected_revision=self.rev())['version_id'];self.versions.append(version)
+        reading = self.store.read_document(self.case, version, format='XLSX')
+        def cell_node(cell):
+            row = next(u for u in reading['result']['units'] if u['locator']['cell'] == cell)
+            text = row['views']['RAW']
+            target = {'format':'XLSX','unit_id':row['unit_id'],'view':'RAW','start':0,'end':len(text),'expected_text':text,'field_kind':'OBLIGATION'}
+            node = self.store.register_context_node(self.case, spec={'node_kind':'SOURCE_UNIT','title':cell,'role':'CLAUSE','version_id':version,'reading_id':reading['processing_id'],'target':target}, expected_revision=self.rev())['node_id']
+            self.texts[node] = text
+            return node
+        value, header, currency, wrong = [cell_node(c) for c in ('A2','A1','B2','B3')]
+        spec = self.fact_spec('125000', node=value, field='price', method='INTEGER', unit='money', unit_literal=None)
+        spec.update(currency='TRY', unit_source={'source_node_id':header,'span':exact_span(self.texts[header],'Tutar'),'relationship':'COLUMN_HEADER'},
+                    currency_source={'source_node_id':currency,'span':exact_span(self.texts[currency],'TL'),'relationship':'SAME_ROW'})
+        self.store.register_business_fact(self.case, spec=spec, expected_revision=self.rev())
+        fact = self.overview()['facts'][0]
+        self.assertEqual('125000', fact['value']['value']);self.assertEqual('TRY', fact['currency'])
+        self.assertEqual(currency, fact['auxiliary_sources']['currency']['source']['node_id'])
+        spec['currency_source']['source_node_id'] = wrong
+        self.error('KAYNAK_ILISKISI', lambda:self.store.register_business_fact(self.case,spec=spec,expected_revision=self.rev()))
+
+    def test_ambiguous_number_requires_current_source_bound_format(self):
+        node, _ = self.document('Bedel 1.500 TRY. Türkçe sayı biçimi.')
+        spec = self.fact_spec('1.500', node=node, field='price', method='DECIMAL_TR', unit='money', unit_literal='Bedel', currency='TRY')
+        self.error('SAYI_BICIMI_BELIRSIZ', lambda: self.store.register_business_fact(self.case, spec=spec, expected_revision=self.rev()))
+        spec['number_format_source'] = {'source_node_id': node, 'locale': 'TR', 'span': exact_span(self.texts[node], 'Türkçe sayı biçimi')}
+        self.store.register_business_fact(self.case, spec=spec, expected_revision=self.rev())
+        fact = next(x for x in self.overview()['facts'] if x['source_node_id'] == node)
+        self.assertEqual('1500', fact['value']['value'])
+        spec['normalization'] = 'DECIMAL_CANONICAL'
+        self.error('SAYI_BICIMI_BELIRSIZ', lambda: self.store.register_business_fact(self.case, spec=spec, expected_revision=self.rev()))
+        spec['number_format_source']['span'] = exact_span(self.texts[node], 'Bedel')
+        self.error('SAYI_BICIMI_BELIRSIZ', lambda: self.store.register_business_fact(self.case, spec=spec, expected_revision=self.rev()))
+
     def setUp(self):
         # Staging excludes .runtime; a shard may start with this class.
         (ROOT / "tests/.runtime").mkdir(exist_ok=True)
@@ -344,7 +430,7 @@ class BusinessTests(unittest.TestCase):
         upgraded = Store(self.area / "older", source_roots=[self.sources], output_root=self.area)
         self.assertEqual(0, upgraded.case_revision(self.case))
         with upgraded._db() as db:
-            self.assertEqual(23, db.execute("SELECT count(*) FROM information_schema.tables WHERE table_schema='main'").fetchone()[0])
+            self.assertEqual(26, db.execute("SELECT count(*) FROM information_schema.tables WHERE table_schema='main'").fetchone()[0])
         wrong = self.area / "wrong.sql"
         wrong.write_text("-- altered", encoding="utf-8")
         with patch("sozlesme_cekirdek.store.MIGRATION_BUSINESS", wrong):
@@ -362,7 +448,7 @@ class BusinessTests(unittest.TestCase):
         self.obligation(rule=self.rule())
         for skill in ("K03", "K23", "K24", "K25", "K26"):
             result = evaluate(self.store, self.skill_request(skill))
-            self.assertEqual("p6-1.2", result["schema_version"])
+            self.assertEqual("p6-1.4", result["schema_version"])
             self.assertEqual("KISMI", result["status"])
             self.assertTrue(result["business_overview"]["comparisons"])
             self.assertEqual("2026-10-31", result["business_overview"]["obligations"][0]["due_date"])

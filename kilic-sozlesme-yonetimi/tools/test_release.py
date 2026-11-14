@@ -24,11 +24,27 @@ class ReleaseTests(unittest.TestCase):
                         "source_digest": self.digest(self.current), "manifest_digest": self.digest(self.manifest),
                         "classes": ["sample.C"], "classes_not_run": {}, "methods_run": 2,
                         "suite": "full", "test_selection": [], "unselected_not_run": [],
-                        "platform": "Windows-test", "python": "3.14.8", "python_abi": "cpython-314",
+                        "platform": "Windows-test", "python": "3.14.8 (synthetic fixture)", "python_abi": "cpython-314",
                         "dependencies": {"duckdb": "1.5.6"},
                         "records": [{"test_id": "sample.C.test_a", "status": "PASS"},
                                     {"test_id": "sample.C.test_b", "status": "PASS"},
                                     {"test_id": "sample.C.test_old", "status": "NOT_RUN"}]}
+        self.receipt.update(release.product_runner(release.PACKAGE).expected_environment(release.PACKAGE))
+
+    def test_every_transitive_pin_and_python_profile_is_required(self):
+        for name in self.receipt['dependencies']:
+            for remove in (True, False):
+                receipt = copy.deepcopy(self.receipt)
+                if remove:
+                    del receipt['dependencies'][name]
+                else:
+                    receipt['dependencies'][name] = 'wrong-version'
+                with self.subTest(package=name, remove=remove):
+                    self.assertEqual('BLOCKED', self.verify([receipt])['status'])
+        for key, value in [('python_version', [3, 14, 7]), ('pointer_bits', 32), ('runtime_profile', 'other'),
+                           ('lock_sha256', '0' * 64), ('profile_sha256', '0' * 64)]:
+            with self.subTest(field=key):
+                self.assertEqual('BLOCKED', self.verify([dict(self.receipt, **{key: value})])['status'])
 
     def verify(self, receipts):
         return release.verify_receipts(receipts, self.current, self.manifest, self.found, self.digest)

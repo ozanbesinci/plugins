@@ -52,7 +52,10 @@
     "test_test_receipt_interruptions.TestReceiptInterruptionTests",
     "test_process_fixtures.ProcessFixtureTests",
     "test_automatic_setup.AutomaticSetupPolicyTests",
-    "test_automatic_setup.AutomaticSetupNativeTests"
+    "test_automatic_setup.AutomaticSetupNativeTests",
+    "test_internal_drafts.InternalDraftTests",
+    "test_draft_document.DraftDocumentTests",
+    "test_workflow_internal_drafts.DraftWorkflowTests"
   ],
   "suites": {
     "bootstrap": [
@@ -156,6 +159,11 @@
     "migration": [
       "test_migration_acceptance.MigrationAcceptanceTests",
       "test_migration_acceptance.LegacyCompatibilityTests"
+    ],
+    "word": [
+      "test_internal_drafts.InternalDraftTests",
+      "test_draft_document.DraftDocumentTests",
+      "test_workflow_internal_drafts.DraftWorkflowTests"
     ]
   },
   "excluded": {

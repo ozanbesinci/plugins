@@ -81,14 +81,14 @@ class BuildIdentityTests(unittest.TestCase):
 
     def test_component_versions_are_distinct_and_commit_is_not_invented(self):
         identity = component_identity()
-        self.assertEqual("0.1.2", identity["plugin_version"])
+        self.assertEqual("0.2.0", identity["plugin_version"])
         primary=json.loads((ROOT/"plugin.json").read_text(encoding="utf-8"))
         compatible=json.loads((ROOT/".claude-plugin/plugin.json").read_text(encoding="utf-8"))
         self.assertEqual(primary["version"],identity["plugin_version"])
         self.assertEqual(primary["version"],compatible["version"])
         self.assertEqual(primary["name"],compatible["name"])
-        self.assertEqual("0.2.1", identity["core_version"])
-        self.assertEqual("p6-1.2", identity["result_schema_version"])
+        self.assertEqual("0.4.0", identity["core_version"])
+        self.assertEqual("p6-1.4", identity["result_schema_version"])
         self.assertEqual("sozlesme-win-cp314-embedded-v1", identity["runtime_profile"])
         self.assertIsNone(identity["source_commit"])
         self.assertEqual("UNVERIFIED", identity["source_commit_attestation"])
@@ -122,7 +122,7 @@ class ReaderNamespaceTests(unittest.TestCase):
             self.assertNotEqual(old, output["result"]["processing_id"])
             self.assertFalse(output["result"]["reused"])
             self.assertEqual(source_sha, output["result"]["result"]["sha256"])
-            self.assertEqual("0.2.1", output["tool_version"])
+            self.assertEqual("0.4.0", output["tool_version"])
             self.assertIsNone(output["components"]["source_commit"])
         self.assertEqual(source_sha, hash_file(self.path))
 

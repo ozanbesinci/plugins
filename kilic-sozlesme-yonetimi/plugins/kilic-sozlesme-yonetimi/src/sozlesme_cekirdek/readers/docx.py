@@ -1,4 +1,5 @@
 """WordprocessingML inventory and explicitly scoped revision projections."""
+import json
 from lxml import etree
 from ..errors import CoreError
 from .common import Package, feature, issue, locator, result_base, unit
@@ -30,23 +31,37 @@ def excluded(node, mode):
     return False
 
 
-def text_of(node, mode="RAW", *, paragraph=False):
+def text_of(node, mode="RAW", *, paragraph=False, marks=None):
     if excluded(node, mode):
         return ""
+    offset = 0
     def walk(current):
+        nonlocal offset
         if excluded(current, mode):
             return ""
         if paragraph and current is not node and current.tag in {q("p"), q("txbxContent")}:
             return ""  # nested text box paragraphs have their own units.
         if current.tag in {q("t"), q("delText")}:
-            return current.text or ""
-        if current.tag in {q("instrText"), q("delInstrText")}:
-            return (current.text or "") if mode == "RAW" else ""
-        if current.tag == q("tab"):
-            return "\t"
-        if current.tag in {q("br"), q("cr")}:
-            return "\n"
-        return "".join(walk(child) for child in current)
+            text = current.text or ""
+        elif current.tag in {q("instrText"), q("delInstrText")}:
+            text = (current.text or "") if mode == "RAW" else ""
+        elif current.tag == q("tab"):
+            text = "\t"
+        elif current.tag in {q("br"), q("cr")}:
+            text = "\n"
+        else:
+            start = offset
+            text = "".join(walk(child) for child in current)
+            if marks is not None and current.tag == q("r") and offset > start:
+                props = current.find(q("rPr"))
+                for name in ("strike", "dstrike"):
+                    prop = props.find(q(name)) if props is not None else None
+                    if prop is not None and prop.get(q("val"), "true").lower() not in {"0", "false", "off"}:
+                        marks.append({"kind": name, "start": start, "end": offset,
+                                      "text": text, "path": path_of(current)})
+            return text
+        offset += len(text)
+        return text
     return walk(node)
 
 
@@ -111,8 +126,14 @@ def read_docx(data):
                     "footnotes": "FOOTNOTE", "endnotes": "ENDNOTE"}.get(root_kind, "PARAGRAPH")
             if any(x.tag == q("txbxContent") for x in ancestors):
                 kind = "TEXTBOX"
-            unit(report, kind, location, text_of(node, paragraph=True),
-                 text_of(node, "BEFORE", paragraph=True), text_of(node, "AFTER", paragraph=True),
+            views, formatting = {}, {}
+            for view in ("RAW", "BEFORE", "AFTER"):
+                formatting[view] = []
+                views[view] = text_of(node, view, paragraph=True, marks=formatting[view])
+            if any(formatting.values()):
+                attrs["direct_formatting_ranges"] = json.dumps(formatting, ensure_ascii=False, separators=(",", ":"))
+                issue(report, "DOCX_STRIKE_FORMATTING", "Çizili metin aralıkları görünüm bazında korundu; hukuki iptal/kabul değildir.", location)
+            unit(report, kind, location, views["RAW"], views["BEFORE"], views["AFTER"],
                  attributes=attrs)
         if part != main and not any(r["resolved_part"] == part for r in package.relationships):
             issue(report, "ORPHAN_CONTENT_PART", "İlişkilendirilmemiş içerik parçası da envanterlendi",
