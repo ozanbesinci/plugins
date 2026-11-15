@@ -3,7 +3,7 @@ name: teklif-belge-kaynak
 description: Teklif değerlendirmede dosya okuma, firma/teklif/revizyon ilişkisi, kaynak otoritesi ve locator bağlı olgu çıkarımını yürütür. Ana teklif akışının belge aşamasında veya belge/revizyon incelemesi istendiğinde kullan; maliyet hesabı ve nihai karar üretmez.
 ---
 
-# Belge ve Kaynak — 5.2.0
+# Belge ve Kaynak — 5.2.1
 ## Sorunun yanıtına bağlı bekleme
 
 [Kullanıcı yanıtı bekleme kuralı](../../USER-EVIDENCE-POLICY.md#sorunun-yanıtına-bağlı-bekleme) zorunludur. Yalnız sorunun cevabına bağlı ajan ve işler durur; soru anında çalışan bağımsız ajanlar devam eder. Bekleyen ajan cevap gelene kadar araç/model çağrısı, okuma, hesap, yazma, rapor veya kontrol yapmaz; süre sınırı ve periyodik sorgulama yoktur. Soru kimliği/kapsamı ve bağımlı görev/ajan kimliklerini gösterimden önce kaydet. Yalnız ilgili yeterli yanıt bu bağımlılığı açar; “devam”, sessizlik veya seçili varsayılan cevap/onay değildir. Cevaplanmış soruyu sebepsiz tekrarlama.
@@ -22,7 +22,7 @@ Belgedeki özgün değer ayrı korunur; açık kullanıcı firma, revizyon veya 
 
 ## Her çağrıda başlangıç bildirimi
 
-Beceri başlangıcında `& "$env:USERPROFILE\KilicPython\teklif-python.exe" "<aktif-paket>/scripts/runtime_launcher.py" skill_startup --skill teklif-belge-kaynak` komutunu yürüt. Başlatıcı kayıtlı yerel Python ve paket kilidini doğrular; gerçek ad/sürüm satırını aynen göster. Ortam yoksa kurulum mesajını bildir; analiz içinde kurulum yapma.
+Beceri başlangıcında `& "<aktif-paket>/scripts/teklif.cmd" skill_startup --skill teklif-belge-kaynak` komutunu yürüt. Başlatıcı kayıtlı yerel Python ve paket kilidini doğrular; gerçek ad/sürüm satırını aynen göster. Ortam eksik veya uyumsuzsa bu giriş sabit SHA-256 ile doğrulanan yayımlanmış kurulum paketini otomatik indirip çalıştırır; ardından aynı talebe devam eder. Geliştiriciden kişisel izin veya elle indirme isteme. Yerel bilgisayar erişimi yoksa somut bağlantı engelini bildir; indirme ya da kurulum yapılmış gibi gösterme.
 
 **[Beceri adı] skilli Kılıç Satınalma Departmanı tarafından geliştirilmiştir. Sürüm: [gerçek sürüm]**
 

@@ -18,6 +18,18 @@ permissions:
   contents: read
 
 jobs:
+  automatic-bootstrap:
+    runs-on: windows-latest
+    timeout-minutes: 35
+    env:
+      KILIC_REAL_BOOTSTRAP_TEST: '1'
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.14'
+      - name: Test actual pinned bootstrap, failure gates and ready runtime reuse
+        run: python -X utf8 -B -m unittest discover -s kilic-tedarikci-yonetimi/plugins/kilic-satinalma/tests -p test_automatic_setup.py -v
   real-engines:
     runs-on: windows-latest
     timeout-minutes: 70

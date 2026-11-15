@@ -2,9 +2,11 @@
 param([Parameter(ValueFromRemainingArguments=$true)][string[]]$CommandArgs)
 $ErrorActionPreference = 'Stop'
 try {
+    & (Join-Path $PSScriptRoot 'ensure_runtime.cmd')
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     $registry = Join-Path $env:USERPROFILE 'KilicPython\teklif-runtime.json'
     if (-not (Test-Path -LiteralPath $registry -PathType Leaf)) {
-        throw 'Hazır teklif ortamı yok. Eklenti dışındaki kurulum\Kur.cmd dosyasını çalıştırın.'
+        throw 'Otomatik kurulum sonrasında ortam kaydı bulunamadı.'
     }
     $record = Get-Content -LiteralPath $registry -Raw -Encoding UTF8 | ConvertFrom-Json
     $profile = Get-Content -LiteralPath (Join-Path $PSScriptRoot '..\config\runtime-profile.json') -Raw -Encoding UTF8 | ConvertFrom-Json

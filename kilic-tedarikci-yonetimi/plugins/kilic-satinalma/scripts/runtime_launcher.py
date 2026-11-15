@@ -14,6 +14,13 @@ def main(identity=None):
     args=sys.argv[1:]
     if not args: raise ValueError('Komut gerekli: workflow, environment_check veya skill_startup.')
     command=args.pop(0)
+    if command == 'runtime_probe':
+        if args:
+            raise ValueError('runtime_probe argüman almaz.')
+        from calculation_runtime import current as calculation_current
+        calculation_current(verify_files=True)
+        print(json.dumps({'status':'READY','runtime_id':identity['runtime_id']},ensure_ascii=False))
+        return
     package=Path(__file__).resolve().parents[1]
     scripts=package/'skills/teklif-degerlendirme/scripts'
     allowed={p.stem:p for p in scripts.glob('*.py') if p.name!='__init__.py'}
@@ -43,7 +50,7 @@ def entry():
         identity=current()
     except (ValueError,OSError,KeyError) as exc:
         print(json.dumps({'status':'BLOCKED_ENVIRONMENT','automatic_installation':False,
-                          'message':str(exc),'next_step':'Eklenti dışındaki kurulum/Kur.cmd ile ortamı hazırlayın.'},ensure_ascii=False))
+                          'message':str(exc),'next_step':'Aynı komutu aktif eklentinin scripts/teklif.cmd girişiyle çalıştırın; ortam otomatik hazırlanır.'},ensure_ascii=False))
         return 3
     try:
         main(identity)
